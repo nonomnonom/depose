@@ -20,7 +20,9 @@
     "@nestjs/core": "^12.4.1",
     "@nestjs/platform-express": "^12.4.1",
     "@thallesp/nestjs-better-auth": "^2.8.0",
-    "better-auth": "^1.7.18"
+    "better-auth": "^1.7.18",
+    "kysely": "^0.29.8",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -30,6 +32,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
     "eslint": "^10.14.0",
     "globals": "^17.14.0",
     "jest": "^30.5.2",
@@ -37,4 +40,3 @@
     "typescript-eslint": "^8.72.1"
   }
 }
-
