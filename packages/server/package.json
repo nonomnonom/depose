@@ -1,0 +1,40 @@
+{
+  "name": "server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Depose modular backend server",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "nest start",
+    "start": "node dist/main",
+    "start:dev": "nest start --watch",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "check-types": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:ci": "jest --ci"
+  },
+  "dependencies": {
+    "@nestjs/common": "^12.4.1",
+    "@nestjs/core": "^12.4.1",
+    "@nestjs/platform-express": "^12.4.1",
+    "@thallesp/nestjs-better-auth": "^2.8.0",
+    "better-auth": "^1.7.18"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@nestjs/cli": "^12.0.12",
+    "@nestjs/schematics": "^12.0.13",
+    "@nestjs/testing": "^12.4.1",
+    "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.15",
+    "typescript-eslint": "^8.72.1"
+  }
+}
+
