@@ -16,11 +16,13 @@
     "test:ci": "jest --ci"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.7.18",
     "@nestjs/common": "^12.4.1",
     "@nestjs/core": "^12.4.1",
     "@nestjs/platform-express": "^12.4.1",
     "@thallesp/nestjs-better-auth": "^2.8.0",
     "better-auth": "^1.7.18",
+    "drizzle-orm": "^0.45.4",
     "kysely": "^0.29.8",
     "pg": "^8.23.1"
   },
