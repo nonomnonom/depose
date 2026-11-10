@@ -21,15 +21,15 @@ atau untuk workspace internal:
 Import komponen dari `@depose/ui`:
 
 ```tsx
-import { Button, Card, Input } from "@depose/ui";
-import "@depose/ui/globals.css";
+import { Button, Card, Input } from '@depose/ui';
+import '@depose/ui/globals.css';
 ```
 
 atau import langsung dari path komponen:
 
 ```tsx
-import { Button } from "@depose/ui/components/button";
-import { Card } from "@depose/ui/components/card";
+import { Button } from '@depose/ui/components/button';
+import { Card } from '@depose/ui/components/card';
 ```
 
 ## Konfigurasi

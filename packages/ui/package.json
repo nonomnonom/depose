@@ -5,13 +5,9 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": {
-      "import": "./src/index.tsx",
-      "types": "./src/index.tsx"
-    },
     "./globals.css": "./src/styles/globals.css",
-    "./components/*": "./src/components/*.tsx",
     "./lib/*": "./src/lib/*.ts",
+    "./components/*": "./src/components/ui/*.tsx",
     "./hooks/*": "./src/hooks/*.ts"
   },
   "imports": {
@@ -23,9 +19,9 @@
     "src"
   ],
   "scripts": {
-    "dev": "vite",
     "check-types": "tsc --noEmit",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\""
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -56,8 +52,10 @@
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^4.0.0",
-    "typescript": "^5.0.0",
-    "vite": "^5.0.0"
+    "eslint": "^10.0.0",
+    "@eslint/js": "^10.0.0",
+    "globals": "^17.0.0",
+    "typescript-eslint": "^8.0.0",
+    "typescript": "^5.0.0"
   }
 }

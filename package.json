@@ -5,10 +5,14 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "format": "turbo run format",
+    "check-types": "turbo run check-types",
+    "lint:fix": "turbo run lint -- --fix",
+    "format:check": "turbo run format -- --check",
+    "format:fix": "turbo run format -- --write"
   },
   "devDependencies": {
+    "playwright": "^1.65.0",
     "prettier": "3.9.6",
     "shadcn": "^4.23.0",
     "turbo": "^2.11.10",
