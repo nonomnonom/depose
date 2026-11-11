@@ -13,7 +13,7 @@ import {
   webhooks,
   webhookDeliveries,
 } from '../../infrastructure/database/schema/index.js';
-import { encryptSecret } from '../ai/platform/secret-box.js';
+import { encryptSecret } from '../../common/secret-box.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { WEBHOOK_QUEUE } from '../jobs/queue.constants.js';
@@ -70,7 +70,7 @@ export class WebhooksService {
 
     let secretCiphertext: string | null = null;
     if (input.secret) {
-      const encryptionKey = appConfig.ai.encryptionKey;
+      const encryptionKey = appConfig.webhooks.encryptionKey;
       if (!encryptionKey) {
         throw DomainError.internalServerError(
           'AI_SECRET_ENCRYPTION_KEY is required before a webhook secret can be stored',

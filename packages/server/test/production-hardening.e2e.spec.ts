@@ -26,7 +26,6 @@ describe('Production hardening', () => {
     const user = await signUpUser(e2e.baseUrl, { name: 'Hardening Admin' });
     const firm = await createFirmWithDomain({
       ownerId: user.userId,
-      slug: 'hardening-firm',
       hostname: 'hardening.depose.test',
       role: 'admin',
     });

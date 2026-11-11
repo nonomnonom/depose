@@ -194,7 +194,6 @@ export class InvitationsService {
         status: invitation.status,
         expiresAt: invitation.expiresAt,
         firmName: firms.name,
-        firmSlug: firms.slug,
         inviterName: user.name,
       })
       .from(invitation)
@@ -235,7 +234,7 @@ export class InvitationsService {
     }
 
     const [firm] = await this.db
-      .select({ id: firms.id, slug: firms.slug })
+      .select({ id: firms.id })
       .from(firms)
       .where(eq(firms.organizationId, invitationRow.organizationId))
       .limit(1);
@@ -292,7 +291,6 @@ export class InvitationsService {
         emailVerified: true,
         joinedAt: new Date(),
       },
-      firmSlug: firm.slug,
     };
   }
 

@@ -12,7 +12,8 @@ import {
   facts,
 } from '../../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../../access-control/policy.service.js';
-import { ModelGatewayService, type DecisionQuestion } from '../platform/model-gateway.service.js';
+import { SystemOneService } from '../system-one/system-one.service.js';
+import type { DecisionQuestion } from '../system-one/system-one.types.js';
 
 interface AgentUser extends FirmActor {
   matterId: string;
@@ -61,7 +62,7 @@ export class MatterAgentTools {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly policy: PolicyService,
-    private readonly gateway: ModelGatewayService,
+    private readonly systemOne: SystemOneService,
   ) {}
 
   @AgentFunction({
@@ -253,16 +254,15 @@ export class MatterAgentTools {
     }
 
     try {
-      const result = await this.gateway.decide({
-        firmId: user.firmId,
-        state: {
-          text: context ? `${text}\n\nContext:\n${context}` : text,
-          context: { decisionKey, matterId: user.matterId },
-        },
-        questions: { evaluate: question },
+      const result = await this.systemOne.decide(user.firmId, {
+        text: context ? `${text}\n\nContext:\n${context}` : text,
+        context: { decisionKey, matterId: user.matterId },
+      }, {
+        evaluate: question,
       });
       const answer = result.answers.evaluate;
-      const value = answer.type === 'choice' ? answer.choice : answer.noul;
+      const value =
+        answer.type === 'choice' ? answer.choice : answer.type === 'noul' ? answer.noul : null;
       const recommendedAction =
         answer.type === 'noul'
           ? (answer.noul ?? 0) >= answer.threshold

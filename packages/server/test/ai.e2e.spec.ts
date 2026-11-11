@@ -33,32 +33,19 @@ describe('Dep AI evidence answer', () => {
       './helpers/auth.test-utils.js'
     );
     const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { aiProviderConnections, facts } = await import(
-      '../src/infrastructure/database/schema/index.js'
-    );
-    const { encryptSecret } = await import('../src/modules/ai/platform/secret-box.js');
+    const { facts } = await import('../src/infrastructure/database/schema/index.js');
+    const { encryptSecret } = await import('../src/common/secret-box.js');
     const { TEST_SECRET_KEY } = await import('./helpers/test-env.js');
 
     const user = await signUpUser(e2e.baseUrl);
     const firm = await createFirmWithDomain({
       ownerId: user.userId,
-      slug: 'ai-firm',
       hostname: 'ai.depose.test',
     });
     const { matterId } = await createMatter({ firmId: firm.firmId, createdBy: user.userId });
 
-    await db.insert(aiProviderConnections).values({
-      firmId: firm.firmId,
-      kind: 'openai-compatible',
-      label: 'e2e-fake',
-      baseUrl: fake.url,
-      apiKeyCiphertext: encryptSecret('fake-key', TEST_SECRET_KEY),
-      apiKeyLast4: '-key',
-      models: ['fake-model'],
-      fallbackModelId: 'fake-model',
-      status: 'active',
-      createdBy: user.userId,
-    });
+    // aiProviderConnections removed: AI is operated through instance config.
+    // The fake model server is configured via app config in e2e setup.
 
     const [seededFact] = await db
       .insert(facts)
@@ -142,7 +129,6 @@ describe('Dep AI evidence answer', () => {
     const user = await signUpUser(e2e.baseUrl);
     const firm = await createFirmWithDomain({
       ownerId: user.userId,
-      slug: 'no-ai-firm',
       hostname: 'no-ai.depose.test',
     });
     const { matterId } = await createMatter({ firmId: firm.firmId, createdBy: user.userId });

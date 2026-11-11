@@ -42,7 +42,6 @@ describe('Document ingest and fact extraction', () => {
     const user = await signUpUser(e2e.baseUrl);
     const firm = await createFirmWithDomain({
       ownerId: user.userId,
-      slug: 'ingest-firm',
       hostname: 'ingest.depose.test',
     });
     const matter = await createMatter({ firmId: firm.firmId, createdBy: user.userId });

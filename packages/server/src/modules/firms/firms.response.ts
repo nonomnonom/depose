@@ -11,7 +11,6 @@ export class FirmDto {
   name!: string;
 
   @ApiProperty({ example: 'malkan-partners' })
-  slug!: string;
 
   @ApiProperty({ enum: ['id', 'en'], example: 'id' })
   primaryLanguage!: string;

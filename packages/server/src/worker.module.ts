@@ -9,7 +9,7 @@ import { DatabaseModule } from './infrastructure/database/database.module.js';
 import { RedisModule } from './infrastructure/redis/redis.module.js';
 import { StorageModule } from './infrastructure/storage/storage.module.js';
 import { WorkerProcessorsModule } from './modules/jobs/worker-processors.module.js';
-import { PlatformAiModule } from './modules/ai/platform/platform-ai.module.js';
+import { AiRuntimeModule } from './modules/ai/runtime/ai-runtime.module.js';
 
 /**
  * Worker process: database, Redis, storage, AI gateway, and every BullMQ
@@ -26,7 +26,7 @@ import { PlatformAiModule } from './modules/ai/platform/platform-ai.module.js';
     StorageModule,
     AuditModule,
     AccessControlModule,
-    PlatformAiModule,
+    AiRuntimeModule,
     WorkerProcessorsModule,
   ],
 })

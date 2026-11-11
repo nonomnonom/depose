@@ -5,7 +5,7 @@ export class TenantFirmDto {
   name!: string;
 
   @ApiProperty()
-  slug!: string;
+  aiEnabled!: boolean;
 }
 
 export class TenantAuthDto {
@@ -26,9 +26,6 @@ export class TenantAuthDto {
 
   @ApiProperty({ description: 'True when SMTP is configured and mail can be delivered' })
   mailConfigured!: boolean;
-
-  @ApiProperty({ description: 'True when a model provider is configured' })
-  aiEnabled!: boolean;
 
   @ApiProperty({ description: 'True when the Depose MCP server token and firm are configured' })
   mcpServerEnabled!: boolean;

@@ -53,7 +53,7 @@ describe('Auth session lifecycle', () => {
 
     assert.equal(me.status, 200);
     const body = me.json<{
-      firm: { id: string; slug: string; role: string } | null;
+      firm: { id: string; role: string } | null;
     }>();
     assert.equal(body.firm?.id, firm.firmId);
     assert.equal(body.firm?.role, 'lawyer');

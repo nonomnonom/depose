@@ -17,7 +17,7 @@ import { OutputsService } from './outputs.service.js';
  *  - AuditModule (change logging)
  *
  * This module does NOT own the Dep AI agent loop — that belongs to
- * AgentModule. It only owns output document lifecycle and provider configs.
+ * MatterAgentModule. It only owns output document lifecycle and provider configs.
  */
 @Module({
   imports: [AccessControlModule, AuditModule],

@@ -16,44 +16,13 @@ import {
   facts,
 } from '../../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../../access-control/policy.service.js';
-import { ModelGatewayService } from '../platform/model-gateway.service.js';
+import { SystemOneService } from '../system-one/system-one.service.js';
+import { ExtractionsClient } from './extractions.client.js';
+import { ExtractedFact } from './extraction.schema.js';
 import { DocumentTextService } from '../../documents/document-text.service.js';
 import { JobsService } from '../../jobs/jobs.service.js';
 import { EXTRACTION_QUEUE } from '../../jobs/queue.constants.js';
 import { VectorService } from '../../vector/vector.service.js';
-
-const factTypeValues = [
-  'event',
-  'statement',
-  'admission',
-  'denial',
-  'intent',
-  'relationship',
-  'amount',
-  'location',
-  'other',
-] as const;
-
-const datePrecisionValues = ['day', 'month', 'year', 'unknown'] as const;
-
-const candidateSchema = z
-  .object({
-    text: z.string().trim().min(1).max(4_000),
-    factType: z.enum(factTypeValues).default('other'),
-    entity: z.string().trim().max(300).nullable().optional(),
-    action: z.string().trim().max(300).nullable().optional(),
-    object: z.string().trim().max(300).nullable().optional(),
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be ISO 8601 or null')
-      .nullable()
-      .optional(),
-    dateText: z.string().trim().max(200).nullable().optional(),
-    datePrecision: z.enum(datePrecisionValues).default('unknown'),
-    sourceQuote: z.string().trim().min(1).max(8_000),
-    confidence: z.coerce.number().min(0).max(1).default(0.5),
-  })
-  .strict();
 
 function normalize(value: string): string {
   return value
@@ -82,7 +51,8 @@ export class ExtractionService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly policy: PolicyService,
-    private readonly gateway: ModelGatewayService,
+    private readonly extractions: ExtractionsClient,
+    private readonly systemOne: SystemOneService,
     private readonly documentText: DocumentTextService,
     private readonly jobs: JobsService,
     private readonly vector: VectorService,
@@ -193,7 +163,7 @@ export class ExtractionService {
       const text = ingested.pages
         .map((page) => `--- page ${page.pageNumber} ---\n${page.text}`)
         .join('\n\n');
-      const result = await this.gateway.extractFacts(document.firmId, text);
+      const result = await this.extractions.extract(document.firmId, text);
 
       await this.jobs.progress(jobId, 65, 'quote_verification');
       const counts = {
@@ -204,7 +174,7 @@ export class ExtractionService {
         stored: 0,
       };
       const verified: {
-        candidate: z.infer<typeof candidateSchema>;
+        candidate: z.infer<typeof ExtractedFact>;
         pageNumber: number;
         charStart: number;
         charEnd: number;
@@ -215,7 +185,7 @@ export class ExtractionService {
       const seen = new Set<string>();
 
       for (const raw of result.candidates) {
-        const parsed = candidateSchema.safeParse(raw);
+        const parsed = ExtractedFact.safeParse(raw);
         if (!parsed.success) {
           counts.schema_rejected += 1;
           continue;
@@ -239,26 +209,22 @@ export class ExtractionService {
             .sort((a, b) => b.overlap - a.overlap)[0];
           if (nearest && nearest.overlap >= 0.8) {
             try {
-              const decision = await this.gateway.decide({
-                firmId: document.firmId,
-                state: {
-                  text: nearest.item.text.slice(0, 12_000),
-                  context: { pageNumber: nearest.item.pageNumber, documentId: document.id },
-                },
-                questions: {
-                  quote_supported: {
-                    type: 'noul',
-                    instructions:
-                      'Is this quote supported verbatim or near-verbatim by the page text?',
-                    criteria: {
-                      true: 'The claim and quote are clearly present in the text.',
-                      false: 'The quote is absent, materially different, or contradicted.',
-                    },
+              const decision = await this.systemOne.decide(document.firmId, {
+                text: nearest.item.text.slice(0, 12_000),
+                context: { pageNumber: nearest.item.pageNumber, documentId: document.id },
+              }, {
+                quote_supported: {
+                  type: 'noul',
+                  instructions:
+                    'Is this quote supported verbatim or near-verbatim by the page text?',
+                  criteria: {
+                    true: 'The claim and quote are clearly present in the text.',
+                    false: 'The quote is absent, materially different, or contradicted.',
                   },
                 },
               });
               const answer = decision.answers.quote_supported;
-              if ((answer?.noul ?? 0) >= answer.threshold) {
+              if (answer && answer.type === 'noul' && (answer.noul ?? 0) >= answer.threshold) {
                 page = nearest.item;
                 verification = 'fuzzy';
                 counts.fuzzy_verified += 1;

@@ -21,8 +21,8 @@ import { AccessControlModule } from './modules/access-control/access-control.mod
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { SessionGuard } from './modules/auth/session.guard.js';
-import { PlatformAiModule } from './modules/ai/platform/platform-ai.module.js';
-import { AgentModule } from './modules/ai/agent/agent.module.js';
+import { AiRuntimeModule } from './modules/ai/runtime/ai-runtime.module.js';
+import { MatterAgentModule } from './modules/ai/matter-agent/matter-agent.module.js';
 import { ConversationsModule } from './modules/ai/conversations/conversations.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
 import { WorkerProcessorsModule } from './modules/jobs/worker-processors.module.js';
@@ -33,7 +33,7 @@ import { FactsModule } from './modules/facts/facts.module.js';
 import { FirmsModule } from './modules/firms/firms.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
 import { MattersModule } from './modules/matters/matters.module.js';
-import { McpModule } from './modules/mcp/mcp.module.js';
+import { McpRegistryModule } from './modules/mcp-registry/mcp-registry.module.js';
 import { DeposeMcpServerModule } from './modules/mcp-server/mcp-server.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { ApiKeysModule } from './modules/api-keys/api-keys.module.js';
@@ -70,8 +70,8 @@ import { RateLimitGuard } from './common/rate-limit.guard.js';
     AccessControlModule,
     TenancyModule,
     AuthModule,
-    PlatformAiModule,
-    AgentModule,
+    AiRuntimeModule,
+    MatterAgentModule,
     ConversationsModule,
     JobsModule,
     DocumentsModule,
@@ -81,7 +81,7 @@ import { RateLimitGuard } from './common/rate-limit.guard.js';
     FirmsModule,
     IdentityModule,
     MattersModule,
-    McpModule,
+    McpRegistryModule,
     DeposeMcpServerModule,
     NotificationsModule,
     OnboardingModule,

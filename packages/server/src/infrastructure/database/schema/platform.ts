@@ -16,7 +16,7 @@ import {
 import { sql } from 'drizzle-orm';
 import { firms } from './tenancy.js';
 import { matters } from './matters.js';
-import { aiProviderConnections, messages } from './outputs-ai.js';
+import { messages } from './outputs-ai.js';
 import { facts } from './intelligence.js';
 import {
   jobStatusEnum,
@@ -121,9 +121,6 @@ export const modelCalls = pgTable(
       .references(() => firms.id, { onDelete: 'cascade' }),
     routeKey: text('route_key').notNull(),
     capability: modelCapabilityEnum('capability').notNull(),
-    connectionId: uuid('connection_id').references(() => aiProviderConnections.id, {
-      onDelete: 'set null',
-    }),
     provider: text('provider').notNull(),
     model: text('model').notNull(),
     status: modelCallStatusEnum('status').notNull(),
@@ -142,7 +139,6 @@ export const modelCalls = pgTable(
   (table) => [
     index('model_calls_firm_created_idx').on(table.firmId, table.createdAt),
     index('model_calls_route_status_idx').on(table.routeKey, table.status),
-    index('model_calls_connection_created_idx').on(table.connectionId, table.createdAt),
   ],
 );
 

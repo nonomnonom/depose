@@ -10,7 +10,7 @@ import {
   webhooks,
   webhookDeliveries,
 } from '../../infrastructure/database/schema/index.js';
-import { decryptSecret } from '../ai/platform/secret-box.js';
+import { decryptSecret } from '../../common/secret-box.js';
 import { WEBHOOK_QUEUE } from '../jobs/queue.constants.js';
 
 const DELIVERY_TIMEOUT_MS = 10_000;
@@ -66,7 +66,7 @@ export class WebhookDeliveryProcessor extends WorkerHost {
     };
 
     if (row.webhook.secretCiphertext) {
-      const encryptionKey = appConfig.ai.encryptionKey;
+      const encryptionKey = appConfig.webhooks.encryptionKey;
       if (encryptionKey) {
         const secret = decryptSecret(row.webhook.secretCiphertext, encryptionKey);
         headers['X-Depose-Signature'] = `sha256=${createHmac('sha256', secret)

@@ -20,8 +20,6 @@ import { ZodBodyPipe } from '../../common/zod.pipe.js';
 import { createInvitationSchema, type CreateInvitationInput } from './identity.dto.js';
 import {
   AcceptInvitationResponseDto,
-  InvitationListDto,
-  InvitationResponseDto,
   PublicInvitationResponseDto,
 } from './identity.response.js';
 import { InvitationsService } from './invitations.service.js';
@@ -37,7 +35,7 @@ export class InvitationsController {
 
   @Get()
   @ApiOperation({ summary: 'List invitations sent by the current firm' })
-  @ApiOkResponse({ description: 'Invitations', type: InvitationListDto })
+  @ApiOkResponse({ description: 'Invitations', type: PublicInvitationResponseDto })
   async list() {
     const actor = this.context.requireFirmActor();
     return { items: await this.invitations.list(actor) };
@@ -46,7 +44,7 @@ export class InvitationsController {
   @Post()
   @ApiOperation({ summary: 'Invite someone to the firm' })
   @ApiBody({ schema: zodToOpenApiSchema(createInvitationSchema) })
-  @ApiCreatedResponse({ description: 'Invitation sent', type: InvitationResponseDto })
+  @ApiCreatedResponse({ description: 'Invitation sent', type: PublicInvitationResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid payload', type: ErrorEnvelopeDto })
   @ApiConflictResponse({ description: 'Already a member or already invited', type: ErrorEnvelopeDto })
   async create(@Body(new ZodBodyPipe(createInvitationSchema)) body: CreateInvitationInput) {
@@ -57,7 +55,7 @@ export class InvitationsController {
   @Post(':id/resend')
   @ApiOperation({ summary: 'Send the invitation again with a fresh link' })
   @ApiParam({ name: 'id', description: 'Invitation id' })
-  @ApiOkResponse({ description: 'Invitation resent', type: InvitationResponseDto })
+  @ApiOkResponse({ description: 'Invitation resent', type: PublicInvitationResponseDto })
   @ApiNotFoundResponse({ description: 'Invitation not found', type: ErrorEnvelopeDto })
   async resend(@Param('id') id: string) {
     const actor = this.context.requireFirmActor();

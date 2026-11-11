@@ -12,7 +12,8 @@ import {
 import { AuditService } from '../../audit/audit.service.js';
 import { SearchService } from '../../search/search.service.js';
 import { MatterAgentTools } from './matter-agent.tools.js';
-import { ModelGatewayService } from '../platform/model-gateway.service.js';
+import { AiRuntimeService } from '../runtime/ai-runtime.service.js';
+import { ModelCallsService } from '../runtime/model-calls.service.js';
 
 export interface AgentSource {
   sourceId: string;
@@ -76,13 +77,14 @@ function citationMarkers(answer: string): number[] {
 }
 
 @Injectable()
-export class AgentService {
-  private readonly logger = new Logger(AgentService.name);
+export class MatterAgentService {
+  private readonly logger = new Logger(MatterAgentService.name);
 
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly ai: AiService,
-    private readonly gateway: ModelGatewayService,
+    private readonly runtime: AiRuntimeService,
+    private readonly calls: ModelCallsService,
     private readonly audit: AuditService,
     private readonly search: SearchService,
   ) {}
@@ -114,11 +116,8 @@ export class AgentService {
       };
     }
 
-    const resolved = await this.gateway.completionModel(
-      actor.firmId,
-      undefined,
-      mode === 'agent' ? 'completion.balanced' : 'completion.fast',
-    );
+    this.runtime.assertConfigured();
+    const route = this.runtime.alias(mode === 'agent' ? 'balanced' : 'fast');
 
     const evidenceBlock = evidence.sources
       .map(
@@ -139,8 +138,8 @@ export class AgentService {
     let result;
     try {
       result = await this.ai.generateText({
-        model: resolved.model,
-        label: 'dep-ai',
+        model: route,
+        label: mode === 'agent' ? 'matter-agent' : 'matter-answer',
         instructions: [
           'You are Dep AI, a fact-intelligence assistant for a legal matter.',
           'Answer only from the evidence pack and tool results you are given.',
@@ -161,15 +160,16 @@ export class AgentService {
         caller: { user: { ...actor, matterId } },
         maxSteps: mode === 'agent' ? 10 : 4,
         maxOutputTokens: 900,
+        budget: { maxTokens: 80_000 },
+        timeout: `${this.runtime.timeoutMs}ms` as `${number}ms`,
       });
     } catch (error) {
-      await this.gateway.recordCall({
+      await this.calls.record({
         firmId: actor.firmId,
-        routeKey: resolved.routeKey,
+        routeKey: route,
         capability: 'completion',
-        connectionId: resolved.connectionId,
-        provider: resolved.provider,
-        model: resolved.modelId,
+        provider: this.runtime.provider,
+        model: this.runtime.model,
         status: 'failed',
         latencyMs: Date.now() - startedAt,
         errorCode: 'AI_PROVIDER_UNAVAILABLE',
@@ -218,13 +218,12 @@ export class AgentService {
       };
     });
 
-    await this.gateway.recordCall({
+    await this.calls.record({
       firmId: actor.firmId,
-      routeKey: resolved.routeKey,
+      routeKey: route,
       capability: 'completion',
-      connectionId: resolved.connectionId,
-      provider: resolved.provider,
-      model: resolved.modelId,
+      provider: this.runtime.provider,
+      model: this.runtime.model,
       status: 'succeeded',
       latencyMs: Date.now() - startedAt,
       inputTokens: result.usage.inputTokens,
@@ -240,7 +239,7 @@ export class AgentService {
       actor,
       metadata: {
         mode,
-        model: resolved.modelId,
+        model: this.runtime.model,
         sources: evidence.sources.length,
         toolCalls: toolCalls.map((call) => call.name),
         steps: result.steps.length,
@@ -256,7 +255,7 @@ export class AgentService {
       warnings,
       toolCalls: [...evidence.toolCalls, ...toolCalls],
       mode,
-      model: resolved.modelId,
+      model: this.runtime.model,
       engine: 'model',
       degraded: false,
       usage: {

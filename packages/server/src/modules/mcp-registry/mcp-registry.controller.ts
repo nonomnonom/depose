@@ -23,20 +23,20 @@ import { ApiSessionAuth } from '../../common/openapi/session-auth.decorator.js';
 import { zodToOpenApiSchema } from '../../common/openapi/zod-schema.js';
 import { RequestContextService } from '../../common/request-context.service.js';
 import { ZodBodyPipe } from '../../common/zod.pipe.js';
-import { createMcpServerSchema, type CreateMcpServerInput } from './mcp.dto.js';
+import { createMcpServerSchema, type CreateMcpServerInput } from './mcp-registry.dto.js';
 import {
   McpServerListDto,
   McpServerResponseDto,
   McpTestResponseDto,
-} from './mcp.response.js';
-import { McpService } from './mcp.service.js';
+} from './mcp-registry.response.js';
+import { McpRegistryService } from './mcp-registry.service.js';
 
 @ApiTags('MCP')
 @ApiSessionAuth()
 @Controller('v1/firm/mcp/servers')
-export class McpController {
+export class McpRegistryController {
   constructor(
-    private readonly mcp: McpService,
+    private readonly mcp: McpRegistryService,
     private readonly context: RequestContextService,
   ) {}
 

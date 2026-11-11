@@ -39,7 +39,6 @@ export class MeController {
         .select({
           id: firms.id,
           name: firms.name,
-          slug: firms.slug,
           primaryLanguage: firms.primaryLanguage,
           jurisdiction: firms.jurisdiction,
           defaultTimezone: firms.defaultTimezone,

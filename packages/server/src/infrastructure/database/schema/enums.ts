@@ -128,19 +128,5 @@ export const domainSslStatusEnum = pgEnum('domain_ssl_status', [
   'failed',
   'external',
 ]);
-export const aiProviderKindEnum = pgEnum('ai_provider_kind', [
-  'openai',
-  'anthropic',
-  'google',
-  'openrouter',
-  'openai-compatible',
-]);
-export const aiProviderStatusEnum = pgEnum('ai_provider_status', [
-  'active',
-  'invalid',
-  'disabled',
-  'untested',
-]);
-
 export type FirmRole = (typeof firmRoleEnum.enumValues)[number];
 export type MatterAccess = (typeof matterAccessEnum.enumValues)[number];

@@ -73,7 +73,6 @@ export async function signInUser(
 export interface TestFirm {
   firmId: string;
   organizationId: string;
-  slug: string;
   hostname: string;
 }
 
@@ -84,33 +83,28 @@ export interface TestFirm {
 export async function createFirmWithDomain(input: {
   ownerId: string;
   name?: string;
-  slug?: string;
   hostname?: string;
   role?: FirmRole;
 }): Promise<TestFirm> {
-  const slug = input.slug ?? `firm-${randomUUID().slice(0, 8)}`;
-  const name = input.name ?? `Firm ${slug}`;
-  const hostname = input.hostname ?? `${slug}.depose.test`;
+  const hostname = input.hostname ?? `firm-${randomUUID().slice(0, 8)}.depose.test`;
+  const name = input.name ?? `Firm ${hostname.split('.')[0]}`;
   const organizationId = randomUUID();
 
-  await db.insert(organization).values({ id: organizationId, name, slug });
+  /* Better Auth's organization plugin needs a slug; tenancy never reads it. */
+  await db.insert(organization).values({ id: organizationId, name, slug: organizationId });
   await db.insert(member).values({
     id: randomUUID(),
     organizationId,
     userId: input.ownerId,
     role: input.role ?? 'admin',
-  });
-
-  const [firm] = await db
-    .insert(firms)
-    .values({
+  });  const [firm] = await db
+    .insert(firms).values({
       organizationId,
       name,
-      slug,
+      slug: organizationId,
       jurisdiction: 'ID',
       ownerId: input.ownerId,
-    })
-    .returning();
+    }).returning();
 
   await db.insert(firmDomains).values({
     firmId: firm.id,
@@ -121,7 +115,7 @@ export async function createFirmWithDomain(input: {
     verifiedAt: new Date(),
   });
 
-  return { firmId: firm.id, organizationId, slug, hostname };
+  return { firmId: firm.id, organizationId, hostname };
 }
 
 export async function addFirmMember(input: {

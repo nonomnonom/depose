@@ -50,7 +50,7 @@ export class FirmsController {
   @ApiCreatedResponse({ description: 'Firm created', type: FirmSetupResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid payload', type: ErrorEnvelopeDto })
   @ApiConflictResponse({
-    description: 'The instance is already configured or the slug is taken',
+    description: 'The instance is already configured or the hostname is taken',
     type: ErrorEnvelopeDto,
   })
   async setup(@Body(new ZodBodyPipe(setupFirmSchema)) body: SetupFirmInput) {

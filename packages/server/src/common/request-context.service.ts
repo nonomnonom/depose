@@ -6,7 +6,6 @@ import { DomainError } from './domain-error.js';
 export interface TenantContext {
   hostname: string;
   firmId: string | null;
-  firmSlug: string | null;
   domainType: 'subdomain' | 'custom' | null;
   isPrimary: boolean;
   isBootstrapHost: boolean;

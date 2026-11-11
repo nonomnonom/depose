@@ -11,7 +11,7 @@ import {
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
-import type { CreateMcpServerInput } from './mcp.dto.js';
+import type { CreateMcpServerInput } from './mcp-registry.dto.js';
 
 interface JsonRpcTool {
   name?: unknown;
@@ -41,7 +41,7 @@ function parseBody(text: string, contentType: string | null): unknown {
 }
 
 @Injectable()
-export class McpService {
+export class McpRegistryService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly policy: PolicyService,

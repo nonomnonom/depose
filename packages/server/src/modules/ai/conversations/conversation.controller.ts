@@ -27,58 +27,58 @@ import {
   sendMessageSchema,
   type CreateThreadInput,
   type SendMessageInput,
-} from './ai.dto.js';
+} from './conversation.dto.js';
 import {
-  AiMessageResponseDto,
-  AiThreadDetailDto,
-  AiThreadListDto,
-  AiThreadDto,
-} from './ai.response.js';
-import { AiService } from './ai.service.js';
+  ConversationMessageResponseDto,
+  ConversationThreadDetailDto,
+  ConversationThreadListDto,
+  ConversationThreadDto,
+} from './conversation.response.js';
+import { ConversationService } from './conversation.service.js';
 
 @ApiTags('Dep AI')
 @ApiSessionAuth()
 @Controller('v1/matters/:matterId/threads')
-export class AiController {
+export class ConversationController {
   constructor(
-    private readonly ai: AiService,
+    private readonly conversations: ConversationService,
     private readonly context: RequestContextService,
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'List your AI threads in a matter' })
   @ApiParam({ name: 'matterId', format: 'uuid' })
-  @ApiOkResponse({ description: 'Threads', type: AiThreadListDto })
+  @ApiOkResponse({ description: 'Threads', type: ConversationThreadListDto })
   async list(@Param('matterId', ParseUUIDPipe) matterId: string) {
     const actor = this.context.requireFirmActor();
-    return { items: await this.ai.listThreads(actor, matterId) };
+    return { items: await this.conversations.listThreads(actor, matterId) };
   }
 
   @Post()
   @ApiOperation({ summary: 'Start an AI conversation' })
   @ApiParam({ name: 'matterId', format: 'uuid' })
   @ApiBody({ schema: zodToOpenApiSchema(createThreadSchema) })
-  @ApiCreatedResponse({ description: 'Thread created', type: AiThreadDto })
+  @ApiCreatedResponse({ description: 'Thread created', type: ConversationThreadDto })
   async create(
     @Param('matterId', ParseUUIDPipe) matterId: string,
     @Body(new ZodBodyPipe(createThreadSchema)) body: CreateThreadInput,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.ai.createThread(actor, matterId, body.title, body.subsetId);
+    return this.conversations.createThread(actor, matterId, body.title, body.subsetId);
   }
 
   @Get(':threadId')
   @ApiOperation({ summary: 'Get a thread and its messages' })
   @ApiParam({ name: 'matterId', format: 'uuid' })
   @ApiParam({ name: 'threadId', format: 'uuid' })
-  @ApiOkResponse({ description: 'Thread', type: AiThreadDetailDto })
+  @ApiOkResponse({ description: 'Thread', type: ConversationThreadDetailDto })
   @ApiNotFoundResponse({ description: 'Thread not found', type: ErrorEnvelopeDto })
   async get(
     @Param('matterId', ParseUUIDPipe) matterId: string,
     @Param('threadId', ParseUUIDPipe) threadId: string,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.ai.getThread(actor, matterId, threadId);
+    return this.conversations.getThread(actor, matterId, threadId);
   }
 
   @Post(':threadId/messages')
@@ -90,7 +90,7 @@ export class AiController {
   @ApiParam({ name: 'matterId', format: 'uuid' })
   @ApiParam({ name: 'threadId', format: 'uuid' })
   @ApiBody({ schema: zodToOpenApiSchema(sendMessageSchema) })
-  @ApiCreatedResponse({ description: 'User and assistant messages', type: AiMessageResponseDto })
+  @ApiCreatedResponse({ description: 'User and assistant messages', type: ConversationMessageResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid message', type: ErrorEnvelopeDto })
   async send(
     @Param('matterId', ParseUUIDPipe) matterId: string,
@@ -98,7 +98,7 @@ export class AiController {
     @Body(new ZodBodyPipe(sendMessageSchema)) body: SendMessageInput,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.ai.sendMessage(actor, matterId, threadId, body);
+    return this.conversations.sendMessage(actor, matterId, threadId, body);
   }
 
   @Post(':threadId/cancel')
@@ -111,7 +111,7 @@ export class AiController {
     @Param('threadId', ParseUUIDPipe) threadId: string,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.ai.cancelRun(actor, matterId, threadId);
+    return this.conversations.cancelRun(actor, matterId, threadId);
   }
 
   @Delete(':threadId')
@@ -124,6 +124,6 @@ export class AiController {
     @Param('threadId', ParseUUIDPipe) threadId: string,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.ai.deleteThread(actor, matterId, threadId);
+    return this.conversations.deleteThread(actor, matterId, threadId);
   }
 }

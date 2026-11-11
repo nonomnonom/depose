@@ -37,7 +37,6 @@ export class TenantService {
       const [row] = await this.db
         .select({
           firmId: firms.id,
-          firmSlug: firms.slug,
           domainType: firmDomains.domainType,
           isPrimary: firmDomains.isPrimary,
           status: firmDomains.status,
@@ -56,7 +55,6 @@ export class TenantService {
         return {
           hostname,
           firmId: row.firmId,
-          firmSlug: row.firmSlug,
           domainType: row.domainType,
           isPrimary: row.isPrimary,
           isBootstrapHost: bootstrap,
@@ -67,7 +65,6 @@ export class TenantService {
     return {
       hostname,
       firmId: null,
-      firmSlug: null,
       domainType: null,
       isPrimary: false,
       isBootstrapHost: bootstrap,

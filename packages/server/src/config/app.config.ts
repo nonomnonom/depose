@@ -68,11 +68,25 @@ const envSchema = z
     ),
     MCP_SERVER_FIRM_ID: z.uuid().optional(),
 
-    /* Completion BYOK and gateway policy (spec 48) */
-    AI_SECRET_ENCRYPTION_KEY: optionalString,
-    MODEL_GATEWAY_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
-    MODEL_GATEWAY_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
-    MODEL_GATEWAY_STRICT_CAPABILITY: booleanFlag('true'),
+    /*
+     * Instance AI provider. Operator-owned, like the decision and extraction
+     * routes: there is no per-firm BYOK. The provider package is selected by
+     * AI_PROVIDER, and AiModule registers the aliases fast/balanced/thorough.
+     */
+    AI_PROVIDER: z
+      .enum(['openai', 'openai-compatible', 'anthropic', 'google', 'openrouter'])
+      .default('openai-compatible'),
+    AI_BASE_URL: optionalString,
+    AI_API_KEY: optionalString,
+    AI_MODEL: z.string().default(''),
+    AI_FAST_MODEL: optionalString,
+    AI_BALANCED_MODEL: optionalString,
+    AI_THOROUGH_MODEL: optionalString,
+    AI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+    AI_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
+
+    /* Webhook signing secrets are encrypted at rest with this key. */
+    WEBHOOK_ENCRYPTION_KEY: optionalString,
 
     /* Decision route (System One, operator-owned, spec 48) */
     DECISION_PROVIDER: z
@@ -221,10 +235,18 @@ export interface AppConfig {
     enabled: boolean;
   };
   ai: {
-    encryptionKey?: string;
+    provider: 'openai' | 'openai-compatible' | 'anthropic' | 'google' | 'openrouter';
+    baseUrl?: string;
+    apiKey?: string;
+    model: string;
+    fastModel?: string;
+    balancedModel?: string;
+    thoroughModel?: string;
     timeoutMs: number;
     maxRetries: number;
-    strictCapability: boolean;
+  };
+  webhooks: {
+    encryptionKey?: string;
   };
   retrieval: {
     vectorEnabled: boolean;
@@ -340,10 +362,18 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
       firmId: env.MCP_SERVER_FIRM_ID,
     },
     ai: {
-      encryptionKey: env.AI_SECRET_ENCRYPTION_KEY,
-      timeoutMs: env.MODEL_GATEWAY_TIMEOUT_MS,
-      maxRetries: env.MODEL_GATEWAY_MAX_RETRIES,
-      strictCapability: env.MODEL_GATEWAY_STRICT_CAPABILITY,
+      provider: env.AI_PROVIDER,
+      baseUrl: env.AI_BASE_URL,
+      apiKey: env.AI_API_KEY,
+      model: env.AI_MODEL,
+      fastModel: env.AI_FAST_MODEL,
+      balancedModel: env.AI_BALANCED_MODEL,
+      thoroughModel: env.AI_THOROUGH_MODEL,
+      timeoutMs: env.AI_TIMEOUT_MS,
+      maxRetries: env.AI_MAX_RETRIES,
+    },
+    webhooks: {
+      encryptionKey: env.WEBHOOK_ENCRYPTION_KEY,
     },
     retrieval: {
       vectorEnabled: env.VECTOR_SEARCH_ENABLED,

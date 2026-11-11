@@ -6,7 +6,6 @@ import type { Database } from '../../infrastructure/database/database.client.js'
 import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
   outputs,
-  aiProviderConnections,
   threads,
   messages,
 } from '../../infrastructure/database/schema/index.js';
@@ -36,14 +35,9 @@ export class OutputsService {
     return { items: rows.map((r) => this.outputDto(r)) };
   }
 
-  async listProviderConnections(actor: FirmActor) {
-    this.policy.assertFirm(actor, 'firm.api_key.manage');
-    const rows = await this.db
-      .select()
-      .from(aiProviderConnections)
-      .where(eq(aiProviderConnections.firmId, actor.firmId))
-      .orderBy(desc(aiProviderConnections.createdAt));
-    return { items: rows.map((r) => this.connectionDto(r)) };
+  async listProviderConnections(_actor: FirmActor) {
+    /* BYOK has been removed: AI is operated through the instance config. */
+    return { items: [] };
   }
 
   async listThreads(actor: FirmActor, matterId: string) {
@@ -102,20 +96,6 @@ export class OutputsService {
     };
   }
 
-  private connectionDto(row: typeof aiProviderConnections.$inferSelect) {
-    return {
-      id: row.id,
-      kind: row.kind,
-      label: row.label,
-      baseUrl: row.baseUrl,
-      models: row.models,
-      status: row.status,
-      lastTestedAt: row.lastTestedAt,
-      lastError: row.lastError,
-      createdAt: row.createdAt.toISOString(),
-      updatedAt: row.updatedAt.toISOString(),
-    };
-  }
 
   private threadDto(row: typeof threads.$inferSelect) {
     return {

@@ -1,27 +1,5 @@
 import { z } from 'zod';
 
-export const RESERVED_SLUGS = new Set([
-  'www',
-  'api',
-  'app',
-  'admin',
-  'auth',
-  'mail',
-  'status',
-  'docs',
-  'support',
-  'billing',
-  'cdn',
-  'assets',
-]);
-
-export const slugSchema = z
-  .string()
-  .min(3)
-  .max(40)
-  .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/, 'Use lowercase letters, numbers, and hyphens')
-  .refine((value) => !RESERVED_SLUGS.has(value), 'This subdomain is reserved');
-
 export const setupFirmSchema = z
   .object({
     name: z.string().trim().min(1).max(120),
@@ -29,7 +7,6 @@ export const setupFirmSchema = z
     primaryLanguage: z.enum(['id', 'en']).default('id'),
     jurisdiction: z.string().trim().min(2).max(8).default('ID'),
     timezone: z.string().trim().min(1).max(64).default('UTC'),
-    slug: slugSchema.optional(),
   })
   .strict();
 
@@ -46,7 +23,12 @@ export const updateFirmSchema = z
 
 export type UpdateFirmInput = z.infer<typeof updateFirmSchema>;
 
-export function slugify(name: string): string {
+/**
+ * Better Auth's organization plugin still requires a slug. It is an internal
+ * auth-provider id, never a tenancy identifier: Depose resolves tenants by
+ * hostname in `firm_domains`.
+ */
+export function organizationSlug(name: string): string {
   const base = name
     .toLowerCase()
     .normalize('NFKD')

@@ -14,7 +14,7 @@ import { AuthService } from '../auth/auth.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import {
   DEFAULT_FIRM_SETTINGS,
-  slugify,
+  organizationSlug,
   type SetupFirmInput,
   type UpdateFirmInput,
 } from './firms.dto.js';
@@ -43,13 +43,18 @@ export class FirmsService {
       throw DomainError.conflict('CONFLICT', 'This instance is already configured');
     }
 
-    const slug = input.slug ?? slugify(input.name);
-    const primaryHost = `${slug}.${appConfig.tenancy.baseDomain}`;
+    /*
+     * Tenancy is the hostname, not a parallel slug. The first firm is created
+     * on the host that reached the bootstrap instance; additional domains are
+     * managed as firm_domains rows.
+     */
+    const primaryHost = tenant.hostname || appConfig.tenancy.baseDomain;
+    const authSlug = organizationSlug(input.name);
 
     let organizationId: string;
     try {
       const organization = await this.auth.api.createOrganization({
-        body: { name: input.name, slug, userId: actor.userId },
+        body: { name: input.name, slug: authSlug, userId: actor.userId },
       });
       organizationId = organization.id;
     } catch (error) {
@@ -65,7 +70,6 @@ export class FirmsService {
         .values({
           organizationId,
           name: input.name,
-          slug,
           primaryLanguage: input.primaryLanguage,
           jurisdiction: input.jurisdiction,
           defaultTimezone: input.timezone,
@@ -123,7 +127,7 @@ export class FirmsService {
       resourceType: 'firm',
       resourceId: result.id,
       actor,
-      metadata: { slug, primaryHost },
+      metadata: { primaryHost },
     });
 
     const frontendOrigin = appConfig.auth.trustedOrigins[0] ?? '';

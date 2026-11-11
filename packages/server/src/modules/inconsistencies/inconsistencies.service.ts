@@ -13,7 +13,7 @@ import {
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
-import { DecisionService } from '../ai/system-one/decision.service.js';
+import { SystemOneService } from '../ai/system-one/system-one.service.js';
 
 export const reviewContradictionSchema = z.object({
   status: z.enum(['candidate', 'open', 'confirmed', 'dismissed', 'stale']),
@@ -119,7 +119,7 @@ export class InconsistenciesService {
     @Inject(DATABASE) private readonly db: Database,
     private readonly policy: PolicyService,
     private readonly audit: AuditService,
-    private readonly decision: DecisionService,
+    private readonly decision: SystemOneService,
   ) {}
 
   async list(actor: FirmActor, matterId: string, status: 'candidate' | 'open' | 'confirmed' | 'dismissed' | 'stale' | 'all' = 'all') {
@@ -362,7 +362,7 @@ export class InconsistenciesService {
       let answers;
       try {
         const decision = await this.decision.decide(
-          actor,
+          actor.firmId,
           {
             text: `FACT A\n${left.text}\n\nFACT B\n${right.text}`,
             context: {
@@ -408,12 +408,12 @@ export class InconsistenciesService {
 
       const verdict = answers.verdict;
       const confidence = Number(verdict?.confidence ?? 0);
-      if (verdict?.choice !== 'contradiction' || confidence < MIN_CONFIDENCE) {
+      if (verdict?.type !== 'choice' || verdict?.choice !== 'contradiction' || confidence < MIN_CONFIDENCE) {
         skipped += 1;
         continue;
       }
 
-      const rawKind = answers.dimension?.choice ?? 'statement';
+      const rawKind = answers.dimension?.type === 'choice' ? answers.dimension?.choice ?? 'statement' : 'statement';
       const kind: ContradictionKind = isKind(rawKind) ? rawKind : 'statement';
       const summary = truncate(
         `Fact A says "${left.text}" while fact B says "${right.text}" — conflict on ${kind}.`,

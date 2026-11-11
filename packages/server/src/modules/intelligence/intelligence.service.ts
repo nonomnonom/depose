@@ -9,18 +9,26 @@ import { DATABASE } from '../../infrastructure/database/database.module.js';
 import { documentChunks, documents, facts } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { InconsistenciesService } from '../inconsistencies/inconsistencies.service.js';
-import { ModelGatewayService } from '../ai/platform/model-gateway.service.js';
+import { AiRuntimeService } from '../ai/runtime/ai-runtime.service.js';
+import { ModelCallsService } from '../ai/runtime/model-calls.service.js';
 import { VectorService } from '../vector/vector.service.js';
 
 /**
  * The model cites evidence by its bracketed index in the pack, so the answer can
  * never cite a source id the caller did not receive.
  */
-const answerSchema = z.object({
-  answer: z.string(),
-  cited: z.array(z.number().int()).default([]),
-  confidence: z.enum(['low', 'medium', 'high']),
-  insufficientEvidence: z.boolean(),
+export const EvidenceAnswer = z.object({
+  answer: z.string().describe('The evidence-grounded answer, with [n] citation markers'),
+  cited: z
+    .array(z.number().int())
+    .default([])
+    .describe('Bracketed evidence indices the answer relies on'),
+  confidence: z
+    .enum(['low', 'medium', 'high'])
+    .describe('How strongly the evidence supports the answer'),
+  insufficientEvidence: z
+    .boolean()
+    .describe('True when the evidence pack does not answer the question'),
 });
 
 type AnswerResult = {
@@ -55,7 +63,8 @@ export class IntelligenceService {
     private readonly policy: PolicyService,
     private readonly vector: VectorService,
     private readonly ai: AiService,
-    private readonly gateway: ModelGatewayService,
+    private readonly runtime: AiRuntimeService,
+    private readonly calls: ModelCallsService,
     private readonly inconsistencies: InconsistenciesService,
   ) {}
 
@@ -212,11 +221,8 @@ export class IntelligenceService {
     sources: EvidenceSource[],
     mode: 'answer' | 'realtime',
   ): Promise<AnswerResult> {
-    const resolved = await this.gateway.completionModel(
-      firmId,
-      undefined,
-      'completion.fast',
-    );
+    this.runtime.assertConfigured();
+    const route = this.runtime.alias('fast');
 
     const pack = sources
       .map(
@@ -231,9 +237,9 @@ export class IntelligenceService {
     let result;
     try {
       result = await this.ai.generateObject({
-        model: resolved.model,
-        label: 'intelligence',
-        schema: answerSchema,
+        model: route,
+        label: mode === 'realtime' ? 'realtime-check' : 'answer-question',
+        schema: EvidenceAnswer,
         schemaName: 'EvidenceAnswer',
         instructions: [
           'You answer questions about a legal matter strictly from the supplied evidence pack.',
@@ -246,15 +252,16 @@ export class IntelligenceService {
         ].join(' '),
         prompt: [`Question: ${question}`, `Evidence pack:\n${pack}`].join('\n\n'),
         maxOutputTokens: 900,
+        budget: { maxTokens: 60_000 },
+        timeout: `${this.runtime.timeoutMs}ms` as `${number}ms`,
       });
     } catch (error) {
-      await this.gateway.recordCall({
+      await this.calls.record({
         firmId,
-        routeKey: resolved.routeKey,
+        routeKey: route,
         capability: 'completion',
-        connectionId: resolved.connectionId,
-        provider: resolved.provider,
-        model: resolved.modelId,
+        provider: this.runtime.provider,
+        model: this.runtime.model,
         status: 'failed',
         latencyMs: Date.now() - startedAt,
         errorCode: 'AI_PROVIDER_UNAVAILABLE',
@@ -269,13 +276,12 @@ export class IntelligenceService {
       );
     }
 
-    await this.gateway.recordCall({
+    await this.calls.record({
       firmId,
-      routeKey: resolved.routeKey,
+      routeKey: route,
       capability: 'completion',
-      connectionId: resolved.connectionId,
-      provider: resolved.provider,
-      model: resolved.modelId,
+      provider: this.runtime.provider,
+      model: this.runtime.model,
       status: 'succeeded',
       latencyMs: Date.now() - startedAt,
       inputTokens: result.usage.inputTokens,

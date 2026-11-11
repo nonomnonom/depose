@@ -25,7 +25,7 @@ import { InconsistenciesService } from './inconsistencies.service.js';
  * Dependencies:
  *  - AccessControlModule (policy assertions)
  *  - AuditModule (change logging)
- *  - SystemOneModule (DecisionService: typed contradiction verdicts)
+ *  - SystemOneModule (SystemOneService: typed contradiction verdicts)
  */
 @Module({
   imports: [AccessControlModule, AuditModule, SystemOneModule],

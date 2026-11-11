@@ -1,5 +1,4 @@
 import {
-  char,
   index,
   integer,
   jsonb,
@@ -12,11 +11,7 @@ import {
 import { firms } from './tenancy.js';
 import { matters, subsets } from './matters.js';
 import { facts } from './intelligence.js';
-import {
-  aiProviderKindEnum,
-  aiProviderStatusEnum,
-  outputStatusEnum,
-} from './enums.js';
+import { outputStatusEnum } from './enums.js';
 
 export const outputs = pgTable(
   'outputs',
@@ -109,34 +104,6 @@ export const outputTemplates = pgTable(
       table.name,
       table.version,
     ),
-  ],
-);
-
-export const aiProviderConnections = pgTable(
-  'ai_provider_connections',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    firmId: uuid('firm_id')
-      .notNull()
-      .references(() => firms.id, { onDelete: 'cascade' }),
-    kind: aiProviderKindEnum('kind').notNull(),
-    label: text('label').notNull(),
-    baseUrl: text('base_url'),
-    apiKeyCiphertext: text('api_key_ciphertext').notNull(),
-    apiKeyLast4: char('api_key_last4', { length: 4 }).notNull(),
-    keyVersion: integer('key_version').notNull().default(1),
-    models: jsonb('models').$type<unknown[]>().notNull().default([]),
-    fallbackModelId: text('fallback_model_id'),
-    status: aiProviderStatusEnum('status').notNull().default('untested'),
-    lastTestedAt: timestamp('last_tested_at', { withTimezone: true }),
-    lastError: text('last_error'),
-    createdBy: text('created_by').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => [
-    uniqueIndex('ai_provider_connections_firm_label_unique').on(table.firmId, table.label),
-    index('ai_provider_connections_firm_status_idx').on(table.firmId, table.status),
   ],
 );
 

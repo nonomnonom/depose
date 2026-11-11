@@ -6,10 +6,7 @@ import { RequestContextService } from '../../common/request-context.service.js';
 import { appConfig } from '../../config/app.config.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
-import {
-  aiProviderConnections,
-  firms,
-} from '../../infrastructure/database/schema/index.js';
+import { firms } from '../../infrastructure/database/schema/index.js';
 import { TenantResponseDto } from './tenant.response.js';
 
 @ApiTags('Tenancy')
@@ -32,32 +29,20 @@ export class TenantController {
     const tenant = this.context.getTenant();
     if (!tenant) return { hostname: '', requiresSetup: false };
 
-    let firm: { name: string; slug: string } | null = null;
-    let aiEnabled = false;
+    let firm: { name: string } | null = null;
     if (tenant.firmId) {
       const [row] = await this.db
-        .select({ name: firms.name, slug: firms.slug })
+        .select({ name: firms.name })
         .from(firms)
         .where(eq(firms.id, tenant.firmId))
         .limit(1);
       firm = row ?? null;
-
-      const [provider] = await this.db
-        .select({ id: aiProviderConnections.id })
-        .from(aiProviderConnections)
-        .where(
-          and(
-            eq(aiProviderConnections.firmId, tenant.firmId),
-            eq(aiProviderConnections.status, 'active'),
-          ),
-        )
-        .limit(1);
-      aiEnabled = Boolean(provider);
     }
 
     return {
       hostname: tenant.hostname,
-      firm: firm ? { name: firm.name, slug: firm.slug } : null,
+      firm: firm ? { name: firm.name } : null,
+      aiEnabled: Boolean(appConfig.ai.apiKey && appConfig.ai.model),
       domainType: tenant.domainType,
       isPrimary: tenant.isPrimary,
       isBootstrapHost: tenant.isBootstrapHost,
@@ -69,7 +54,7 @@ export class TenantController {
         forceSso: appConfig.auth.forceSso,
         requireEmailVerification: appConfig.auth.requireEmailVerification,
         mailConfigured: appConfig.mail.transport === 'smtp',
-        aiEnabled,
+        aiEnabled: Boolean(appConfig.ai.apiKey && appConfig.ai.model),
         mcpServerEnabled: Boolean(appConfig.mcp.token && appConfig.mcp.firmId),
       },
     };

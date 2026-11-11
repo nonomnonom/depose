@@ -1,14 +1,14 @@
 import { Controller, Post, Body, Param, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiOkResponse, ApiBadRequestResponse, ApiForbiddenResponse } from '@nestjs/swagger';
-import { DecisionService } from './decision.service.js';
+import { SystemOneService } from './system-one.service.js';
 import { RequestContextService } from '../../../common/request-context.service.js';
-import { DecisionQuestion } from '../platform/model-gateway.service.js';
+import type { DecisionQuestion } from './system-one.types.js';
 
 @ApiTags('System One (Decision)')
 @Controller('v1/matters/:matterId/system-one')
 export class SystemOneController {
   constructor(
-    private readonly decision: DecisionService,
+    private readonly decision: SystemOneService,
     private readonly context: RequestContextService,
   ) {}
 
@@ -23,6 +23,6 @@ export class SystemOneController {
     @Body() body: { state: { text: string; context?: Record<string, unknown> }; questions: Record<string, DecisionQuestion> },
   ) {
     const actor = this.context.requireFirmActor();
-    return this.decision.decide(actor, body.state, body.questions);
+    return this.decision.decide(actor.firmId, body.state, body.questions);
   }
 }

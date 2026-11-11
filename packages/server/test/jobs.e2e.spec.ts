@@ -40,7 +40,6 @@ describe('Job handlers', () => {
     const user = await signUpUser(e2e.baseUrl);
     const firm = await createFirmWithDomain({
       ownerId: user.userId,
-      slug: 'jobs-firm',
       hostname: 'jobs.depose.test',
     });
     const matter = await createMatter({ firmId: firm.firmId, createdBy: user.userId });

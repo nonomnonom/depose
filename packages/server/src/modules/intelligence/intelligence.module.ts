@@ -3,7 +3,7 @@ import { AccessControlModule } from '../access-control/access-control.module.js'
 import { AuditModule } from '../audit/audit.module.js';
 import { InconsistenciesModule } from '../inconsistencies/inconsistencies.module.js';
 import { VectorModule } from '../vector/vector.module.js';
-import { PlatformAiModule } from '../ai/platform/platform-ai.module.js';
+import { AiRuntimeModule } from '../ai/runtime/ai-runtime.module.js';
 import { IntelligenceController } from './intelligence.controller.js';
 import { IntelligenceService } from './intelligence.service.js';
 
@@ -25,7 +25,7 @@ import { IntelligenceService } from './intelligence.service.js';
  *  - AccessControlModule (policy assertions)
  *  - AuditModule (change logging)
  *
- * LLM analysis runs through ModelGatewayService (PlatformAiModule) with
+ * LLM analysis runs through ModelGatewayService (AiRuntimeModule) with
  * AiService for schema-validated answers. Contradiction detection is delegated
  * to InconsistenciesModule, the owner of the `contradictions` table.
  */
@@ -35,7 +35,7 @@ import { IntelligenceService } from './intelligence.service.js';
     AuditModule,
     VectorModule,
     InconsistenciesModule,
-    PlatformAiModule,
+    AiRuntimeModule,
   ],
   controllers: [IntelligenceController],
   providers: [IntelligenceService],

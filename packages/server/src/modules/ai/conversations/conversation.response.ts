@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class AiThreadDto {
+export class ConversationThreadDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
 
@@ -17,12 +17,12 @@ export class AiThreadDto {
   updatedAt!: string;
 }
 
-export class AiThreadListDto {
-  @ApiProperty({ type: [AiThreadDto] })
-  items!: AiThreadDto[];
+export class ConversationThreadListDto {
+  @ApiProperty({ type: [ConversationThreadDto] })
+  items!: ConversationThreadDto[];
 }
 
-export class AiCitationDto {
+export class ConversationCitationDto {
   @ApiProperty({ format: 'uuid' })
   sourceId!: string;
 
@@ -69,7 +69,7 @@ export class AiCitationDto {
   sourceDeleted!: boolean;
 }
 
-export class AiToolCallDto {
+export class ConversationToolCallDto {
   @ApiProperty({ example: 'search_facts' })
   name!: string;
 
@@ -80,7 +80,7 @@ export class AiToolCallDto {
   summary!: string;
 }
 
-export class AiMessageDto {
+export class ConversationMessageDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
 
@@ -90,11 +90,11 @@ export class AiMessageDto {
   @ApiProperty()
   content!: string;
 
-  @ApiProperty({ type: [AiCitationDto] })
-  citations!: AiCitationDto[];
+  @ApiProperty({ type: [ConversationCitationDto] })
+  citations!: ConversationCitationDto[];
 
-  @ApiProperty({ type: [AiCitationDto] })
-  sources!: AiCitationDto[];
+  @ApiProperty({ type: [ConversationCitationDto] })
+  sources!: ConversationCitationDto[];
 
   @ApiProperty()
   answer!: string;
@@ -111,8 +111,8 @@ export class AiMessageDto {
   @ApiProperty({ type: [String] })
   warnings!: string[];
 
-  @ApiProperty({ type: [AiToolCallDto] })
-  toolCalls!: AiToolCallDto[];
+  @ApiProperty({ type: [ConversationToolCallDto] })
+  toolCalls!: ConversationToolCallDto[];
 
   @ApiProperty({ enum: ['ask', 'agent'] })
   mode!: string;
@@ -127,26 +127,26 @@ export class AiMessageDto {
   createdAt!: string;
 }
 
-export class AiThreadDetailDto {
-  @ApiProperty({ type: AiThreadDto })
-  thread!: AiThreadDto;
+export class ConversationThreadDetailDto {
+  @ApiProperty({ type: ConversationThreadDto })
+  thread!: ConversationThreadDto;
 
-  @ApiProperty({ type: [AiMessageDto] })
-  messages!: AiMessageDto[];
+  @ApiProperty({ type: [ConversationMessageDto] })
+  messages!: ConversationMessageDto[];
 }
 
-export class AiMessageResponseDto {
-  @ApiProperty({ type: AiMessageDto })
-  userMessage!: AiMessageDto;
+export class ConversationMessageResponseDto {
+  @ApiProperty({ type: ConversationMessageDto })
+  userMessage!: ConversationMessageDto;
 
-  @ApiProperty({ type: AiMessageDto })
-  message!: AiMessageDto;
+  @ApiProperty({ type: ConversationMessageDto })
+  message!: ConversationMessageDto;
 
   @ApiProperty()
   answer!: string;
 
-  @ApiProperty({ type: [AiCitationDto] })
-  sources!: AiCitationDto[];
+  @ApiProperty({ type: [ConversationCitationDto] })
+  sources!: ConversationCitationDto[];
 
   @ApiProperty()
   evidenceScore!: number;
@@ -166,6 +166,6 @@ export class AiMessageResponseDto {
   @ApiProperty({ type: String, nullable: true })
   model!: string | null;
 
-  @ApiProperty({ type: [AiToolCallDto] })
-  toolCalls!: AiToolCallDto[];
+  @ApiProperty({ type: [ConversationToolCallDto] })
+  toolCalls!: ConversationToolCallDto[];
 }

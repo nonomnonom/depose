@@ -23,7 +23,7 @@ export const firms = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     organizationId: text('organization_id').notNull().unique(),
     name: text('name').notNull(),
-    slug: text('slug').notNull().unique(),
+    slug: text('slug'),
     primaryLanguage: text('primary_language').notNull().default('en'),
     jurisdiction: text('jurisdiction').notNull(),
     defaultTimezone: text('default_timezone').notNull().default('UTC'),

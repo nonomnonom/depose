@@ -13,17 +13,17 @@ import {
 import { PolicyService } from '../../access-control/policy.service.js';
 import { AuditService } from '../../audit/audit.service.js';
 import {
-  AgentService,
+  MatterAgentService,
   type AgentSource,
   type AgentToolCall,
   type AgentRunInput,
-} from '../agent/agent.service.js';
+} from '../matter-agent/matter-agent.service.js';
 
 @Injectable()
-export class AiService {
+export class ConversationService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
-    private readonly agent: AgentService,
+    private readonly agent: MatterAgentService,
     private readonly policy: PolicyService,
     private readonly audit: AuditService,
   ) {}

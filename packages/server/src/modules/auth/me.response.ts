@@ -20,7 +20,6 @@ export class MeFirmDto {
   name!: string;
 
   @ApiProperty()
-  slug!: string;
 
   @ApiProperty({ enum: ['id', 'en'] })
   primaryLanguage!: string;

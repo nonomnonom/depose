@@ -31,7 +31,6 @@ describe('Tenancy and access isolation', () => {
       const user = await signUpUser(e2e.baseUrl, { name: `${label} user` });
       const firm = await createFirmWithDomain({
         ownerId: user.userId,
-        slug: `${label}-firm`,
         hostname: `${label}.depose.test`,
       });
       const { matterId } = await createMatter({

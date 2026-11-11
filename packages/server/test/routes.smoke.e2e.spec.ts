@@ -24,7 +24,6 @@ describe('Read route smoke', () => {
     const user = await signUpUser(e2e.baseUrl, { name: 'Smoke Admin' });
     const firm = await createFirmWithDomain({
       ownerId: user.userId,
-      slug: 'smoke-firm',
       hostname: 'smoke.depose.test',
       role: 'admin',
     });
