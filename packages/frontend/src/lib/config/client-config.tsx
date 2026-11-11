@@ -2,20 +2,70 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@depose/ui/components/button';
 import { ApiError } from '~/lib/api/errors';
+import { unwrapData } from '~/lib/api/client';
 import { BootScreen } from '~/lib/components/BootScreen';
 import { queryKeys } from '~/lib/query/keys';
 import { tenantControllerGetTenant } from '~/generated/endpoints';
 import type { TenantInfo } from '~/types';
 
-interface ClientConfigValue {
-  config: TenantInfo;
+/**
+ * UI-facing feature flags derived from the server tenant config. Scenes read
+ * these instead of re-implementing config logic in each page.
+ */
+export interface ClientFeatures {
+  auth: {
+    /** Email + password form can be used. */
+    passwordLogin: boolean;
+    /** A user can create an account from the signup page. */
+    selfSignup: boolean;
+    /** An SSO provider is configured; show the SSO action. */
+    ssoLogin: boolean;
+    /** Password login is disabled, so SSO is the only way in. */
+    ssoRequired: boolean;
+    /** Accounts must verify their email before logging in. */
+    emailVerification: boolean;
+    /** Mail delivery is configured, so verification/reset mail can be sent. */
+    mailConfigured: boolean;
+  };
+  setup: {
+    /** This host still has to create the first firm. */
+    required: boolean;
+    /** The request host is the instance bootstrap host. */
+    bootstrapHost: boolean;
+  };
 }
 
-const ClientConfigContext = createContext<ClientConfigValue | null>(null);
+export interface ClientConfig extends TenantInfo {
+  /** Firm name with the product fallback applied. */
+  firmName: string;
+  features: ClientFeatures;
+}
 
-async function fetchClientConfig(): Promise<TenantInfo> {
-  const response = await tenantControllerGetTenant();
-  return response.data;
+const ClientConfigContext = createContext<ClientConfig | null>(null);
+
+function toClientConfig(tenant: TenantInfo): ClientConfig {
+  return {
+    ...tenant,
+    firmName: tenant.firm?.name ?? 'Depose',
+    features: {
+      auth: {
+        passwordLogin: !tenant.auth.forceSso,
+        selfSignup: tenant.auth.allowSelfSignup && !tenant.auth.forceSso,
+        ssoLogin: tenant.auth.ssoEnabled,
+        ssoRequired: tenant.auth.forceSso && tenant.auth.ssoEnabled,
+        emailVerification: tenant.auth.requireEmailVerification,
+        mailConfigured: tenant.auth.mailConfigured,
+      },
+      setup: {
+        required: tenant.requiresSetup,
+        bootstrapHost: tenant.isBootstrapHost,
+      },
+    },
+  };
+}
+
+async function fetchClientConfig(): Promise<ClientConfig> {
+  return toClientConfig(unwrapData(await tenantControllerGetTenant()));
 }
 
 export function ClientConfigProvider({ children }: { children: ReactNode }) {
@@ -53,16 +103,20 @@ export function ClientConfigProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ClientConfigContext.Provider value={{ config: query.data }}>
+    <ClientConfigContext.Provider value={query.data}>
       {children}
     </ClientConfigContext.Provider>
   );
 }
 
-export function useClientConfig(): TenantInfo {
+export function useClientConfig(): ClientConfig {
   const value = useContext(ClientConfigContext);
   if (!value) {
     throw new Error('useClientConfig must be used inside ClientConfigProvider');
   }
-  return value.config;
+  return value;
+}
+
+export function useAuthFeatures(): ClientFeatures['auth'] {
+  return useClientConfig().features.auth;
 }

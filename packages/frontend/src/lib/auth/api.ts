@@ -25,6 +25,22 @@ export async function signUpWithEmail(input: SignUpInput): Promise<void> {
   });
 }
 
+interface SsoRedirect {
+  url: string;
+  redirect?: boolean;
+}
+
+export async function signInWithSso(email: string): Promise<void> {
+  const result = await api.post<SsoRedirect>('/api/auth/sign-in/sso', {
+    email,
+    callbackURL: `${window.location.origin}/matters`,
+  });
+  if (!result?.url) {
+    throw new Error('SSO provider did not return a redirect URL.');
+  }
+  window.location.assign(result.url);
+}
+
 export async function signOut(): Promise<void> {
   await api.post('/api/auth/sign-out', {});
 }

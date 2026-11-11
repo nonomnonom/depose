@@ -11,7 +11,7 @@ import {
 } from '@depose/ui/components/breadcrumb';
 import { Kbd } from '@depose/ui/components/kbd';
 import { SidebarTrigger } from '@depose/ui/components/sidebar';
-import { SearchIcon } from 'lucide-react';
+import { Search } from '@coolicons/react';
 import { useClientConfig } from '~/lib/config/client-config';
 import { useSession } from '~/lib/auth/session';
 import { useCommandPalette } from '~/layout/CommandPalette';
@@ -25,7 +25,7 @@ export function AppTopbar() {
   const { me } = useSession();
   const { setOpen } = useCommandPalette();
 
-  const firmName = me?.firm?.name ?? config.firm?.name ?? 'Depose';
+  const firmName = me?.firm?.name ?? config.firmName;
   const crumbs = breadcrumbsFor(location.pathname, firmName);
 
   return (
@@ -66,7 +66,7 @@ export function AppTopbar() {
           onClick={() => setOpen(true)}
           aria-label="Buka pencarian halaman"
         >
-          <SearchIcon className="size-3.5" aria-hidden="true" />
+          <Search className="size-3.5" aria-hidden="true" />
           <span>Cari</span>
           <Kbd>Ctrl</Kbd>
           <Kbd>K</Kbd>
@@ -78,7 +78,7 @@ export function AppTopbar() {
           onClick={() => setOpen(true)}
           aria-label="Buka pencarian halaman"
         >
-          <SearchIcon className="size-4" />
+          <Search className="size-4" />
         </Button>
         <ThemeMenu />
         <UserMenu />

@@ -10,7 +10,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@depose/ui/components/command';
-import { MoonIcon, SunIcon } from 'lucide-react';
+import { Moon, Sun } from '@coolicons/react';
 import { useClientConfig } from '~/lib/config/client-config';
 import { useSession, useSignOut } from '~/lib/auth/session';
 import { useTheme } from '~/layout/ThemeProvider';
@@ -107,7 +107,7 @@ export function CommandPalette() {
           <CommandGroup heading="Instance">
             <CommandItem value="hostname" disabled>
               <span className="truncate text-xs text-muted-foreground">
-                {config.firm?.name ?? 'Instance'} · {config.hostname}
+                {config.firmName} · {config.hostname}
               </span>
             </CommandItem>
           </CommandGroup>
@@ -118,7 +118,7 @@ export function CommandPalette() {
               onSelect={() => run(() => setTheme('light'))}
               data-checked={resolvedTheme === 'light'}
             >
-              <SunIcon className="size-4" />
+              <Sun className="size-4" />
               <span>Tema terang</span>
             </CommandItem>
             <CommandItem
@@ -126,7 +126,7 @@ export function CommandPalette() {
               onSelect={() => run(() => setTheme('dark'))}
               data-checked={resolvedTheme === 'dark'}
             >
-              <MoonIcon className="size-4" />
+              <Moon className="size-4" />
               <span>Tema gelap</span>
             </CommandItem>
           </CommandGroup>

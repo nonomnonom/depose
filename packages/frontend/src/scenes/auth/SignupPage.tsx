@@ -4,20 +4,21 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@depose/ui/components/button';
 import { Alert, AlertDescription, AlertTitle } from '@depose/ui/components/alert';
-import { AlertCircleIcon, CheckCircle2Icon } from 'lucide-react';
+import { CircleWarning, Check } from '@coolicons/react';
 import { ApiError } from '~/lib/api/errors';
 import { FormField } from '~/lib/components/FormField';
 import { useClientConfig } from '~/lib/config/client-config';
 import { queryKeys } from '~/lib/query/keys';
 import { queryClient } from '~/lib/query/client';
 import { meControllerMe } from '~/generated/endpoints';
+import { unwrapData } from '~/lib/api/client';
 import { signUpWithEmail } from '~/lib/auth/api';
 import { AuthLayout } from '~/layout/AuthLayout';
 import { signupSchema, type SignupFormValues } from '~/scenes/auth/schemas/auth';
 
 export function SignupPage() {
   const navigate = useNavigate();
-  const config = useClientConfig();
+  const { firmName, features } = useClientConfig();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
@@ -31,9 +32,9 @@ export function SignupPage() {
     try {
       await signUpWithEmail(values);
       try {
-        const me = await meControllerMe();
-        queryClient.setQueryData(queryKeys.me, me.data);
-        navigate(me.data.setupRequired ? '/setup' : '/matters', { replace: true });
+        const me = unwrapData(await meControllerMe());
+        queryClient.setQueryData(queryKeys.me, me);
+        navigate(me.setupRequired ? '/setup' : '/matters', { replace: true });
       } catch {
         setDone(true);
       }
@@ -42,11 +43,16 @@ export function SignupPage() {
     }
   });
 
-  if (!config.auth.allowSelfSignup) {
+  if (!features.auth.selfSignup) {
+    const ssoOnly = features.auth.ssoRequired;
     return (
       <AuthLayout
-        title="Sign-up closed"
-        description="Self-signup is disabled for this instance."
+        title={ssoOnly ? 'SSO required' : 'Sign-up closed'}
+        description={
+          ssoOnly
+            ? `${firmName} accounts are created through single sign-on.`
+            : 'Self-signup is disabled for this instance.'
+        }
         switcher={
           <span>
             Already have an account?{' '}
@@ -57,10 +63,12 @@ export function SignupPage() {
         }
       >
         <Alert>
-          <AlertCircleIcon className="size-4" />
+          <CircleWarning size={16} />
           <AlertTitle>Limited access</AlertTitle>
           <AlertDescription>
-            Contact your firm admin for an invitation or account creation.
+            {ssoOnly
+              ? 'Go back to the login page and continue with SSO.'
+              : 'Contact your firm admin for an invitation or account creation.'}
           </AlertDescription>
         </Alert>
       </AuthLayout>
@@ -79,10 +87,10 @@ export function SignupPage() {
         }
       >
         <Alert>
-          <CheckCircle2Icon className="size-4" />
+          <Check size={16} />
           <AlertTitle>Signup successful</AlertTitle>
           <AlertDescription>
-            {config.auth.requireEmailVerification
+            {features.auth.emailVerification
               ? 'Check your email for verification before logging in.'
               : 'Your account is ready to use.'}
           </AlertDescription>
@@ -94,11 +102,11 @@ export function SignupPage() {
   return (
     <AuthLayout
       title="Sign up"
-      description="Create a new account for your firm."
+      description={`Create a new account for ${firmName}.`}
       footer={
         error ? (
           <Alert variant="destructive">
-            <AlertCircleIcon className="size-4" />
+            <CircleWarning size={16} />
             <AlertTitle>Signup failed</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>

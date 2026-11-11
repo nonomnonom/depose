@@ -1,11 +1,23 @@
+import { useQuery } from '@tanstack/react-query';
+import { Badge } from '@depose/ui/components/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@depose/ui/components/card';
+import { queryKeys } from '~/lib/query/keys';
+import { unwrapData } from '~/lib/api/client';
+import { firmsControllerDomains } from '~/generated/endpoints';
+import {
+  FirmDomainDtoDomainType,
+  FirmDomainDtoSslStatus,
+  FirmDomainDtoStatus,
+} from '~/generated/schemas';
+
 function FirmDomainsList({ firmId }: { firmId?: string }) {
-  const { data: domains } = useQuery({
+  const { data } = useQuery({
     queryKey: queryKeys.firmDomains,
-    queryFn: () => firmsControllerDomains(),
+    queryFn: async () => unwrapData(await firmsControllerDomains()),
     enabled: Boolean(firmId),
   });
 
-  const list = (domains?.data?.items ?? []) as FirmDomainDto[];
+  const list = data?.domains ?? [];
 
   return (
     <div className="mt-4 space-y-3">

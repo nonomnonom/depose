@@ -1,8 +1,11 @@
+import { FirmDomainsList } from '~/scenes/settings/FirmSettingsDomains';
+import { FirmSettingsResourcePage } from '~/scenes/settings/FirmSettingsResource';
+
 export function FirmSettingsPage() {
   return (
     <>
       <FirmSettingsResourcePage />
-      <FirmDomainsListPluginherit={{}} />
+      <FirmDomainsList firmId="current" />
     </>
   );
 }

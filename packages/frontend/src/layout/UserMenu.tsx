@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@depose/ui/components/dropdown-menu';
-import { LogOutIcon, UserRoundIcon } from 'lucide-react';
+import { LogOut, User } from '@coolicons/react';
 import { useSession, useSignOut } from '~/lib/auth/session';
 import { initials } from '~/lib/format/date';
 
@@ -43,8 +43,8 @@ export function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate('/settings/profile')}>
-          <UserRoundIcon className="size-4" />
-          Profil dan akun
+          <User size={16} />
+          Profile and account
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -52,8 +52,8 @@ export function UserMenu() {
           disabled={signOut.isPending}
           onClick={() => signOut.mutate()}
         >
-          <LogOutIcon className="size-4" />
-          Keluar
+          <LogOut size={16} />
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

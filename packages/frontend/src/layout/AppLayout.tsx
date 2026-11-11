@@ -7,6 +7,7 @@ import { AppSidebar } from '~/layout/AppSidebar';
 import { AppTopbar } from '~/layout/AppTopbar';
 import { CommandPalette, CommandPaletteProvider } from '~/layout/CommandPalette';
 import { OfflineBanner } from '~/layout/OfflineBanner';
+import { OnboardingDialog } from '~/scenes/onboarding/OnboardingDialog';
 
 export function AppLayout() {
   return (
@@ -24,6 +25,7 @@ export function AppLayout() {
         </SidebarInset>
       </SidebarProvider>
       <CommandPalette />
+      <OnboardingDialog />
     </CommandPaletteProvider>
   );
 }

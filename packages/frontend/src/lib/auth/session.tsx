@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { meControllerMe, meControllerPermissions } from '~/generated/endpoints';
 import { signOut } from '~/lib/auth/api';
+import { unwrapData } from '~/lib/api/client';
 import { queryKeys } from '~/lib/query/keys';
 import type { Me } from '~/types';
 
@@ -18,13 +19,11 @@ interface SessionValue {
 const SessionContext = createContext<SessionValue | null>(null);
 
 async function fetchMe(): Promise<Me> {
-  const response = await meControllerMe();
-  return response.data;
+  return unwrapData(await meControllerMe());
 }
 
 async function fetchPermissions(): Promise<string[]> {
-  const response = await meControllerPermissions();
-  return response.data.permissions;
+  return unwrapData(await meControllerPermissions()).permissions;
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {

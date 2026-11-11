@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { cn } from 'cn';
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './collapsible';
 import { ChevronRightIcon } from 'lucide-react';
 
 function Trace({ className, ...props }: React.ComponentProps<'div'>) {

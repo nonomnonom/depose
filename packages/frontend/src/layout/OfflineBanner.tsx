@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { WifiOffIcon } from 'lucide-react';
+import { WifiOff } from '@coolicons/react';
 
 export function OfflineBanner() {
   const [offline, setOffline] = useState(() => !navigator.onLine);
@@ -22,7 +22,7 @@ export function OfflineBanner() {
       role="status"
       className="flex items-center gap-2 border-b border-border bg-muted px-4 py-2 text-xs text-muted-foreground"
     >
-      <WifiOffIcon className="size-3.5" aria-hidden="true" />
+      <WifiOff className="size-3.5" aria-hidden="true" />
       Koneksi terputus. Perubahan tidak akan tersimpan sampai koneksi kembali.
     </div>
   );

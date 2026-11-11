@@ -22,7 +22,7 @@ export function AppSidebar() {
   const config = useClientConfig();
   const { can, me } = useSession();
 
-  const firmName = me?.firm?.name ?? config.firm?.name ?? 'Depose';
+  const firmName = me?.firm?.name ?? config.firmName;
   const role = me?.firm?.role;
 
   return (

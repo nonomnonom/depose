@@ -6,6 +6,7 @@ import { queryClient } from '~/lib/query/client';
 import { queryKeys } from '~/lib/query/keys';
 import { ApiError } from '~/lib/api/errors';
 import { firmsControllerUpdate } from '~/generated/endpoints';
+import { unwrapData } from '~/lib/api/client';
 import { FirmsControllerUpdateBodyPrimaryLanguage, FirmDomainDto, FirmDomainDtoStatus, FirmDomainDtoSslStatus } from '~/generated/schemas';
 import { useSession } from '~/lib/auth/session';
 import { PageHeader } from '~/layout/PageHeader';
@@ -30,12 +31,12 @@ export function FirmSettingsResourcePage() {
     setLoading(true);
     setError(null);
     try {
-      await firmsControllerUpdate({
+      unwrapData(await firmsControllerUpdate({
         name: form.name.trim(),
         primaryLanguage: form.primaryLanguage,
         jurisdiction: form.jurisdiction.trim() || undefined,
         defaultTimezone: form.defaultTimezone.trim(),
-      });
+      }));
       queryClient.setQueryData(queryKeys.me, (old: any) => ({
         ...(old ?? {}),
         firm: { ...(old?.firm ?? {}), name: form.name, primaryLanguage: form.primaryLanguage },

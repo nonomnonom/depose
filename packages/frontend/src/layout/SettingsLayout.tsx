@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { Card } from '@depose/ui/components/card';
 import { Separator } from '@depose/ui/components/separator';
-import { cn } from 'cn';
+import { cn } from '@depose/ui/lib/utils';
 import { useSession } from '~/lib/auth/session';
 import { PageHeader } from '~/layout/PageHeader';
 

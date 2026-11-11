@@ -1,5 +1,31 @@
 import { ApiError, codeForStatus, type ApiErrorDetail } from './errors';
 
+type SuccessfulResponse<T> = Extract<T, { status: 200 }> | Extract<T, { status: 201 }>;
+
+/**
+ * Generated endpoint types include the documented error responses even though
+ * `customFetch` throws on non-2xx replies. Narrow the union back to its success
+ * payload at the call site.
+ */
+export function unwrapData<T extends { status: number; data: unknown }>(
+  response: T,
+): SuccessfulResponse<T> extends { data: infer D } ? D : never {
+  if (response.status >= 400) {
+    const payload = response.data as {
+      code?: string;
+      message?: string;
+      details?: ApiErrorDetail[];
+    };
+    throw new ApiError(
+      response.status,
+      payload?.code ?? codeForStatus(response.status),
+      payload?.message ?? 'Permintaan gagal.',
+      Array.isArray(payload?.details) ? payload.details : [],
+    );
+  }
+  return response.data as SuccessfulResponse<T> extends { data: infer D } ? D : never;
+}
+
 export interface CustomFetchEnvelope<T> {
   data: T;
   status: number;

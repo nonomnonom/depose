@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom';
-import { AlertCircleIcon, HomeIcon, RefreshCwIcon, ShieldAlertIcon } from 'lucide-react';
+import { CircleWarning, Dashboard, Reload, ShieldWarning } from '@coolicons/react';
 import { Alert, AlertDescription, AlertTitle } from '@depose/ui/components/alert';
 import { Button } from '@depose/ui/components/button';
 import { Card } from '@depose/ui/components/card';
@@ -28,7 +28,7 @@ export function ErrorState({
       <Card className="w-full max-w-md p-5">
         <div className="flex flex-col gap-3">
           <Alert variant="destructive">
-            <AlertCircleIcon className="size-4" />
+            <CircleWarning size={16} />
             <AlertTitle>{title}</AlertTitle>
             <AlertDescription>{message}</AlertDescription>
           </Alert>
@@ -40,12 +40,12 @@ export function ErrorState({
           <div className="flex flex-wrap items-center gap-2">
             {onRetry ? (
               <Button onClick={onRetry}>
-                <RefreshCwIcon className="size-4" />
+                <Reload size={16} />
                 Coba lagi
               </Button>
             ) : null}
-            <Button variant="outline" asChild>
-              <a href={secondaryHref}>{secondaryLabel}</a>
+            <Button variant="outline" render={<a href={secondaryHref} />}>
+              {secondaryLabel}
             </Button>
           </div>
         </div>
@@ -61,7 +61,7 @@ export function NotFoundPage() {
       <Card className="w-full max-w-md p-5">
         <div className="flex flex-col gap-3">
           <Alert>
-            <AlertCircleIcon className="size-4" />
+            <CircleWarning size={16} />
             <AlertTitle>Halaman tidak ditemukan</AlertTitle>
             <AlertDescription>
               Alamat yang Anda buka tidak tersedia atau sudah dipindahkan.
@@ -69,7 +69,7 @@ export function NotFoundPage() {
           </Alert>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => navigate('/matters')}>
-              <HomeIcon className="size-4" />
+              <Dashboard size={16} />
               Ke Matter
             </Button>
             <Button variant="outline" onClick={() => navigate(-1)}>
@@ -88,14 +88,14 @@ export function ForbiddenPage() {
       <Card className="w-full max-w-md p-5">
         <div className="flex flex-col gap-3">
           <Alert variant="destructive">
-            <ShieldAlertIcon className="size-4" />
+            <ShieldWarning size={16} />
             <AlertTitle>Akses ditolak</AlertTitle>
             <AlertDescription>
               Peran Anda tidak memiliki izin untuk halaman ini.
             </AlertDescription>
           </Alert>
-          <Button variant="outline" asChild>
-            <a href="/matters">Kembali ke Matter</a>
+          <Button variant="outline" render={<a href="/matters" />}>
+            Kembali ke Matter
           </Button>
         </div>
       </Card>

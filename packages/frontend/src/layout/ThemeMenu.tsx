@@ -7,18 +7,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@depose/ui/components/dropdown-menu';
-import { CheckIcon, MonitorIcon, MoonIcon, SunIcon } from 'lucide-react';
+import { Check, Monitor, Moon, Sun } from '@coolicons/react';
 import { useTheme, type Theme } from '~/layout/ThemeProvider';
 
-const OPTIONS: { value: Theme; label: string; icon: typeof SunIcon }[] = [
-  { value: 'light', label: 'Terang', icon: SunIcon },
-  { value: 'dark', label: 'Gelap', icon: MoonIcon },
-  { value: 'system', label: 'Ikuti sistem', icon: MonitorIcon },
+const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
+  { value: 'light', label: 'Terang', icon: Sun },
+  { value: 'dark', label: 'Gelap', icon: Moon },
+  { value: 'system', label: 'Ikuti sistem', icon: Monitor },
 ];
 
 export function ThemeMenu() {
   const { theme, setTheme } = useTheme();
-  const Current = theme === 'light' ? SunIcon : theme === 'dark' ? MoonIcon : MonitorIcon;
+  const Current = theme === 'light' ? Sun : theme === 'dark' ? Moon : Monitor;
 
   return (
     <DropdownMenu>
@@ -34,7 +34,7 @@ export function ThemeMenu() {
           <DropdownMenuItem key={option.value} onClick={() => setTheme(option.value)}>
             <option.icon className="size-4" />
             <span>{option.label}</span>
-            {theme === option.value ? <CheckIcon className="ml-auto size-4" /> : null}
+            {theme === option.value ? <Check className="ml-auto size-4" /> : null}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

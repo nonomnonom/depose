@@ -8,10 +8,11 @@ import { NativeSelect, NativeSelectOption } from '@depose/ui/components/native-s
 import { Label } from '@depose/ui/components/label';
 import { ApiError } from '~/lib/api/errors';
 import { Alert, AlertDescription, AlertTitle } from '@depose/ui/components/alert';
-import { AlertCircleIcon } from 'lucide-react';
+import { CircleWarning } from '@coolicons/react';
 import { queryClient } from '~/lib/query/client';
 import { queryKeys } from '~/lib/query/keys';
 import { meControllerMe } from '~/generated/endpoints';
+import { unwrapData } from '~/lib/api/client';
 import { firmsControllerSetup } from '~/generated/endpoints';
 import { FirmsControllerSetupBodyPrimaryLanguage } from '~/generated/schemas';
 import { z } from 'zod';
@@ -59,8 +60,8 @@ export function SetupFirmPage() {
         timezone: clean(values.timezone),
         slug: clean(values.slug),
       });
-      const me = await meControllerMe();
-      queryClient.setQueryData(queryKeys.me, me.data);
+      const me = unwrapData(await meControllerMe());
+      queryClient.setQueryData(queryKeys.me, me);
       navigate('/matters', { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Firm creation failed. Please try again.');
@@ -81,7 +82,7 @@ export function SetupFirmPage() {
       <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         {error ? (
           <Alert variant="destructive">
-            <AlertCircleIcon className="size-4" />
+            <CircleWarning size={16} />
             <AlertTitle>Firm creation failed</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
@@ -110,7 +111,7 @@ export function SetupFirmPage() {
             id="setup-language"
             value={primaryLanguage}
             onChange={(event) =>
-              form.setValue('primaryLanguage', event.target.value as 'id' | 'en')
+              form.setValue('primaryLanguage', event.target.value as 'en')
             }
           >
             <NativeSelectOption value={FirmsControllerSetupBodyPrimaryLanguage.en}>

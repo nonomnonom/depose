@@ -1,15 +1,15 @@
+import type { ComponentType } from 'react';
 import {
-  Building2,
-  ListChecks,
+  Building1,
   Scale,
-  UserRound,
-  type LucideIcon,
-} from 'lucide-react';
+  User,
+} from '@coolicons/react';
+import type { IconProps } from '@coolicons/react/dynamic';
 
 export interface NavItem {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: ComponentType<IconProps>;
   permission?: string;
   firmOnly?: boolean;
 }
@@ -21,17 +21,16 @@ export interface NavGroup {
 
 export const navGroups: NavGroup[] = [
   {
-    label: 'Kerja',
+    label: 'Work',
     items: [
       { href: '/matters', label: 'Matter', icon: Scale, permission: 'matter.read', firmOnly: true },
-      { href: '/onboarding', label: 'Onboarding', icon: ListChecks, firmOnly: true },
     ],
   },
   {
-    label: 'Pengaturan',
+    label: 'Settings',
     items: [
-      { href: '/settings/firm', label: 'Firm', icon: Building2, permission: 'firm.read' },
-      { href: '/settings/profile', label: 'Profil', icon: UserRound },
+      { href: '/settings/firm', label: 'Firm', icon: Building1, permission: 'firm.read' },
+      { href: '/settings/profile', label: 'Profile', icon: User },
     ],
   },
 ];
@@ -42,8 +41,8 @@ export function isNavItemActive(href: string, pathname: string): boolean {
 
 const SETTINGS_SECTIONS: Record<string, string> = {
   '/settings/firm': 'Firm',
-  '/settings/firm/domains': 'Domain',
-  '/settings/profile': 'Profil',
+  '/settings/firm/domains': 'Domains',
+  '/settings/profile': 'Profile',
 };
 
 export interface BreadcrumbEntry {
@@ -54,11 +53,9 @@ export interface BreadcrumbEntry {
 export function breadcrumbsFor(pathname: string, firmName: string): BreadcrumbEntry[] {
   const root: BreadcrumbEntry = { label: firmName, href: '/matters' };
 
-  if (pathname === '/onboarding') return [root, { label: 'Onboarding' }];
-
   const section = SETTINGS_SECTIONS[pathname];
   if (section) {
-    const trail: BreadcrumbEntry[] = [root, { label: 'Pengaturan', href: '/settings/firm' }];
+    const trail: BreadcrumbEntry[] = [root, { label: 'Settings', href: '/settings/firm' }];
     if (pathname === '/settings/firm') return [...trail, { label: 'Firm' }];
     if (pathname.startsWith('/settings/firm/')) {
       return [...trail, { label: 'Firm', href: '/settings/firm' }, { label: section }];
