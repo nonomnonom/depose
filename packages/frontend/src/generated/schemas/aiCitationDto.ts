@@ -19,8 +19,11 @@
  */
 
 export interface AiCitationDto {
+  sourceId: string;
   factId: string;
   factText: string;
+  factStatus: string;
+  manual: boolean;
   /** @nullable */
   documentId: string | null;
   /** @nullable */
@@ -28,5 +31,14 @@ export interface AiCitationDto {
   /** @nullable */
   pageNumber: number | null;
   /** @nullable */
+  sentenceStart: number | null;
+  /** @nullable */
+  sentenceEnd: number | null;
+  /** @nullable */
   quote: string | null;
+  /** @nullable */
+  quoteHash: string | null;
+  sourceKind: string;
+  capturedAt: string;
+  sourceDeleted: boolean;
 }

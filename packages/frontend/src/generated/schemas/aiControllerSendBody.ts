@@ -17,11 +17,15 @@
  * Requests are resolved by hostname. Use the subdomain of your firm or a verified custom domain.
  * OpenAPI spec version: 1.0.0
  */
+import type { AiControllerSendBodyContextItem } from './aiControllerSendBodyContextItem';
+import type { AiControllerSendBodyMode } from './aiControllerSendBodyMode';
 
 export type AiControllerSendBody = {
-  /**
-     * @minLength 2
-     * @maxLength 8000
-     */
-  content: string;
+  /** @maxLength 8000 */
+  content?: string;
+  mode?: AiControllerSendBodyMode;
+  subsetId?: string;
+  /** @maxItems 20 */
+  context?: AiControllerSendBodyContextItem[];
+  templateId?: string;
 };

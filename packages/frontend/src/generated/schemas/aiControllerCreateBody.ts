@@ -21,4 +21,5 @@
 export type AiControllerCreateBody = {
   /** @maxLength 120 */
   title?: string;
+  subsetId?: string;
 };

@@ -22,6 +22,6 @@ export type AiMessageDtoMode = typeof AiMessageDtoMode[keyof typeof AiMessageDto
 
 
 export const AiMessageDtoMode = {
-  model: 'model',
-  retrieval: 'retrieval',
+  ask: 'ask',
+  agent: 'agent',
 } as const;

@@ -18,6 +18,7 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { AiCitationDto } from './aiCitationDto';
+import type { AiMessageDtoEngine } from './aiMessageDtoEngine';
 import type { AiMessageDtoMode } from './aiMessageDtoMode';
 import type { AiMessageDtoRole } from './aiMessageDtoRole';
 import type { AiToolCallDto } from './aiToolCallDto';
@@ -27,8 +28,16 @@ export interface AiMessageDto {
   role: AiMessageDtoRole;
   content: string;
   citations: AiCitationDto[];
+  sources: AiCitationDto[];
+  answer: string;
+  /** @nullable */
+  evidenceScore: number | null;
+  insufficientEvidence: boolean;
+  unverifiedCitations: string[];
+  warnings: string[];
   toolCalls: AiToolCallDto[];
   mode: AiMessageDtoMode;
+  engine: AiMessageDtoEngine;
   /** @nullable */
   model: string | null;
   createdAt: string;

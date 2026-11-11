@@ -23,6 +23,9 @@ import type {
   AiControllerRemove200,
   AiControllerSendBody,
   AiMessageResponseDto,
+  AiProviderListDto,
+  AiProviderResponseDto,
+  AiProviderTestDto,
   AiThreadDetailDto,
   AiThreadDto,
   AiThreadListDto,
@@ -38,6 +41,7 @@ import type {
   FactListDto,
   FactResponseDto,
   FactsControllerCreateBody,
+  FactsControllerExtractBody,
   FactsControllerListParams,
   FactsControllerRemove200,
   FactsControllerUpdateBody,
@@ -50,6 +54,7 @@ import type {
   InvitationResponseDto,
   InvitationsControllerCreateBody,
   InvitationsControllerRevoke200,
+  JobsControllerListParams,
   MatterListDto,
   MatterResponseDto,
   MattersControllerCreateBody,
@@ -65,6 +70,9 @@ import type {
   MemberResponseDto,
   MembersControllerRemove200,
   MembersControllerUpdateRoleBody,
+  ModelGatewayControllerCreateBody,
+  ModelGatewayControllerRemove200,
+  ModelGatewayControllerUpdateBody,
   NotificationListDto,
   NotificationsControllerListParams,
   NotificationsControllerMarkAllRead200,
@@ -307,7 +315,7 @@ export const getAiControllerListUrl = (matterId: string,) => {
 
 
 
-  return `/api/v1/matters/${matterId}/ai/threads`
+  return `/api/v1/matters/${matterId}/threads`
 }
 
 /**
@@ -360,7 +368,7 @@ export const getAiControllerCreateUrl = (matterId: string,) => {
 
 
 
-  return `/api/v1/matters/${matterId}/ai/threads`
+  return `/api/v1/matters/${matterId}/threads`
 }
 
 /**
@@ -434,7 +442,7 @@ export const getAiControllerGetUrl = (matterId: string,
 
 
 
-  return `/api/v1/matters/${matterId}/ai/threads/${threadId}`
+  return `/api/v1/matters/${matterId}/threads/${threadId}`
 }
 
 /**
@@ -489,7 +497,7 @@ export const getAiControllerRemoveUrl = (matterId: string,
 
 
 
-  return `/api/v1/matters/${matterId}/ai/threads/${threadId}`
+  return `/api/v1/matters/${matterId}/threads/${threadId}`
 }
 
 /**
@@ -549,7 +557,7 @@ export const getAiControllerSendUrl = (matterId: string,
 
 
 
-  return `/api/v1/matters/${matterId}/ai/threads/${threadId}/messages`
+  return `/api/v1/matters/${matterId}/threads/${threadId}/messages`
 }
 
 /**
@@ -580,6 +588,657 @@ return customFetch<aiControllerSendResponse>(getAiControllerSendUrl(matterId,thr
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(aiControllerSendBody)
+  }
+);}
+
+
+
+export type aiControllerCancelResponse200 = {
+  data: void
+  status: 200
+}
+
+export type aiControllerCancelResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type aiControllerCancelResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type aiControllerCancelResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type aiControllerCancelResponseSuccess = (aiControllerCancelResponse200) & {
+  headers: Headers;
+};
+export type aiControllerCancelResponseError = (aiControllerCancelResponse401 | aiControllerCancelResponse403 | aiControllerCancelResponse500) & {
+  headers: Headers;
+};
+
+export type aiControllerCancelResponse = (aiControllerCancelResponseSuccess | aiControllerCancelResponseError)
+
+export const getAiControllerCancelUrl = (matterId: string,
+    threadId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/threads/${threadId}/cancel`
+}
+
+/**
+ * @summary Stop the active Dep AI run
+ */
+export const aiControllerCancel = async (matterId: string,
+    threadId: string, options?: Parameters<typeof customFetch>[1]): Promise<aiControllerCancelResponse> => {
+
+  return customFetch<aiControllerCancelResponse>(getAiControllerCancelUrl(matterId,threadId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type modelGatewayControllerListResponse200 = {
+  data: AiProviderListDto
+  status: 200
+}
+
+export type modelGatewayControllerListResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type modelGatewayControllerListResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type modelGatewayControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type modelGatewayControllerListResponseSuccess = (modelGatewayControllerListResponse200) & {
+  headers: Headers;
+};
+export type modelGatewayControllerListResponseError = (modelGatewayControllerListResponse401 | modelGatewayControllerListResponse403 | modelGatewayControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type modelGatewayControllerListResponse = (modelGatewayControllerListResponseSuccess | modelGatewayControllerListResponseError)
+
+export const getModelGatewayControllerListUrl = () => {
+
+
+
+
+  return `/api/v1/firm/ai/providers`
+}
+
+/**
+ * @summary List the firm AI provider connections (keys masked)
+ */
+export const modelGatewayControllerList = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerListResponse> => {
+
+  return customFetch<modelGatewayControllerListResponse>(getModelGatewayControllerListUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type modelGatewayControllerCreateResponse201 = {
+  data: AiProviderResponseDto
+  status: 201
+}
+
+export type modelGatewayControllerCreateResponse400 = {
+  data: ErrorEnvelopeDto
+  status: 400
+}
+
+export type modelGatewayControllerCreateResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type modelGatewayControllerCreateResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type modelGatewayControllerCreateResponse409 = {
+  data: ErrorEnvelopeDto
+  status: 409
+}
+
+export type modelGatewayControllerCreateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type modelGatewayControllerCreateResponseSuccess = (modelGatewayControllerCreateResponse201) & {
+  headers: Headers;
+};
+export type modelGatewayControllerCreateResponseError = (modelGatewayControllerCreateResponse400 | modelGatewayControllerCreateResponse401 | modelGatewayControllerCreateResponse403 | modelGatewayControllerCreateResponse409 | modelGatewayControllerCreateResponse500) & {
+  headers: Headers;
+};
+
+export type modelGatewayControllerCreateResponse = (modelGatewayControllerCreateResponseSuccess | modelGatewayControllerCreateResponseError)
+
+export const getModelGatewayControllerCreateUrl = () => {
+
+
+
+
+  return `/api/v1/firm/ai/providers`
+}
+
+/**
+ * @summary Add a BYOK completion provider
+ */
+export const modelGatewayControllerCreate = async (modelGatewayControllerCreateBody: ModelGatewayControllerCreateBody, options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerCreateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<modelGatewayControllerCreateResponse>(getModelGatewayControllerCreateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(modelGatewayControllerCreateBody)
+  }
+);}
+
+
+
+export type modelGatewayControllerUpdateResponse200 = {
+  data: AiProviderResponseDto
+  status: 200
+}
+
+export type modelGatewayControllerUpdateResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type modelGatewayControllerUpdateResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type modelGatewayControllerUpdateResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type modelGatewayControllerUpdateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type modelGatewayControllerUpdateResponseSuccess = (modelGatewayControllerUpdateResponse200) & {
+  headers: Headers;
+};
+export type modelGatewayControllerUpdateResponseError = (modelGatewayControllerUpdateResponse401 | modelGatewayControllerUpdateResponse403 | modelGatewayControllerUpdateResponse404 | modelGatewayControllerUpdateResponse500) & {
+  headers: Headers;
+};
+
+export type modelGatewayControllerUpdateResponse = (modelGatewayControllerUpdateResponseSuccess | modelGatewayControllerUpdateResponseError)
+
+export const getModelGatewayControllerUpdateUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/firm/ai/providers/${id}`
+}
+
+/**
+ * @summary Update a provider connection
+ */
+export const modelGatewayControllerUpdate = async (id: string,
+    modelGatewayControllerUpdateBody: ModelGatewayControllerUpdateBody, options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<modelGatewayControllerUpdateResponse>(getModelGatewayControllerUpdateUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(modelGatewayControllerUpdateBody)
+  }
+);}
+
+
+
+export type modelGatewayControllerRemoveResponse200 = {
+  data: ModelGatewayControllerRemove200
+  status: 200
+}
+
+export type modelGatewayControllerRemoveResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type modelGatewayControllerRemoveResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type modelGatewayControllerRemoveResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type modelGatewayControllerRemoveResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type modelGatewayControllerRemoveResponseSuccess = (modelGatewayControllerRemoveResponse200) & {
+  headers: Headers;
+};
+export type modelGatewayControllerRemoveResponseError = (modelGatewayControllerRemoveResponse401 | modelGatewayControllerRemoveResponse403 | modelGatewayControllerRemoveResponse404 | modelGatewayControllerRemoveResponse500) & {
+  headers: Headers;
+};
+
+export type modelGatewayControllerRemoveResponse = (modelGatewayControllerRemoveResponseSuccess | modelGatewayControllerRemoveResponseError)
+
+export const getModelGatewayControllerRemoveUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/firm/ai/providers/${id}`
+}
+
+/**
+ * @summary Remove a provider connection
+ */
+export const modelGatewayControllerRemove = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerRemoveResponse> => {
+
+  return customFetch<modelGatewayControllerRemoveResponse>(getModelGatewayControllerRemoveUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+export type modelGatewayControllerTestResponse200 = {
+  data: AiProviderTestDto
+  status: 200
+}
+
+export type modelGatewayControllerTestResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type modelGatewayControllerTestResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type modelGatewayControllerTestResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type modelGatewayControllerTestResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type modelGatewayControllerTestResponseSuccess = (modelGatewayControllerTestResponse200) & {
+  headers: Headers;
+};
+export type modelGatewayControllerTestResponseError = (modelGatewayControllerTestResponse401 | modelGatewayControllerTestResponse403 | modelGatewayControllerTestResponse404 | modelGatewayControllerTestResponse500) & {
+  headers: Headers;
+};
+
+export type modelGatewayControllerTestResponse = (modelGatewayControllerTestResponseSuccess | modelGatewayControllerTestResponseError)
+
+export const getModelGatewayControllerTestUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/firm/ai/providers/${id}/test`
+}
+
+/**
+ * @summary Test credentials and refresh the model list
+ */
+export const modelGatewayControllerTest = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerTestResponse> => {
+
+  return customFetch<modelGatewayControllerTestResponse>(getModelGatewayControllerTestUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type modelGatewayControllerCatalogueResponse200 = {
+  data: void
+  status: 200
+}
+
+export type modelGatewayControllerCatalogueResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type modelGatewayControllerCatalogueResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type modelGatewayControllerCatalogueResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type modelGatewayControllerCatalogueResponseSuccess = (modelGatewayControllerCatalogueResponse200) & {
+  headers: Headers;
+};
+export type modelGatewayControllerCatalogueResponseError = (modelGatewayControllerCatalogueResponse401 | modelGatewayControllerCatalogueResponse403 | modelGatewayControllerCatalogueResponse500) & {
+  headers: Headers;
+};
+
+export type modelGatewayControllerCatalogueResponse = (modelGatewayControllerCatalogueResponseSuccess | modelGatewayControllerCatalogueResponseError)
+
+export const getModelGatewayControllerCatalogueUrl = () => {
+
+
+
+
+  return `/api/v1/firm/ai/providers/catalogue`
+}
+
+/**
+ * @summary List completion models the firm may select
+ */
+export const modelGatewayControllerCatalogue = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerCatalogueResponse> => {
+
+  return customFetch<modelGatewayControllerCatalogueResponse>(getModelGatewayControllerCatalogueUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type modelGatewayControllerHealthResponse200 = {
+  data: void
+  status: 200
+}
+
+export type modelGatewayControllerHealthResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type modelGatewayControllerHealthResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type modelGatewayControllerHealthResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type modelGatewayControllerHealthResponseSuccess = (modelGatewayControllerHealthResponse200) & {
+  headers: Headers;
+};
+export type modelGatewayControllerHealthResponseError = (modelGatewayControllerHealthResponse401 | modelGatewayControllerHealthResponse403 | modelGatewayControllerHealthResponse500) & {
+  headers: Headers;
+};
+
+export type modelGatewayControllerHealthResponse = (modelGatewayControllerHealthResponseSuccess | modelGatewayControllerHealthResponseError)
+
+export const getModelGatewayControllerHealthUrl = () => {
+
+
+
+
+  return `/api/v1/firm/ai/providers/health`
+}
+
+/**
+ * @summary Completion route health for the firm
+ */
+export const modelGatewayControllerHealth = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerHealthResponse> => {
+
+  return customFetch<modelGatewayControllerHealthResponse>(getModelGatewayControllerHealthUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type jobsControllerGetResponse200 = {
+  data: void
+  status: 200
+}
+
+export type jobsControllerGetResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type jobsControllerGetResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type jobsControllerGetResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type jobsControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type jobsControllerGetResponseSuccess = (jobsControllerGetResponse200) & {
+  headers: Headers;
+};
+export type jobsControllerGetResponseError = (jobsControllerGetResponse401 | jobsControllerGetResponse403 | jobsControllerGetResponse404 | jobsControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type jobsControllerGetResponse = (jobsControllerGetResponseSuccess | jobsControllerGetResponseError)
+
+export const getJobsControllerGetUrl = (jobId: string,) => {
+
+
+
+
+  return `/api/v1/jobs/${jobId}`
+}
+
+/**
+ * @summary Read an async job in your firm
+ */
+export const jobsControllerGet = async (jobId: string, options?: Parameters<typeof customFetch>[1]): Promise<jobsControllerGetResponse> => {
+
+  return customFetch<jobsControllerGetResponse>(getJobsControllerGetUrl(jobId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type jobsControllerCancelResponse200 = {
+  data: void
+  status: 200
+}
+
+export type jobsControllerCancelResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type jobsControllerCancelResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type jobsControllerCancelResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type jobsControllerCancelResponseSuccess = (jobsControllerCancelResponse200) & {
+  headers: Headers;
+};
+export type jobsControllerCancelResponseError = (jobsControllerCancelResponse401 | jobsControllerCancelResponse403 | jobsControllerCancelResponse500) & {
+  headers: Headers;
+};
+
+export type jobsControllerCancelResponse = (jobsControllerCancelResponseSuccess | jobsControllerCancelResponseError)
+
+export const getJobsControllerCancelUrl = (jobId: string,) => {
+
+
+
+
+  return `/api/v1/jobs/${jobId}/cancel`
+}
+
+/**
+ * @summary Cancel a queued or running job
+ */
+export const jobsControllerCancel = async (jobId: string, options?: Parameters<typeof customFetch>[1]): Promise<jobsControllerCancelResponse> => {
+
+  return customFetch<jobsControllerCancelResponse>(getJobsControllerCancelUrl(jobId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type jobsControllerListResponse200 = {
+  data: void
+  status: 200
+}
+
+export type jobsControllerListResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type jobsControllerListResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type jobsControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type jobsControllerListResponseSuccess = (jobsControllerListResponse200) & {
+  headers: Headers;
+};
+export type jobsControllerListResponseError = (jobsControllerListResponse401 | jobsControllerListResponse403 | jobsControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type jobsControllerListResponse = (jobsControllerListResponseSuccess | jobsControllerListResponseError)
+
+export const getJobsControllerListUrl = (params?: JobsControllerListParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/firm/jobs?${stringifiedParams}` : `/api/v1/firm/jobs`
+}
+
+/**
+ * @summary List jobs in your firm
+ */
+export const jobsControllerList = async (params?: JobsControllerListParams, options?: Parameters<typeof customFetch>[1]): Promise<jobsControllerListResponse> => {
+
+  return customFetch<jobsControllerListResponse>(getJobsControllerListUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
   }
 );}
 
@@ -850,6 +1509,68 @@ export const documentsControllerRemove = async (matterId: string,
 
 
 
+export type documentsControllerPageResponse200 = {
+  data: void
+  status: 200
+}
+
+export type documentsControllerPageResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type documentsControllerPageResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type documentsControllerPageResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type documentsControllerPageResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type documentsControllerPageResponseSuccess = (documentsControllerPageResponse200) & {
+  headers: Headers;
+};
+export type documentsControllerPageResponseError = (documentsControllerPageResponse401 | documentsControllerPageResponse403 | documentsControllerPageResponse404 | documentsControllerPageResponse500) & {
+  headers: Headers;
+};
+
+export type documentsControllerPageResponse = (documentsControllerPageResponseSuccess | documentsControllerPageResponseError)
+
+export const getDocumentsControllerPageUrl = (matterId: string,
+    id: string,
+    pageNumber: number,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/documents/${id}/pages/${pageNumber}`
+}
+
+/**
+ * @summary Read one extracted page for the source viewer
+ */
+export const documentsControllerPage = async (matterId: string,
+    id: string,
+    pageNumber: number, options?: Parameters<typeof customFetch>[1]): Promise<documentsControllerPageResponse> => {
+
+  return customFetch<documentsControllerPageResponse>(getDocumentsControllerPageUrl(matterId,id,pageNumber),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
 export type documentsControllerDownloadResponse200 = {
   data: void
   status: 200
@@ -1100,6 +1821,75 @@ return customFetch<factsControllerCreateResponse>(getFactsControllerCreateUrl(ma
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
     body: JSON.stringify(factsControllerCreateBody)
+  }
+);}
+
+
+
+export type factsControllerExtractResponse200 = {
+  data: void
+  status: 200
+}
+
+export type factsControllerExtractResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type factsControllerExtractResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type factsControllerExtractResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type factsControllerExtractResponseSuccess = (factsControllerExtractResponse200) & {
+  headers: Headers;
+};
+export type factsControllerExtractResponseError = (factsControllerExtractResponse401 | factsControllerExtractResponse403 | factsControllerExtractResponse500) & {
+  headers: Headers;
+};
+
+export type factsControllerExtractResponse = (factsControllerExtractResponseSuccess | factsControllerExtractResponseError)
+
+export const getFactsControllerExtractUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/facts/extract`
+}
+
+/**
+ * Queues the fact extraction pipeline for one document or every document in the matter. Returns job ids; poll GET /v1/jobs/:jobId for progress.
+ * @summary Run fact extraction
+ */
+export const factsControllerExtract = async (matterId: string,
+    factsControllerExtractBody: FactsControllerExtractBody, options?: Parameters<typeof customFetch>[1]): Promise<factsControllerExtractResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<factsControllerExtractResponse>(getFactsControllerExtractUrl(matterId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(factsControllerExtractBody)
   }
 );}
 

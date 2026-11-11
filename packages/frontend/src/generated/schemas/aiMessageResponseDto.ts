@@ -17,9 +17,22 @@
  * Requests are resolved by hostname. Use the subdomain of your firm or a verified custom domain.
  * OpenAPI spec version: 1.0.0
  */
+import type { AiCitationDto } from './aiCitationDto';
 import type { AiMessageDto } from './aiMessageDto';
+import type { AiMessageResponseDtoMode } from './aiMessageResponseDtoMode';
+import type { AiToolCallDto } from './aiToolCallDto';
 
 export interface AiMessageResponseDto {
   userMessage: AiMessageDto;
   message: AiMessageDto;
+  answer: string;
+  sources: AiCitationDto[];
+  evidenceScore: number;
+  insufficientEvidence: boolean;
+  unverifiedCitations: string[];
+  warnings: string[];
+  mode: AiMessageResponseDtoMode;
+  /** @nullable */
+  model: string | null;
+  toolCalls: AiToolCallDto[];
 }
