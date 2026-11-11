@@ -36,6 +36,7 @@ import { McpModule } from './modules/mcp/mcp.module.js';
 import { DeposeMcpServerModule } from './modules/mcp-server/mcp-server.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
+import { OutputsModule } from './modules/outputs/outputs.module.js';
 import { SearchModule } from './modules/search/search.module.js';
 import { VectorModule } from './modules/vector/vector.module.js';
 import { SubsetsModule } from './modules/subsets/subsets.module.js';
@@ -93,6 +94,7 @@ import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
     DeposeMcpServerModule,
     NotificationsModule,
     OnboardingModule,
+    OutputsModule,
     SearchModule,
     VectorModule,
     SubsetsModule,

@@ -36,6 +36,17 @@ const envSchema = z
     STORAGE_TYPE: z.enum(['s3', 'local']).default('local'),
     STORAGE_LOCAL_PATH: z.string().default('.local-storage'),
 
+    /*
+     * Outbound URL policy. Provider and webhook endpoints are supplied by firm
+     * admins, so a compromised admin account must not be able to reach the
+     * metadata service or internal networks. `auto` blocks private targets in
+     * production and allows them in development/test (self-hosted local models).
+     */
+    ALLOW_PRIVATE_OUTBOUND_URLS: z.enum(['true', 'false', 'auto']).default('auto'),
+
+    /* Background workers. Turn off in API replicas when a worker runs separately. */
+    WORKER_ENABLED: booleanFlag('true'),
+
     /* Auth (spec 07, 09) */
     BETTER_AUTH_URL: optionalString,
     BETTER_AUTH_SECRET: z.preprocess(
@@ -144,6 +155,14 @@ const envSchema = z
         message: 'SSL_KEY_PATH and SSL_CERT_PATH are required when TLS_MODE=files',
       });
     }
+    if (env.STORAGE_TYPE === 's3') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['STORAGE_TYPE'],
+        message:
+          'STORAGE_TYPE=s3 is not implemented in this build. Use local storage on a persistent volume.',
+      });
+    }
   });
 
 export interface AppConfig {
@@ -169,8 +188,11 @@ export interface AppConfig {
     certPath?: string;
   };
   storage: {
-    type: 's3' | 'local';
+    type: 'local';
     localPath: string;
+  };
+  outbound: {
+    allowPrivateUrls: boolean;
   };
   auth: {
     baseUrl: string;
@@ -196,6 +218,7 @@ export interface AppConfig {
   };
   worker: {
     concurrency: number;
+    enabled: boolean;
   };
   ai: {
     encryptionKey?: string;
@@ -250,6 +273,10 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
 
   const env = parsed.data;
   const baseUrl = env.BETTER_AUTH_URL ?? `http://${env.BASE_DOMAIN}:${env.PORT}`;
+  const allowPrivateUrls =
+    env.ALLOW_PRIVATE_OUTBOUND_URLS === 'auto'
+      ? env.NODE_ENV !== 'production'
+      : env.ALLOW_PRIVATE_OUTBOUND_URLS === 'true';
 
   return {
     nodeEnv: env.NODE_ENV,
@@ -274,8 +301,11 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
       certPath: env.SSL_CERT_PATH,
     },
     storage: {
-      type: env.STORAGE_TYPE,
+      type: 'local',
       localPath: env.STORAGE_LOCAL_PATH,
+    },
+    outbound: {
+      allowPrivateUrls,
     },
     auth: {
       baseUrl,
@@ -343,6 +373,7 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
     },
     worker: {
       concurrency: env.WORKER_CONCURRENCY,
+      enabled: env.WORKER_ENABLED,
     },
     ingest: {
       host: env.INGEST_HOST,

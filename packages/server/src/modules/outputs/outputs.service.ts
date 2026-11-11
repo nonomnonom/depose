@@ -1,12 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
   outputs,
-  outputVersions,
   aiProviderConnections,
   threads,
   messages,
@@ -64,11 +63,27 @@ export class OutputsService {
 
   async listMessages(actor: FirmActor, threadId: string) {
     this.policy.assertFirm(actor, 'matter.read');
+    const [thread] = await this.db
+      .select({ id: threads.id, matterId: threads.matterId })
+      .from(threads)
+      .where(and(eq(threads.id, threadId), eq(threads.firmId, actor.firmId)))
+      .limit(1);
+    if (!thread) throw DomainError.notFound('Thread not found');
+    /* A thread that belongs to no matter is firm-scoped; the firm check above is
+     * then the whole authorization. Matter threads still need matter access. */
+    if (thread.matterId) {
+      await this.policy.assertMatter(actor, 'matter.read', thread.matterId);
+    }
     const rows = await this.db
       .select()
       .from(messages)
-      .where(eq(messages.threadId, threadId))
-      .orderBy(threads.createdAt);
+      .where(
+        and(
+          eq(messages.firmId, actor.firmId),
+          eq(messages.threadId, threadId),
+        ),
+      )
+      .orderBy(desc(messages.createdAt));
     return { items: rows.map((r) => this.messageDto(r)) };
   }
 

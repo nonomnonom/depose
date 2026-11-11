@@ -21,6 +21,10 @@ export interface ActorContext {
   firmId: string | null;
   role: FirmRole | null;
   memberId: string | null;
+  /** Set when the request authenticated with a firm API key. */
+  apiKeyId?: string;
+  /** Action whitelist for API-key actors. Absent for human sessions. */
+  scopes?: string[];
 }
 
 export interface FirmActor extends ActorContext {

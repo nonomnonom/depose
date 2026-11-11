@@ -39,3 +39,4 @@ yarn-error.log*
 
 # TypeScript incremental build info
 *.tsbuildinfo
+packages/server/.test-dist/

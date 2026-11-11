@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AccessControlModule } from '../../access-control/access-control.module.js';
 import { AuditModule } from '../../audit/audit.module.js';
 import { ModelGatewayController } from './model-gateway.controller.js';
 import { ModelGatewayService } from './model-gateway.service.js';
@@ -18,7 +19,7 @@ import { ModelGatewayService } from './model-gateway.service.js';
  * module that needs a LanguageModel for a firm.
  */
 @Module({
-  imports: [AuditModule],
+  imports: [AccessControlModule, AuditModule],
   controllers: [ModelGatewayController],
   providers: [ModelGatewayService],
   exports: [ModelGatewayService],

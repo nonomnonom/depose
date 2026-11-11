@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../access-control/access-control.module.js';
 import { AuditModule } from '../audit/audit.module.js';
+import { SystemOneModule } from '../ai/system-one/system-one.module.js';
 import { InconsistenciesController } from './inconsistencies.controller.js';
 import { InconsistenciesService } from './inconsistencies.service.js';
 
@@ -17,13 +18,17 @@ import { InconsistenciesService } from './inconsistencies.service.js';
  *  - POST /v1/matters/:matterId/inconsistencies/:id/review — review
  *  - PATCH /v1/matters/:matterId/inconsistencies/:id/severity — severity
  *  - GET  /v1/matters/:matterId/inconsistencies/kind/:kind  — filter by kind
+ *  - POST /v1/matters/:matterId/inconsistencies/detect     — run the detector
+ *
+ * This module is the only writer of `contradictions` and `contradiction_facts`.
  *
  * Dependencies:
  *  - AccessControlModule (policy assertions)
  *  - AuditModule (change logging)
+ *  - SystemOneModule (DecisionService: typed contradiction verdicts)
  */
 @Module({
-  imports: [AccessControlModule, AuditModule],
+  imports: [AccessControlModule, AuditModule, SystemOneModule],
   controllers: [InconsistenciesController],
   providers: [InconsistenciesService],
   exports: [InconsistenciesService],

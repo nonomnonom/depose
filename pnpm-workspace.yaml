@@ -4,9 +4,12 @@ packages:
 allowBuilds:
   '@parcel/watcher': true
   '@scarf/scarf': true
+  cpu-features: true
   esbuild: true
   msgpackr-extract: true
+  protobufjs: true
   sharp: true
+  ssh2: true
 
 minimumReleaseAgeExclude:
   - '@ai-sdk/gateway@4.0.142'

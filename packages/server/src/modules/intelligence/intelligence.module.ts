@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../access-control/access-control.module.js';
 import { AuditModule } from '../audit/audit.module.js';
+import { InconsistenciesModule } from '../inconsistencies/inconsistencies.module.js';
 import { VectorModule } from '../vector/vector.module.js';
+import { PlatformAiModule } from '../ai/platform/platform-ai.module.js';
 import { IntelligenceController } from './intelligence.controller.js';
 import { IntelligenceService } from './intelligence.service.js';
 
@@ -23,12 +25,18 @@ import { IntelligenceService } from './intelligence.service.js';
  *  - AccessControlModule (policy assertions)
  *  - AuditModule (change logging)
  *
- * LLM analysis runs through ModelGatewayService (PlatformAiModule),
- * not through a mastra agent — the mastra dependency does not exist in
- * this codebase.
+ * LLM analysis runs through ModelGatewayService (PlatformAiModule) with
+ * AiService for schema-validated answers. Contradiction detection is delegated
+ * to InconsistenciesModule, the owner of the `contradictions` table.
  */
 @Module({
-  imports: [AccessControlModule, AuditModule, VectorModule],
+  imports: [
+    AccessControlModule,
+    AuditModule,
+    VectorModule,
+    InconsistenciesModule,
+    PlatformAiModule,
+  ],
   controllers: [IntelligenceController],
   providers: [IntelligenceService],
 })

@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
@@ -38,37 +38,33 @@ export class ChronologyService {
         .toLowerCase()
         .split(/[ ,;.\u2013\u2014\u2019]+/)
         .filter((term) => term.length >= 2);
-      if (terms.length > 0) {
-        conditions.push(or(...terms.map((term) => ilike(facts.text, `%${term}%`))));
-      }
+      const search = or(...terms.map((term) => ilike(facts.text, `%${term}%`)));
+      if (search) conditions.push(search);
     }
 
+    const datedConditions = and(...conditions, sql`not isnull(${facts.dateStart})`);
+
     const datedRows = await this.db
-      .select({
-        fact: facts,
-        sourceCount: sql<number>`(
-          select count(*)
-          from ${factSources}
-          where ${factSources.factId} = ${facts.id}
-        )::int`,
-      })
+      .select()
       .from(facts)
-      .where(and(...conditions, sql`not isnull(facts.date_start)`))
+      .where(datedConditions)
+      .orderBy(facts.dateStart)
       .limit(limit + 1);
 
     const hasMore = datedRows.length > limit;
-    const datedItems = datedRows.slice(0, limit).map(({ fact, sourceCount }) => {
+    const page = datedRows.slice(0, limit);
+    const sourceCounts = await this.sourceCounts(page.map((fact) => fact.id));
+
+    const datedItems = page.map((fact) => {
       const dateStart = fact.dateStart;
-      if (!dateStart) throw new DomainError('INTERNAL_ERROR', 500, 'chronology query returned null dateStart');
-      return this.toDto(fact, sourceCount, dateStart as string, fact.dateEnd ?? null);
+      if (!dateStart) {
+        throw new DomainError('INTERNAL_ERROR', 500, 'chronology query returned null dateStart');
+      }
+      return this.toDto(fact, sourceCounts.get(fact.id) ?? 0, dateStart, fact.dateEnd ?? null);
     });
 
     const undatedRow = await this.db
-      .select(
-        {
-          count: sql<number>`count(*)::int`,
-        },
-      )
+      .select({ count: sql<number>`count(*)::int` })
       .from(facts)
       .where(
         and(
@@ -87,6 +83,19 @@ export class ChronologyService {
       nextCursor: hasMore ? datedItems.at(-1)!.createdAt : null,
       undatedCount,
     };
+  }
+
+  private async sourceCounts(factIds: string[]): Promise<Map<string, number>> {
+    if (factIds.length === 0) return new Map();
+    const rows = await this.db
+      .select({
+        factId: factSources.factId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(factSources)
+      .where(inArray(factSources.factId, factIds))
+      .groupBy(factSources.factId);
+    return new Map(rows.map((row) => [row.factId, row.count]));
   }
 
   private toDto(

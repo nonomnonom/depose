@@ -4,7 +4,8 @@ import { AuditModule } from '../../audit/audit.module.js';
 import { VectorModule } from '../../vector/vector.module.js';
 import { PlatformAiModule } from '../platform/platform-ai.module.js';
 import { SystemOneModule } from '../system-one/system-one.module.js';
-import { AgentModule } from '../agent/agent.module.js';
+import { DocumentsModule } from '../../documents/documents.module.js';
+import { JobsModule } from '../../jobs/jobs.module.js';
 import { ExtractionProcessor } from './extraction.processor.js';
 import { ExtractionService } from './extraction.service.js';
 
@@ -30,7 +31,15 @@ import { ExtractionService } from './extraction.service.js';
  * AI-owned capability, not a standalone module.
  */
 @Module({
-  imports: [AccessControlModule, AuditModule, VectorModule, PlatformAiModule, SystemOneModule],
+  imports: [
+    AccessControlModule,
+    AuditModule,
+    VectorModule,
+    PlatformAiModule,
+    SystemOneModule,
+    DocumentsModule,
+    JobsModule,
+  ],
   providers: [ExtractionService, ExtractionProcessor],
   exports: [ExtractionService],
 })

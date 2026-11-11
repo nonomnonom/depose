@@ -4,6 +4,15 @@ import { ApiTags, ApiOperation, ApiParam, ApiOkResponse, ApiNotFoundResponse } f
 import { InconsistenciesService, reviewContradictionSchema, updateSeveritySchema } from './inconsistencies.service.js';
 import { RequestContextService } from '../../common/request-context.service.js';
 import { ZodBodyPipe } from '../../common/zod.pipe.js';
+import { contradictionStatusEnum } from '../../infrastructure/database/schema/enums.js';
+
+type ContradictionStatus = (typeof contradictionStatusEnum.enumValues)[number];
+
+function parseStatusFilter(value: string | undefined): ContradictionStatus | 'all' {
+  const statuses: readonly string[] = contradictionStatusEnum.enumValues;
+  if (value && statuses.includes(value)) return value as ContradictionStatus;
+  return 'all';
+}
 
 @ApiTags('Inconsistencies')
 @Controller('v1/matters/:matterId/inconsistencies')
@@ -22,7 +31,7 @@ export class InconsistenciesController {
     @Query('status') status?: string,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.service.list(actor, matterId, status as any ?? 'all');
+    return this.service.list(actor, matterId, parseStatusFilter(status));
   }
 
   @Get('summary')
@@ -46,6 +55,19 @@ export class InconsistenciesController {
   ) {
     const actor = this.context.requireFirmActor();
     return this.service.get(actor, matterId, id);
+  }
+
+  @Post('detect')
+  @ApiOperation({
+    summary: 'Detect contradictions across the matter facts',
+    description:
+      'Compares facts that share an entity or fact type, asks the decision route whether each pair conflicts, and stores confirmed pairs as candidate contradictions.',
+  })
+  @ApiParam({ name: 'matterId', format: 'uuid' })
+  @ApiOkResponse({ description: 'Detection result with the new contradictions' })
+  async detect(@Param('matterId', ParseUUIDPipe) matterId: string) {
+    const actor = this.context.requireFirmActor();
+    return this.service.detect(actor, matterId);
   }
 
   @Post(':id/review')

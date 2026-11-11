@@ -298,6 +298,39 @@ export function roleAllows(role: FirmRole, action: Action): boolean {
   return MATRIX[role].has(action);
 }
 
+/** Every action that can be granted to an API key. */
+export const KNOWN_ACTIONS: ReadonlySet<Action> = new Set<Action>([
+  ...ADMIN_ONLY,
+  ...LAWYER_ACTIONS,
+  ...PARALEGAL_ACTIONS,
+  ...VIEWER_ACTIONS,
+  'firm.read',
+  'matter.delete',
+]);
+
+export function isAction(value: string): value is Action {
+  return KNOWN_ACTIONS.has(value as Action);
+}
+
+/** Default scopes for a key created without an explicit list: read-only. */
+export const READ_ONLY_ACTIONS: Action[] = [
+  'firm.read',
+  'firm.license.read',
+  'matter.read',
+  'document.read',
+  'document.download',
+  'transcript.read',
+  'fact.read',
+  'subset.read',
+  'issue.read',
+  'theme.read',
+  'summary.read',
+  'event.read',
+  'intelligence.read',
+  'output.read',
+  'search.read',
+];
+
 export function requiredMatterAccess(action: Action): MatterAccess | undefined {
   return MIN_MATTER_ACCESS[action];
 }
