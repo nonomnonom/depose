@@ -1,4 +1,4 @@
-﻿import { ApiError, type ApiErrorDetail } from './errors';
+import { ApiError, codeForStatus, type ApiErrorDetail } from './errors';
 
 export interface CustomFetchEnvelope<T> {
   data: T;
@@ -6,18 +6,41 @@ export interface CustomFetchEnvelope<T> {
   headers: Headers;
 }
 
+function newRequestId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+  return `req_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function readMessage(payload: unknown, fallback: string): string {
+  if (payload && typeof payload === 'object' && 'message' in payload) {
+    const message = (payload as { message?: unknown }).message;
+    if (Array.isArray(message)) return message.join(', ');
+    if (typeof message === 'string' && message.length > 0) return message;
+  }
+  return fallback;
+}
+
 export const customFetch = async <T>(url: string, options: RequestInit): Promise<T> => {
   const headers = new Headers(options.headers);
   headers.set('Accept', 'application/json');
+  const requestId = headers.get('X-Request-Id') ?? newRequestId();
+  headers.set('X-Request-Id', requestId);
   if (options.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+    });
+  } catch {
+    throw new ApiError(0, 'NETWORK_ERROR', 'Tidak dapat menghubungi server.', [], requestId);
+  }
 
   const text = await response.text();
   let payload: unknown = null;
@@ -35,9 +58,10 @@ export const customFetch = async <T>(url: string, options: RequestInit): Promise
       | null;
     throw new ApiError(
       response.status,
-      envelope?.code ?? 'INTERNAL_ERROR',
-      envelope?.message ?? response.statusText,
+      envelope?.code ?? codeForStatus(response.status),
+      readMessage(payload, response.statusText || 'Permintaan gagal.'),
       Array.isArray(envelope?.details) ? envelope.details : [],
+      response.headers.get('X-Request-Id') ?? requestId,
     );
   }
 
@@ -57,6 +81,7 @@ const request = async <T>(
   return response.data;
 };
 
+/** Escape hatch for endpoints Better Auth owns (`/api/auth/*`). */
 export const api = {
   get: <T>(url: string) => request<T>(url, 'GET'),
   post: <T>(url: string, body?: unknown) => request<T>(url, 'POST', body),

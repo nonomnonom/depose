@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@coolicons/react':
+        specifier: ^5.2.0
+        version: 5.2.0(react@19.3.1)
     devDependencies:
       playwright:
         specifier: ^1.65.0
@@ -683,6 +687,11 @@ packages:
     resolution: {integrity: sha512-FsI7l5tFON52RyyDKyCkvwFl+peHZuP5TZ7AhxbDFGo/5T6KQd4+KE48aJ8jrDSSAQDvZ8hYKX47fmwZ5bGFNw==}
     peerDependencies:
       commander: ~15.1.0
+
+  '@coolicons/react@5.2.0':
+    resolution: {integrity: sha512-rfFmk4LSNwi58qq0bwtWfyQPnRvoXFJ4izkDZiTVqD93QQKZtZWHw9kh8A4bTuTPjkhEK+PXlxcr2Uur/W5ZmQ==}
+    peerDependencies:
+      react: '>=18'
 
   '@date-fns/tz@1.5.0':
     resolution: {integrity: sha512-lwYN/vDPeNRULcepoE/LO2Pgx+7/RV+S9ARfbc9lr2DtGkOD7pAiruHvbR1RX3Qyf6ja47EWJDMsNK5vK08DJg==}
@@ -6771,6 +6780,10 @@ snapshots:
   '@commander-js/extra-typings@15.1.0(commander@15.0.0)':
     dependencies:
       commander: 15.0.0
+
+  '@coolicons/react@5.2.0(react@19.3.1)':
+    dependencies:
+      react: 19.3.1
 
   '@date-fns/tz@1.5.0': {}
 

@@ -11,3 +11,41 @@ body,
 body {
   -webkit-font-smoothing: antialiased;
 }
+
+/* Auth scene backdrop - PostHog style */
+.AuthScene {
+  --auth-scene-backdrop-top: #eef4fa;
+  --auth-scene-backdrop-mid: #dbe8f4;
+  --auth-scene-backdrop-bottom: #c4d8ea;
+  --auth-scene-backdrop-glow: rgb(255 255 255 / 55%);
+  --auth-scene-backdrop-ink: rgb(30 56 84 / 62%);
+  --auth-scene-card-bg: #f6f5f0;
+  --auth-scene-card-border: #e3e0d4;
+  --auth-scene-card-shadow: rgb(20 44 72 / 18%);
+  --auth-scene-card-ink: #111;
+  --auth-scene-card-ink-muted: rgb(17 17 17 / 58%);
+  --auth-scene-note-bg: #fbfbf9;
+  --auth-scene-note-border: #c5c6bd;
+}
+
+[theme='dark'] .AuthScene {
+  --auth-scene-backdrop-top: #16232f;
+  --auth-scene-backdrop-mid: #101a24;
+  --auth-scene-backdrop-bottom: #0a1119;
+  --auth-scene-backdrop-glow: rgb(150 185 220 / 12%);
+  --auth-scene-backdrop-ink: rgb(186 210 232 / 65%);
+  --auth-scene-card-bg: var(--color-bg-surface-primary);
+  --auth-scene-card-border: var(--color-border-primary);
+  --auth-scene-card-shadow: rgb(0 0 0 / 45%);
+  --auth-scene-card-ink: var(--color-text-primary);
+  --auth-scene-card-ink-muted: var(--color-text-secondary);
+  --auth-scene-note-bg: var(--color-bg-fill-primary);
+  --auth-scene-note-border: var(--color-border-primary);
+}
+
+.AuthScene__card {
+  background: var(--auth-scene-card-bg);
+  border: 1px solid var(--auth-scene-card-border);
+  border-radius: 1rem;
+  box-shadow: 0 16px 40px var(--auth-scene-card-shadow);
+}

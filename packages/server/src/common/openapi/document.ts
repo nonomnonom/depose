@@ -37,13 +37,13 @@ export function buildOpenApiConfig() {
     .addTag('Matters', 'Matter records')
     .addTag('Onboarding', 'First-run checklist state')
     .addCookieAuth(
-      'better-auth.session_token',
+      'depose.session_token',
       {
         type: 'apiKey',
         in: 'cookie',
-        name: 'better-auth.session_token',
+        name: 'depose.session_token',
         description:
-          'Better Auth session cookie. In production the browser prefixes it with `__Secure-`.',
+          'Depose session cookie. In production the browser prefixes it with `__Secure-`.',
       },
       SESSION_SECURITY_NAME,
     )

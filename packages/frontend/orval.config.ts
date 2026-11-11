@@ -6,8 +6,8 @@ export default defineConfig({
       target: '../server/openapi.json',
     },
     output: {
-      target: './src/lib/api/generated/endpoints.ts',
-      schemas: './src/lib/api/generated/schemas',
+      target: './src/generated/endpoints.ts',
+      schemas: './src/generated/schemas',
       client: 'fetch',
       mode: 'single',
       clean: true,
