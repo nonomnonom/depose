@@ -1,0 +1,178 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { and, eq } from 'drizzle-orm';
+import type { Database } from '../../infrastructure/database/database.client.js';
+import { DATABASE } from '../../infrastructure/database/database.module.js';
+import {
+  documents,
+  documentPages,
+} from '../../infrastructure/database/schema/index.js';
+import { StorageService } from '../../infrastructure/storage/storage.service.js';
+
+export interface IngestedDocument {
+  documentId: string;
+  pageCount: number;
+  pages: { pageNumber: number; text: string; charCount: number }[];
+  status: 'done' | 'needs_review';
+  reason?: string;
+}
+
+const TEXT_MIME = new Set([
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'application/rtf',
+  'message/rfc822',
+]);
+
+const DOCX_MIME =
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const PDF_MIME = 'application/pdf';
+
+function splitPages(text: string): string[] {
+  const normalized = text.replace(/\r\n?/g, '\n').replace(/\u0000/g, '');
+  const byFormFeed = normalized.split('\f');
+  if (byFormFeed.length > 1) return byFormFeed;
+  if (normalized.length <= 40_000) return [normalized];
+
+  const pages: string[] = [];
+  let cursor = 0;
+  while (cursor < normalized.length) {
+    let end = Math.min(cursor + 40_000, normalized.length);
+    if (end < normalized.length) {
+      const breakAt = normalized.lastIndexOf('\n', end);
+      if (breakAt > cursor + 1_000) end = breakAt;
+    }
+    pages.push(normalized.slice(cursor, end));
+    cursor = end;
+  }
+  return pages;
+}
+
+@Injectable()
+export class DocumentTextService {
+  private readonly logger = new Logger(DocumentTextService.name);
+
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    private readonly storage: StorageService,
+  ) {}
+
+  async ingest(documentId: string): Promise<IngestedDocument> {
+    const [document] = await this.db
+      .select()
+      .from(documents)
+      .where(eq(documents.id, documentId))
+      .limit(1);
+    if (!document) throw new Error('Document not found');
+
+    await this.db
+      .update(documents)
+      .set({ processingStatus: 'processing', updatedAt: new Date() })
+      .where(eq(documents.id, document.id));
+
+    try {
+      const data = await this.storage.get(document.storageKey);
+      const parsed = await this.extract(document.mimeType, data);
+
+      if (parsed.pages.length === 0) {
+        await this.finish(document.id, 'needs_review', null, 'DOCUMENT_TEXT_UNAVAILABLE');
+        return {
+          documentId: document.id,
+          pageCount: 0,
+          pages: [],
+          status: 'needs_review',
+          reason: 'No text layer was found. Configure OCR before extracting facts.',
+        };
+      }
+
+      await this.db.transaction(async (tx) => {
+        await tx.delete(documentPages).where(eq(documentPages.documentId, document.id));
+        await tx.insert(documentPages).values(
+          parsed.pages.map((page, index) => ({
+            firmId: document.firmId,
+            matterId: document.matterId,
+            documentId: document.id,
+            pageNumber: index + 1,
+            text: page,
+            charCount: page.length,
+          })),
+        );
+      });
+
+      await this.finish(document.id, 'done', parsed.pages.length, null);
+      return {
+        documentId: document.id,
+        pageCount: parsed.pages.length,
+        pages: parsed.pages.map((text, index) => ({
+          pageNumber: index + 1,
+          text,
+          charCount: text.length,
+        })),
+        status: 'done',
+      };
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'Text extraction failed';
+      this.logger.warn(`Document ingest failed for ${document.id}: ${reason}`);
+      await this.finish(document.id, 'failed', null, reason.slice(0, 240));
+      throw error;
+    }
+  }
+
+  async pages(documentId: string) {
+    return this.db
+      .select({
+        pageNumber: documentPages.pageNumber,
+        text: documentPages.text,
+      })
+      .from(documentPages)
+      .where(eq(documentPages.documentId, documentId))
+      .orderBy(documentPages.pageNumber);
+  }
+
+  async markNeedsReview(documentId: string, reason: string) {
+    await this.db
+      .update(documents)
+      .set({
+        processingStatus: 'needs_review',
+        processingError: reason.slice(0, 240),
+        updatedAt: new Date(),
+      })
+      .where(eq(documents.id, documentId));
+  }
+
+  private async extract(mimeType: string, data: Buffer): Promise<{ pages: string[] }> {
+    if (TEXT_MIME.has(mimeType) || mimeType.startsWith('text/')) {
+      return { pages: splitPages(data.toString('utf8')) };
+    }
+    if (mimeType === PDF_MIME) {
+      const { extractText, getDocumentProxy } = await import('unpdf');
+      const pdf = await getDocumentProxy(new Uint8Array(data));
+      const result = await extractText(pdf, { mergePages: false });
+      const pages = Array.isArray(result.text) ? result.text : [result.text];
+      return { pages: pages.map((page) => splitPages(page).join('\n')).filter(Boolean) };
+    }
+    if (mimeType === DOCX_MIME) {
+      const mammoth = await import('mammoth');
+      const result = await mammoth.extractRawText({ buffer: data });
+      return { pages: splitPages(result.value) };
+    }
+    return { pages: [] };
+  }
+
+  private async finish(
+    documentId: string,
+    status: 'done' | 'failed' | 'needs_review',
+    pageCount: number | null,
+    error: string | null,
+  ) {
+    await this.db
+      .update(documents)
+      .set({
+        processingStatus: status,
+        pageCount,
+        processingError: error,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(documents.id, documentId)));
+  }
+}

@@ -11,7 +11,12 @@ import {
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
-import { AgentService, type AgentCitation, type AgentToolCall } from './agent.service.js';
+import {
+  AgentService,
+  type AgentSource,
+  type AgentToolCall,
+  type AgentRunInput,
+} from './agent.service.js';
 
 @Injectable()
 export class AiService {
@@ -37,15 +42,21 @@ export class AiService {
       .orderBy(desc(threads.updatedAt));
   }
 
-  async createThread(actor: FirmActor, matterId: string, title?: string) {
+  async createThread(
+    actor: FirmActor,
+    matterId: string,
+    title?: string,
+    subsetId?: string,
+  ) {
     await this.policy.assertMatter(actor, 'ai.ask', matterId);
     const [thread] = await this.db
       .insert(threads)
       .values({
         firmId: actor.firmId,
         matterId,
+        subsetId: subsetId ?? null,
         userId: actor.userId,
-        scope: 'matter',
+        scope: subsetId ? 'subset' : 'matter',
         title: title?.trim() || 'New conversation',
       })
       .returning();
@@ -82,15 +93,21 @@ export class AiService {
           row,
           sources
             .filter((source) => source.messageId === row.id)
-            .map((source) => source.citationSnapshot as unknown as AgentCitation),
+            .map((source) => source.citationSnapshot as unknown as AgentSource),
         ),
       ),
     };
   }
 
-  async sendMessage(actor: FirmActor, matterId: string, threadId: string, content: string) {
+  async sendMessage(
+    actor: FirmActor,
+    matterId: string,
+    threadId: string,
+    input: AgentRunInput,
+  ) {
     await this.policy.assertMatter(actor, 'ai.ask', matterId);
     const thread = await this.requireThread(actor, matterId, threadId);
+    const content = input.content ?? 'Summarize the attached context.';
 
     const [userMessage] = await this.db
       .insert(messages)
@@ -100,10 +117,15 @@ export class AiService {
         threadId: thread.id,
         role: 'user',
         content,
+        runMetadata: { mode: input.mode ?? 'ask', context: input.context ?? [] },
       })
       .returning();
 
-    const result = await this.agent.run(actor, matterId, content);
+    const result = await this.agent.run(actor, matterId, {
+      ...input,
+      content,
+      subsetId: input.subsetId ?? thread.subsetId ?? undefined,
+    });
 
     const [assistantMessage] = await this.db.transaction(async (tx) => {
       const [assistant] = await tx
@@ -113,23 +135,33 @@ export class AiService {
           matterId,
           threadId: thread.id,
           role: 'assistant',
-          content: result.content,
+          content: result.answer,
+          responseEnvelope: {
+            answer: result.answer,
+            sources: result.sources,
+            evidenceScore: result.evidenceScore,
+            insufficientEvidence: result.insufficientEvidence,
+            unverifiedCitations: result.unverifiedCitations,
+            warnings: result.warnings,
+          },
           runMetadata: {
             toolCalls: result.toolCalls,
             mode: result.mode,
+            engine: result.engine,
             model: result.model ?? null,
+            usage: result.usage,
           },
         })
         .returning();
 
-      if (result.citations.length > 0) {
+      if (result.sources.length > 0) {
         await tx.insert(messageSources).values(
-          result.citations.map((citation) => ({
+          result.sources.map((source) => ({
             firmId: actor.firmId,
             matterId,
             messageId: assistant.id,
-            factId: citation.factId,
-            citationSnapshot: citation as unknown as Record<string, unknown>,
+            factId: source.factId,
+            citationSnapshot: source as unknown as Record<string, unknown>,
           })),
         );
       }
@@ -156,15 +188,32 @@ export class AiService {
       actor,
       metadata: {
         matterId,
-        citations: result.citations.length,
+        sources: result.sources.length,
         tools: result.toolCalls.map((call) => call.name),
+        insufficientEvidence: result.insufficientEvidence,
       },
     });
 
     return {
       userMessage: this.toMessageDto(userMessage, []),
-      message: this.toMessageDto(assistantMessage, result.citations),
+      message: this.toMessageDto(assistantMessage, result.sources),
+      answer: result.answer,
+      sources: result.sources,
+      evidenceScore: result.evidenceScore,
+      insufficientEvidence: result.insufficientEvidence,
+      unverifiedCitations: result.unverifiedCitations,
+      warnings: result.warnings,
+      mode: result.mode,
+      model: result.model,
+      toolCalls: result.toolCalls,
     };
+  }
+
+  async cancelRun(actor: FirmActor, matterId: string, threadId: string) {
+    await this.policy.assertMatter(actor, 'ai.ask', matterId);
+    const thread = await this.requireThread(actor, matterId, threadId);
+    /* Runs are synchronous within the request; a finished run is already stopped. */
+    return { cancelled: false, state: 'idle', threadId: thread.id };
   }
 
   async deleteThread(actor: FirmActor, matterId: string, threadId: string) {
@@ -203,16 +252,27 @@ export class AiService {
 
   private toMessageDto(
     row: typeof messages.$inferSelect,
-    citations: AgentCitation[],
+    sources: AgentSource[],
   ) {
-    const cleanCitations = citations.filter(Boolean);
+    const cleanSources = sources.filter(Boolean);
+    const envelope = (row.responseEnvelope ?? {}) as Record<string, unknown>;
     return {
       id: row.id,
       role: row.role,
       content: row.content,
-      citations: cleanCitations,
+      sources: cleanSources,
+      citations: cleanSources,
+      answer: typeof envelope.answer === 'string' ? envelope.answer : row.content,
+      evidenceScore:
+        typeof envelope.evidenceScore === 'number' ? envelope.evidenceScore : null,
+      insufficientEvidence: Boolean(envelope.insufficientEvidence),
+      unverifiedCitations: Array.isArray(envelope.unverifiedCitations)
+        ? (envelope.unverifiedCitations as string[])
+        : [],
+      warnings: Array.isArray(envelope.warnings) ? (envelope.warnings as string[]) : [],
       toolCalls: ((row.runMetadata?.toolCalls ?? []) as AgentToolCall[]).filter(Boolean),
-      mode: (row.runMetadata?.mode as string | undefined) ?? 'retrieval',
+      mode: (row.runMetadata?.mode as string | undefined) ?? 'ask',
+      engine: (row.runMetadata?.engine as string | undefined) ?? 'model',
       model: (row.runMetadata?.model as string | null | undefined) ?? null,
       createdAt: row.createdAt,
     };

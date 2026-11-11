@@ -1,12 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AgentFunction, type AgentFunctionContext } from '@nestjs/ai';
-import { and, desc, eq, ilike, or } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, or } from 'drizzle-orm';
 import { z } from 'zod';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
   documents,
+  documentPages,
   factSources,
   facts,
 } from '../../infrastructure/database/schema/index.js';
@@ -20,11 +21,20 @@ const searchInput = z.object({
   query: z.string().describe('What to look for in the confirmed facts, in plain language'),
 });
 
+const factInput = z.object({
+  factId: z.string().describe('Fact UUID from a previous search result'),
+});
+
 const documentInput = z.object({
   query: z
     .string()
     .optional()
     .describe('Optional file-name fragment, for example "agreement" or "invoice"'),
+});
+
+const pageInput = z.object({
+  documentId: z.string().describe('Document UUID from documents.list'),
+  pageNumber: z.number().int().min(1).describe('1-based page number'),
 });
 
 @Injectable()
@@ -35,14 +45,158 @@ export class MatterAgentTools {
   ) {}
 
   @AgentFunction({
-    name: 'search-confirmed-facts',
+    name: 'retrieval_search',
     description:
-      'Search confirmed facts in the current matter. Returns the fact text, its date, and the source document and quote when one exists. Use this before answering.',
+      'Search confirmed facts in the current matter. Returns fact text, date, and the source document and verbatim quote. Use this before answering.',
     inputSchema: searchInput,
   })
-  async searchFacts({ query }: z.infer<typeof searchInput>, ctx: AgentFunctionContext) {
-    const user = ctx.user as AgentUser | undefined;
-    if (!user?.matterId) throw new Error('No matter context');
+  async retrievalSearch({ query }: z.infer<typeof searchInput>, ctx: AgentFunctionContext) {
+    return this.searchFacts(query, ctx);
+  }
+
+  @AgentFunction({
+    name: 'facts_search',
+    description:
+      'Search confirmed facts with a plain-language query. Same evidence as retrieval.search.',
+    inputSchema: searchInput,
+  })
+  async factsSearch({ query }: z.infer<typeof searchInput>, ctx: AgentFunctionContext) {
+    return this.searchFacts(query, ctx);
+  }
+
+  @AgentFunction({
+    name: 'facts_get',
+    description:
+      'Get one confirmed fact with all of its source citations. Use the fact id from a search result.',
+    inputSchema: factInput,
+  })
+  async factsGet({ factId }: z.infer<typeof factInput>, ctx: AgentFunctionContext) {
+    const user = this.user(ctx);
+    await this.policy.assertMatter(user, 'ai.ask', user.matterId);
+
+    const [fact] = await this.db
+      .select()
+      .from(facts)
+      .where(
+        and(
+          eq(facts.id, factId),
+          eq(facts.firmId, user.firmId),
+          eq(facts.matterId, user.matterId),
+          eq(facts.status, 'confirmed'),
+        ),
+      )
+      .limit(1);
+    if (!fact) return { fact: null, note: 'No confirmed fact with that id.' };
+
+    const sources = await this.db
+      .select({
+        documentId: factSources.documentId,
+        documentName: documents.fileName,
+        pageNumber: factSources.pageNumber,
+        sentenceStart: factSources.sentenceStart,
+        sentenceEnd: factSources.sentenceEnd,
+        quote: factSources.quote,
+        quoteHash: factSources.quoteHash,
+      })
+      .from(factSources)
+      .innerJoin(documents, eq(documents.id, factSources.documentId))
+      .where(eq(factSources.factId, fact.id));
+
+    return {
+      fact: {
+        id: fact.id,
+        text: fact.text,
+        date: fact.dateStart,
+        factType: fact.factType,
+        sources,
+      },
+    };
+  }
+
+  @AgentFunction({
+    name: 'documents_list',
+    description:
+      'List source documents in the current matter, optionally filtered by a file-name fragment.',
+    inputSchema: documentInput,
+  })
+  async listDocuments(
+    { query }: z.infer<typeof documentInput>,
+    ctx: AgentFunctionContext,
+  ) {
+    const user = this.user(ctx);
+    await this.policy.assertMatter(user, 'document.read', user.matterId);
+
+    const conditions = [
+      eq(documents.firmId, user.firmId),
+      eq(documents.matterId, user.matterId),
+    ];
+    if (query) conditions.push(ilike(documents.fileName, `%${query}%`));
+
+    const rows = await this.db
+      .select({
+        id: documents.id,
+        fileName: documents.fileName,
+        type: documents.type,
+        status: documents.processingStatus,
+        pageCount: documents.pageCount,
+        createdAt: documents.createdAt,
+      })
+      .from(documents)
+      .where(and(...conditions))
+      .orderBy(desc(documents.createdAt))
+      .limit(20);
+
+    return { documents: rows };
+  }
+
+  @AgentFunction({
+    name: 'documents_readPage',
+    description:
+      'Read the extracted text of one page in a source document. Use this only when the fact quotes are not enough.',
+    inputSchema: pageInput,
+  })
+  async readPage(
+    { documentId, pageNumber }: z.infer<typeof pageInput>,
+    ctx: AgentFunctionContext,
+  ) {
+    const user = this.user(ctx);
+    await this.policy.assertMatter(user, 'document.read', user.matterId);
+
+    const [page] = await this.db
+      .select({
+        documentId: documentPages.documentId,
+        pageNumber: documentPages.pageNumber,
+        text: documentPages.text,
+      })
+      .from(documentPages)
+      .innerJoin(documents, eq(documents.id, documentPages.documentId))
+      .where(
+        and(
+          eq(documentPages.documentId, documentId),
+          eq(documentPages.pageNumber, pageNumber),
+          eq(documents.firmId, user.firmId),
+          eq(documents.matterId, user.matterId),
+        ),
+      )
+      .limit(1);
+
+    if (!page) return { page: null, note: 'That page is not available.' };
+    return { page: { ...page, text: page.text.slice(0, 8_000) } };
+  }
+
+  @AgentFunction({
+    name: 'currentTime',
+    description: 'Return the current server time in ISO 8601. Use it for “today” or date arithmetic.',
+    inputSchema: z.object({}),
+  })
+  async currentTime(_input: Record<string, never>, ctx: AgentFunctionContext) {
+    const user = this.user(ctx);
+    await this.policy.assertMatter(user, 'ai.ask', user.matterId);
+    return { now: new Date().toISOString() };
+  }
+
+  private async searchFacts(query: string, ctx: AgentFunctionContext) {
+    const user = this.user(ctx);
     await this.policy.assertMatter(user, 'ai.ask', user.matterId);
 
     const terms = [
@@ -63,6 +217,7 @@ export class MatterAgentTools {
               id: facts.id,
               text: facts.text,
               dateStart: facts.dateStart,
+              factType: facts.factType,
             })
             .from(facts)
             .where(
@@ -74,7 +229,7 @@ export class MatterAgentTools {
               ),
             )
             .orderBy(desc(facts.dateStart), desc(facts.createdAt))
-            .limit(6);
+            .limit(8);
 
     if (rows.length === 0) return { facts: [], note: 'No confirmed facts matched.' };
 
@@ -84,64 +239,34 @@ export class MatterAgentTools {
         documentId: factSources.documentId,
         documentName: documents.fileName,
         pageNumber: factSources.pageNumber,
+        sentenceStart: factSources.sentenceStart,
+        sentenceEnd: factSources.sentenceEnd,
         quote: factSources.quote,
+        quoteHash: factSources.quoteHash,
       })
       .from(factSources)
       .innerJoin(documents, eq(documents.id, factSources.documentId))
       .where(
-        and(
-          eq(factSources.firmId, user.firmId),
-          eq(factSources.matterId, user.matterId),
+        inArray(
+          factSources.factId,
+          rows.map((fact) => fact.id),
         ),
       );
 
     return {
-      facts: rows.map((fact) => {
-        const source = sources.find((item) => item.factId === fact.id);
-        return {
-          id: fact.id,
-          text: fact.text,
-          date: fact.dateStart,
-          document: source?.documentName ?? null,
-          page: source?.pageNumber ?? null,
-          quote: source?.quote ?? null,
-        };
-      }),
+      facts: rows.map((fact) => ({
+        id: fact.id,
+        text: fact.text,
+        date: fact.dateStart,
+        factType: fact.factType,
+        sources: sources.filter((source) => source.factId === fact.id),
+      })),
     };
   }
 
-  @AgentFunction({
-    name: 'list-matter-documents',
-    description:
-      'List source documents in the current matter, optionally filtered by a file-name fragment. Use this when the question is about what evidence exists rather than what a fact says.',
-    inputSchema: documentInput,
-  })
-  async listDocuments(
-    { query }: z.infer<typeof documentInput>,
-    ctx: AgentFunctionContext,
-  ) {
+  private user(ctx: AgentFunctionContext): AgentUser {
     const user = ctx.user as AgentUser | undefined;
     if (!user?.matterId) throw new Error('No matter context');
-    await this.policy.assertMatter(user, 'document.read', user.matterId);
-
-    const conditions = [
-      eq(documents.firmId, user.firmId),
-      eq(documents.matterId, user.matterId),
-    ];
-    if (query) conditions.push(ilike(documents.fileName, `%${query}%`));
-
-    const rows = await this.db
-      .select({
-        fileName: documents.fileName,
-        type: documents.type,
-        status: documents.processingStatus,
-        createdAt: documents.createdAt,
-      })
-      .from(documents)
-      .where(and(...conditions))
-      .orderBy(desc(documents.createdAt))
-      .limit(20);
-
-    return { documents: rows };
+    return user;
   }
 }

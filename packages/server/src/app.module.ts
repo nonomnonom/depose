@@ -22,7 +22,9 @@ import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { SessionGuard } from './modules/auth/session.guard.js';
 import { AiModule } from './modules/ai/ai.module.js';
+import { JobsModule } from './modules/jobs/jobs.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
+import { ExtractionModule } from './modules/extraction/extraction.module.js';
 import { FactsModule } from './modules/facts/facts.module.js';
 import { FirmsModule } from './modules/firms/firms.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
@@ -37,22 +39,24 @@ import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
 
 @Module({
   imports: [
-    NestAiModule.forRootAsync({
+    NestAiModule.forRoot({
       isGlobal: true,
-      useFactory: () => {
-        const provider = createOpenAICompatible({
-          name: 'depose',
-          baseURL: appConfig.ai.baseUrl,
-          apiKey: appConfig.ai.apiKey ?? 'not-configured',
-        });
-        return {
-          models: { default: provider(appConfig.ai.model) },
-          defaults: {
-            timeout: '45s',
-            retry: { attempts: 2 },
-            maxSteps: 6,
-          },
-        };
+      /*
+       * Sentinel only: @nestjs/ai requires a registry entry, but every Dep AI
+       * call passes the firm's BYOK LanguageModel from ModelGatewayService.
+       * This endpoint is never reachable and holds no key from env.
+       */
+      models: {
+        unconfigured: createOpenAICompatible({
+          name: 'unconfigured',
+          baseURL: 'http://127.0.0.1:1/v1',
+          apiKey: 'unused',
+        })('unconfigured'),
+      },
+      defaults: {
+        timeout: `${appConfig.ai.timeoutMs}ms`,
+        retry: { attempts: appConfig.ai.maxRetries },
+        maxSteps: 10,
       },
     }),
     AppConfigModule,
@@ -65,7 +69,9 @@ import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
     TenancyModule,
     AuthModule,
     AiModule,
+    JobsModule,
     DocumentsModule,
+    ExtractionModule,
     FactsModule,
     FirmsModule,
     IdentityModule,

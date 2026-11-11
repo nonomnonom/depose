@@ -3,6 +3,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   ParseUUIDPipe,
   Post,
   Query,
@@ -105,6 +106,22 @@ export class DocumentsController {
   ) {
     const actor = this.context.requireFirmActor();
     return { document: await this.documents.get(actor, matterId, id) };
+  }
+
+  @Get(':id/pages/:pageNumber')
+  @ApiOperation({ summary: 'Read one extracted page for the source viewer' })
+  @ApiParam({ name: 'matterId', format: 'uuid' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiParam({ name: 'pageNumber', schema: { type: 'integer', minimum: 1 } })
+  @ApiOkResponse({ description: 'Page text' })
+  @ApiNotFoundResponse({ description: 'Page not found', type: ErrorEnvelopeDto })
+  async page(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('pageNumber', ParseIntPipe) pageNumber: number,
+  ) {
+    const actor = this.context.requireFirmActor();
+    return this.documents.page(actor, matterId, id, pageNumber);
   }
 
   @Get(':id/download')

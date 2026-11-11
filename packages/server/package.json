@@ -46,9 +46,12 @@
     "dotenv": "^18.0.10",
     "drizzle-orm": "^0.45.4",
     "express": "^5.1.0",
+    "ioredis": "^6.0.0",
+    "mammoth": "^1.13.0",
     "nodemailer": "^10.4.0",
     "pg": "^8.23.1",
     "rxjs": "^7.8.2",
+    "unpdf": "^2.1.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {

@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -26,12 +27,15 @@ import { ApiSessionAuth } from '../../common/openapi/session-auth.decorator.js';
 import { zodToOpenApiSchema } from '../../common/openapi/zod-schema.js';
 import { RequestContextService } from '../../common/request-context.service.js';
 import { parseOrThrow, ZodBodyPipe } from '../../common/zod.pipe.js';
+import { ExtractionService } from '../extraction/extraction.service.js';
 import {
   createFactSchema,
+  extractFactsSchema,
   factStatusValues,
   listFactsQuerySchema,
   updateFactSchema,
   type CreateFactInput,
+  type ExtractFactsInput,
   type ListFactsQuery,
   type UpdateFactInput,
 } from './facts.dto.js';
@@ -48,6 +52,7 @@ import { FactsService } from './facts.service.js';
 export class FactsController {
   constructor(
     private readonly facts: FactsService,
+    private readonly extraction: ExtractionService,
     private readonly context: RequestContextService,
   ) {}
 
@@ -66,6 +71,24 @@ export class FactsController {
     const actor = this.context.requireFirmActor();
     const parsed: ListFactsQuery = parseOrThrow(listFactsQuerySchema, query);
     return this.facts.list(actor, matterId, parsed);
+  }
+
+  @Post('extract')
+  @HttpCode(202)
+  @ApiOperation({
+    summary: 'Run fact extraction',
+    description:
+      'Queues the fact extraction pipeline for one document or every document in the matter. Returns job ids; poll GET /v1/jobs/:jobId for progress.',
+  })
+  @ApiParam({ name: 'matterId', format: 'uuid' })
+  @ApiBody({ schema: zodToOpenApiSchema(extractFactsSchema) })
+  @ApiOkResponse({ description: 'Accepted' })
+  async extract(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Body(new ZodBodyPipe(extractFactsSchema)) body: ExtractFactsInput,
+  ) {
+    const actor = this.context.requireFirmActor();
+    return this.extraction.request(actor, matterId, body);
   }
 
   @Post()

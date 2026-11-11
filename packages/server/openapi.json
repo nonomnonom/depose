@@ -192,7 +192,7 @@
         ]
       }
     },
-    "/api/v1/matters/{matterId}/ai/threads": {
+    "/api/v1/matters/{matterId}/threads": {
       "get": {
         "operationId": "AiController_list",
         "parameters": [
@@ -281,6 +281,10 @@
                   "title": {
                     "type": "string",
                     "maxLength": 120
+                  },
+                  "subsetId": {
+                    "type": "string",
+                    "format": "uuid"
                   }
                 },
                 "additionalProperties": false
@@ -341,7 +345,7 @@
         ]
       }
     },
-    "/api/v1/matters/{matterId}/ai/threads/{threadId}": {
+    "/api/v1/matters/{matterId}/threads/{threadId}": {
       "get": {
         "operationId": "AiController_get",
         "parameters": [
@@ -501,7 +505,7 @@
         ]
       }
     },
-    "/api/v1/matters/{matterId}/ai/threads/{threadId}/messages": {
+    "/api/v1/matters/{matterId}/threads/{threadId}/messages": {
       "post": {
         "description": "Runs the grounded retrieval agent over confirmed facts and returns the answer with citations and tool calls.",
         "operationId": "AiController_send",
@@ -534,13 +538,62 @@
                 "properties": {
                   "content": {
                     "type": "string",
-                    "minLength": 2,
                     "maxLength": 8000
+                  },
+                  "mode": {
+                    "default": "ask",
+                    "type": "string",
+                    "enum": [
+                      "ask",
+                      "agent"
+                    ]
+                  },
+                  "subsetId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "context": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "matter",
+                            "document",
+                            "fact",
+                            "event",
+                            "entity",
+                            "output",
+                            "text"
+                          ]
+                        },
+                        "key": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "label": {
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "value": {
+                          "type": "string",
+                          "maxLength": 4000
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "templateId": {
+                    "type": "string",
+                    "format": "uuid"
                   }
                 },
-                "required": [
-                  "content"
-                ],
                 "additionalProperties": false
               }
             }
@@ -606,6 +659,856 @@
         "summary": "Ask Dep AI",
         "tags": [
           "Dep AI"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/threads/{threadId}/cancel": {
+      "post": {
+        "operationId": "AiController_cancel",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "threadId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Run state"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Stop the active Dep AI run",
+        "tags": [
+          "Dep AI"
+        ]
+      }
+    },
+    "/api/v1/firm/ai/providers": {
+      "get": {
+        "operationId": "ModelGatewayController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Provider connections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiProviderListDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List the firm AI provider connections (keys masked)",
+        "tags": [
+          "Firm AI"
+        ]
+      },
+      "post": {
+        "operationId": "ModelGatewayController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "openai",
+                      "anthropic",
+                      "google",
+                      "openrouter",
+                      "openai-compatible"
+                    ]
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "baseUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "models": {
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    }
+                  },
+                  "fallbackModelId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  }
+                },
+                "required": [
+                  "kind",
+                  "label",
+                  "models"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Provider created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiProviderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Label already used",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Add a BYOK completion provider",
+        "tags": [
+          "Firm AI"
+        ]
+      }
+    },
+    "/api/v1/firm/ai/providers/{id}": {
+      "patch": {
+        "operationId": "ModelGatewayController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "baseUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "apiKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "models": {
+                    "minItems": 1,
+                    "maxItems": 50,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    }
+                  },
+                  "fallbackModelId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provider updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiProviderResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Provider not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Update a provider connection",
+        "tags": [
+          "Firm AI"
+        ]
+      },
+      "delete": {
+        "operationId": "ModelGatewayController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider removed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Provider not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Remove a provider connection",
+        "tags": [
+          "Firm AI"
+        ]
+      }
+    },
+    "/api/v1/firm/ai/providers/{id}/test": {
+      "post": {
+        "operationId": "ModelGatewayController_test",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiProviderTestDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Provider not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Test credentials and refresh the model list",
+        "tags": [
+          "Firm AI"
+        ]
+      }
+    },
+    "/api/v1/firm/ai/providers/catalogue": {
+      "get": {
+        "operationId": "ModelGatewayController_catalogue",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Catalogue"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List completion models the firm may select",
+        "tags": [
+          "Firm AI"
+        ]
+      }
+    },
+    "/api/v1/firm/ai/providers/health": {
+      "get": {
+        "operationId": "ModelGatewayController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Route health"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Completion route health for the firm",
+        "tags": [
+          "Firm AI"
+        ]
+      }
+    },
+    "/api/v1/jobs/{jobId}": {
+      "get": {
+        "operationId": "JobsController_get",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job state"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Read an async job in your firm",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/api/v1/jobs/{jobId}/cancel": {
+      "post": {
+        "operationId": "JobsController_cancel",
+        "parameters": [
+          {
+            "name": "jobId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job state"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Cancel a queued or running job",
+        "tags": [
+          "Jobs"
+        ]
+      }
+    },
+    "/api/v1/firm/jobs": {
+      "get": {
+        "operationId": "JobsController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Jobs"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List jobs in your firm",
+        "tags": [
+          "Jobs"
         ]
       }
     },
@@ -977,6 +1880,94 @@
           }
         ],
         "summary": "Delete a document",
+        "tags": [
+          "Documents"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/documents/{id}/pages/{pageNumber}": {
+      "get": {
+        "operationId": "DocumentsController_page",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "pageNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page text"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Page not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Read one extracted page for the source viewer",
         "tags": [
           "Documents"
         ]
@@ -1381,6 +2372,84 @@
           }
         ],
         "summary": "Add a manual fact",
+        "tags": [
+          "Facts"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/facts/extract": {
+      "post": {
+        "description": "Queues the fact extraction pipeline for one document or every document in the matter. Returns job ids; poll GET /v1/jobs/:jobId for progress.",
+        "operationId": "FactsController_extract",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "documentId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted"
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Run fact extraction",
         "tags": [
           "Facts"
         ]
@@ -4779,12 +5848,22 @@
       "AiCitationDto": {
         "type": "object",
         "properties": {
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "factId": {
             "type": "string",
             "format": "uuid"
           },
           "factText": {
             "type": "string"
+          },
+          "factStatus": {
+            "type": "string"
+          },
+          "manual": {
+            "type": "boolean"
           },
           "documentId": {
             "type": [
@@ -4804,20 +5883,57 @@
               "null"
             ]
           },
+          "sentenceStart": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "sentenceEnd": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "quote": {
             "type": [
               "string",
               "null"
             ]
+          },
+          "quoteHash": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceKind": {
+            "type": "string"
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sourceDeleted": {
+            "type": "boolean"
           }
         },
         "required": [
+          "sourceId",
           "factId",
           "factText",
+          "factStatus",
+          "manual",
           "documentId",
           "documentName",
           "pageNumber",
-          "quote"
+          "sentenceStart",
+          "sentenceEnd",
+          "quote",
+          "quoteHash",
+          "sourceKind",
+          "capturedAt",
+          "sourceDeleted"
         ]
       },
       "AiToolCallDto": {
@@ -4864,6 +5980,36 @@
               "$ref": "#/components/schemas/AiCitationDto"
             }
           },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiCitationDto"
+            }
+          },
+          "answer": {
+            "type": "string"
+          },
+          "evidenceScore": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "insufficientEvidence": {
+            "type": "boolean"
+          },
+          "unverifiedCitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "toolCalls": {
             "type": "array",
             "items": {
@@ -4873,8 +6019,14 @@
           "mode": {
             "type": "string",
             "enum": [
-              "model",
-              "retrieval"
+              "ask",
+              "agent"
+            ]
+          },
+          "engine": {
+            "type": "string",
+            "enum": [
+              "model"
             ]
           },
           "model": {
@@ -4893,8 +6045,15 @@
           "role",
           "content",
           "citations",
+          "sources",
+          "answer",
+          "evidenceScore",
+          "insufficientEvidence",
+          "unverifiedCitations",
+          "warnings",
           "toolCalls",
           "mode",
+          "engine",
           "model",
           "createdAt"
         ]
@@ -4925,11 +6084,199 @@
           },
           "message": {
             "$ref": "#/components/schemas/AiMessageDto"
+          },
+          "answer": {
+            "type": "string"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiCitationDto"
+            }
+          },
+          "evidenceScore": {
+            "type": "number"
+          },
+          "insufficientEvidence": {
+            "type": "boolean"
+          },
+          "unverifiedCitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "ask",
+              "agent"
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "toolCalls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiToolCallDto"
+            }
           }
         },
         "required": [
           "userMessage",
-          "message"
+          "message",
+          "answer",
+          "sources",
+          "evidenceScore",
+          "insufficientEvidence",
+          "unverifiedCitations",
+          "warnings",
+          "mode",
+          "model",
+          "toolCalls"
+        ]
+      },
+      "AiProviderDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "google",
+              "openrouter",
+              "openai-compatible"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "baseUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "apiKeyLast4": {
+            "type": "string",
+            "example": "4f2a"
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fallbackModelId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "invalid",
+              "disabled",
+              "untested"
+            ]
+          },
+          "lastTestedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "baseUrl",
+          "apiKeyLast4",
+          "models",
+          "fallbackModelId",
+          "status",
+          "lastTestedAt",
+          "lastError",
+          "createdAt"
+        ]
+      },
+      "AiProviderListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiProviderDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "AiProviderResponseDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/AiProviderDto"
+          }
+        },
+        "required": [
+          "provider"
+        ]
+      },
+      "AiProviderTestDto": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ok",
+          "models",
+          "error"
         ]
       },
       "DocumentDto": {

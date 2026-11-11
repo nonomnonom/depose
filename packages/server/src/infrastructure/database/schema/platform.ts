@@ -40,9 +40,13 @@ export const jobs = pgTable(
     queueName: text('queue_name').notNull(),
     idempotencyKey: text('idempotency_key').notNull(),
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull().default({}),
+    result: jsonb('result').$type<Record<string, unknown>>(),
     status: jobStatusEnum('status').notNull().default('queued'),
+    progress: integer('progress').notNull().default(0),
+    stage: text('stage'),
     attempts: integer('attempts').notNull().default(0),
     maxAttempts: integer('max_attempts').notNull().default(3),
+    createdBy: text('created_by').notNull().default('system'),
     leaseOwner: text('lease_owner'),
     leaseExpiresAt: timestamp('lease_expires_at', { withTimezone: true }),
     errorCode: text('error_code'),
@@ -53,8 +57,13 @@ export const jobs = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex('jobs_firm_job_key_unique').on(table.firmId, table.jobKey),
+    uniqueIndex('jobs_firm_type_idempotency_unique').on(
+      table.firmId,
+      table.jobKey,
+      table.idempotencyKey,
+    ),
     index('jobs_firm_status_idx').on(table.firmId, table.status),
+    index('jobs_status_created_idx').on(table.status, table.createdAt),
   ],
 );
 

@@ -38,7 +38,7 @@ import { AiService } from './ai.service.js';
 
 @ApiTags('Dep AI')
 @ApiSessionAuth()
-@Controller('v1/matters/:matterId/ai/threads')
+@Controller('v1/matters/:matterId/threads')
 export class AiController {
   constructor(
     private readonly ai: AiService,
@@ -64,7 +64,7 @@ export class AiController {
     @Body(new ZodBodyPipe(createThreadSchema)) body: CreateThreadInput,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.ai.createThread(actor, matterId, body.title);
+    return this.ai.createThread(actor, matterId, body.title, body.subsetId);
   }
 
   @Get(':threadId')
@@ -98,7 +98,20 @@ export class AiController {
     @Body(new ZodBodyPipe(sendMessageSchema)) body: SendMessageInput,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.ai.sendMessage(actor, matterId, threadId, body.content);
+    return this.ai.sendMessage(actor, matterId, threadId, body);
+  }
+
+  @Post(':threadId/cancel')
+  @ApiOperation({ summary: 'Stop the active Dep AI run' })
+  @ApiParam({ name: 'matterId', format: 'uuid' })
+  @ApiParam({ name: 'threadId', format: 'uuid' })
+  @ApiOkResponse({ description: 'Run state' })
+  async cancel(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Param('threadId', ParseUUIDPipe) threadId: string,
+  ) {
+    const actor = this.context.requireFirmActor();
+    return this.ai.cancelRun(actor, matterId, threadId);
   }
 
   @Delete(':threadId')

@@ -24,10 +24,19 @@ export class AiThreadListDto {
 
 export class AiCitationDto {
   @ApiProperty({ format: 'uuid' })
+  sourceId!: string;
+
+  @ApiProperty({ format: 'uuid' })
   factId!: string;
 
   @ApiProperty()
   factText!: string;
+
+  @ApiProperty()
+  factStatus!: string;
+
+  @ApiProperty()
+  manual!: boolean;
 
   @ApiProperty({ type: String, nullable: true })
   documentId!: string | null;
@@ -38,8 +47,26 @@ export class AiCitationDto {
   @ApiProperty({ type: Number, nullable: true })
   pageNumber!: number | null;
 
+  @ApiProperty({ type: Number, nullable: true })
+  sentenceStart!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  sentenceEnd!: number | null;
+
   @ApiProperty({ type: String, nullable: true })
   quote!: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  quoteHash!: string | null;
+
+  @ApiProperty()
+  sourceKind!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  capturedAt!: string;
+
+  @ApiProperty()
+  sourceDeleted!: boolean;
 }
 
 export class AiToolCallDto {
@@ -66,11 +93,32 @@ export class AiMessageDto {
   @ApiProperty({ type: [AiCitationDto] })
   citations!: AiCitationDto[];
 
+  @ApiProperty({ type: [AiCitationDto] })
+  sources!: AiCitationDto[];
+
+  @ApiProperty()
+  answer!: string;
+
+  @ApiProperty({ type: Number, nullable: true })
+  evidenceScore!: number | null;
+
+  @ApiProperty()
+  insufficientEvidence!: boolean;
+
+  @ApiProperty({ type: [String] })
+  unverifiedCitations!: string[];
+
+  @ApiProperty({ type: [String] })
+  warnings!: string[];
+
   @ApiProperty({ type: [AiToolCallDto] })
   toolCalls!: AiToolCallDto[];
 
-  @ApiProperty({ enum: ['model', 'retrieval'] })
+  @ApiProperty({ enum: ['ask', 'agent'] })
   mode!: string;
+
+  @ApiProperty({ enum: ['model'] })
+  engine!: string;
 
   @ApiProperty({ type: String, nullable: true })
   model!: string | null;
@@ -93,4 +141,31 @@ export class AiMessageResponseDto {
 
   @ApiProperty({ type: AiMessageDto })
   message!: AiMessageDto;
+
+  @ApiProperty()
+  answer!: string;
+
+  @ApiProperty({ type: [AiCitationDto] })
+  sources!: AiCitationDto[];
+
+  @ApiProperty()
+  evidenceScore!: number;
+
+  @ApiProperty()
+  insufficientEvidence!: boolean;
+
+  @ApiProperty({ type: [String] })
+  unverifiedCitations!: string[];
+
+  @ApiProperty({ type: [String] })
+  warnings!: string[];
+
+  @ApiProperty({ enum: ['ask', 'agent'] })
+  mode!: string;
+
+  @ApiProperty({ type: String, nullable: true })
+  model!: string | null;
+
+  @ApiProperty({ type: [AiToolCallDto] })
+  toolCalls!: AiToolCallDto[];
 }

@@ -1,12 +1,15 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { RequestContextService } from '../../common/request-context.service.js';
 import { appConfig } from '../../config/app.config.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
-import { firms } from '../../infrastructure/database/schema/index.js';
+import {
+  aiProviderConnections,
+  firms,
+} from '../../infrastructure/database/schema/index.js';
 import { TenantResponseDto } from './tenant.response.js';
 
 @ApiTags('Tenancy')
@@ -30,6 +33,7 @@ export class TenantController {
     if (!tenant) return { hostname: '', requiresSetup: false };
 
     let firm: { name: string; slug: string } | null = null;
+    let aiEnabled = false;
     if (tenant.firmId) {
       const [row] = await this.db
         .select({ name: firms.name, slug: firms.slug })
@@ -37,6 +41,18 @@ export class TenantController {
         .where(eq(firms.id, tenant.firmId))
         .limit(1);
       firm = row ?? null;
+
+      const [provider] = await this.db
+        .select({ id: aiProviderConnections.id })
+        .from(aiProviderConnections)
+        .where(
+          and(
+            eq(aiProviderConnections.firmId, tenant.firmId),
+            eq(aiProviderConnections.status, 'active'),
+          ),
+        )
+        .limit(1);
+      aiEnabled = Boolean(provider);
     }
 
     return {
@@ -53,7 +69,7 @@ export class TenantController {
         forceSso: appConfig.auth.forceSso,
         requireEmailVerification: appConfig.auth.requireEmailVerification,
         mailConfigured: appConfig.mail.transport === 'smtp',
-        aiEnabled: appConfig.ai.enabled,
+        aiEnabled,
         mcpServerEnabled: Boolean(appConfig.mcp.token && appConfig.mcp.firmId),
       },
     };

@@ -9,7 +9,10 @@ import type { FirmActor } from '../../common/request-context.service.js';
 import { appConfig } from '../../config/app.config.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
-import { aiProviderConnections } from '../../infrastructure/database/schema/index.js';
+import {
+  aiProviderConnections,
+  modelCalls,
+} from '../../infrastructure/database/schema/index.js';
 import { AuditService } from '../audit/audit.service.js';
 import { decryptSecret, encryptSecret } from './secret-box.js';
 
@@ -25,6 +28,33 @@ export interface ResolvedModel {
   connectionId: string;
   provider: string;
   modelId: string;
+  routeKey: string;
+}
+
+export interface ExtractionModelResult {
+  candidates: unknown[];
+  provider: string;
+  model: string;
+  degraded: boolean;
+  usage: { inputTokens: number; outputTokens: number };
+}
+
+export interface ModelCallRecord {
+  firmId: string;
+  routeKey: string;
+  capability: 'completion' | 'decision' | 'extraction' | 'ocr' | 'transcription';
+  connectionId?: string | null;
+  provider: string;
+  model: string;
+  status: 'succeeded' | 'failed';
+  latencyMs?: number | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  costUsd?: string | null;
+  degraded?: boolean;
+  errorCode?: string | null;
+  workflowRunId?: string | null;
+  messageId?: string | null;
 }
 
 @Injectable()
@@ -287,7 +317,95 @@ export class ModelGatewayService {
     return { ok: false, models: [], error };
   }
 
-  async completionModel(firmId: string, reference?: string): Promise<ResolvedModel> {
+  async recordCall(record: ModelCallRecord): Promise<void> {
+    await this.db.insert(modelCalls).values({
+      firmId: record.firmId,
+      routeKey: record.routeKey,
+      capability: record.capability,
+      connectionId: record.connectionId ?? null,
+      provider: record.provider,
+      model: record.model,
+      status: record.status,
+      latencyMs: record.latencyMs ?? null,
+      inputTokens: record.inputTokens ?? null,
+      outputTokens: record.outputTokens ?? null,
+      costUsd: record.costUsd ?? null,
+      degraded: record.degraded ?? false,
+      errorCode: record.errorCode ?? null,
+      workflowRunId: record.workflowRunId ?? null,
+      messageId: record.messageId ?? null,
+    });
+  }
+
+  async catalogue(actor: FirmActor) {
+    const connections = await this.db
+      .select()
+      .from(aiProviderConnections)
+      .where(eq(aiProviderConnections.firmId, actor.firmId))
+      .orderBy(asc(aiProviderConnections.createdAt));
+
+    return {
+      items: connections.flatMap((connection) => {
+        const models = Array.isArray(connection.models)
+          ? (connection.models as string[])
+          : [];
+        return models.map((model) => ({
+          id: `${connection.id}/${model}`,
+          connectionId: connection.id,
+          displayName: model,
+          provider: connection.kind,
+          providerLabel: connection.label,
+          capability: 'completion' as const,
+          routeKey: 'completion.balanced',
+          model,
+          cost: null,
+          costClass: null,
+          latencyClass: null,
+          contextWindow: null,
+          available: connection.status === 'active',
+          selectable: connection.status === 'active',
+        }));
+      }),
+    };
+  }
+
+  async health(actor: FirmActor) {
+    const connections = await this.db
+      .select({
+        id: aiProviderConnections.id,
+        label: aiProviderConnections.label,
+        kind: aiProviderConnections.kind,
+        status: aiProviderConnections.status,
+        lastTestedAt: aiProviderConnections.lastTestedAt,
+        lastError: aiProviderConnections.lastError,
+        models: aiProviderConnections.models,
+      })
+      .from(aiProviderConnections)
+      .where(eq(aiProviderConnections.firmId, actor.firmId))
+      .orderBy(asc(aiProviderConnections.createdAt));
+
+    return {
+      items: connections.map((connection) => ({
+        routeKey: 'completion.balanced',
+        capability: 'completion',
+        provider: connection.kind,
+        providerLabel: connection.label,
+        model: Array.isArray(connection.models)
+          ? ((connection.models as string[])[0] ?? null)
+          : null,
+        available: connection.status === 'active',
+        status: connection.status,
+        lastTestedAt: connection.lastTestedAt,
+        lastError: connection.lastError,
+      })),
+    };
+  }
+
+  async completionModel(
+    firmId: string,
+    reference?: string,
+    routeKey: 'completion.fast' | 'completion.balanced' | 'completion.thorough' = 'completion.balanced',
+  ): Promise<ResolvedModel> {
     const connections = await this.db
       .select()
       .from(aiProviderConnections)
@@ -359,6 +477,141 @@ export class ModelGatewayService {
       connectionId: connection.id,
       provider: connection.kind,
       modelId,
+      routeKey,
+    };
+  }
+
+  async extractFacts(firmId: string, text: string): Promise<ExtractionModelResult> {
+    const config = appConfig.extraction;
+    const baseURL = (
+      config.baseUrl ??
+      (config.provider === 'openrouter' ? DEFAULT_BASE_URL.openrouter : '')
+    ).replace(/\/$/, '');
+    if (!baseURL) {
+      throw new DomainError(
+        'EXTRACTION_NOT_CONFIGURED',
+        503,
+        'The operator has not configured EXTRACTION_BASE_URL for this instance',
+      );
+    }
+
+    const startedAt = Date.now();
+    const prompt = [
+      'You extract facts from legal case documents.',
+      '',
+      'Rules:',
+      '- Only extract facts explicitly stated in the supplied text. Never infer names, dates, amounts, or intent.',
+      '- Each fact is one atomic statement: entity (who), action (what), object (to whom/what), date (when).',
+      '- date must be ISO 8601. If only a relative date is given, keep wording in text and set date to null.',
+      '- sourceQuote must be copied verbatim from the document.',
+      '- confidence: 1 for a direct sentence; lower when combining clauses.',
+      '- Ignore boilerplate, signatures, headers, footers, page numbers.',
+      '- Do not deduplicate across documents; the pipeline does that.',
+      '- Return an empty array if the text contains no material fact.',
+      '',
+      'Return JSON of shape {"facts":[{text,factType,entity,action,object,date,dateText,datePrecision,sourceQuote,confidence}]}.',
+      'factType is one of event, statement, admission, denial, intent, relationship, amount, location, other.',
+      'date is ISO 8601 (YYYY-MM-DD) or null. datePrecision is day, month, year, or unknown.',
+      '',
+      `Document text:\n${text.slice(0, 120_000)}`,
+    ].join('\n');
+
+    const call = async (jsonMode: boolean) => {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      };
+      if (config.apiKey) headers.Authorization = `Bearer ${config.apiKey}`;
+      return fetch(`${baseURL}/chat/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model: config.model,
+          temperature: 0,
+          messages: [{ role: 'user', content: prompt }],
+          ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
+        }),
+        signal: AbortSignal.timeout(appConfig.ai.timeoutMs),
+      });
+    };
+
+    let response = await call(true);
+    if (response.status === 400) response = await call(false);
+    if (!response.ok) {
+      await this.recordCall({
+        firmId,
+        routeKey: 'extraction.primary',
+        capability: 'extraction',
+        provider: config.provider,
+        model: config.model,
+        status: 'failed',
+        latencyMs: Date.now() - startedAt,
+        errorCode: 'EXTRACTION_UNAVAILABLE',
+      });
+      throw new DomainError(
+        'EXTRACTION_UNAVAILABLE',
+        503,
+        `The extraction route returned ${response.status}`,
+      );
+    }
+
+    const payload = (await response.json()) as {
+      choices?: { message?: { content?: string } }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+    const content = payload.choices?.[0]?.message?.content ?? '';
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(stripCodeFence(content));
+    } catch {
+      await this.recordCall({
+        firmId,
+        routeKey: 'extraction.primary',
+        capability: 'extraction',
+        provider: config.provider,
+        model: config.model,
+        status: 'failed',
+        latencyMs: Date.now() - startedAt,
+        errorCode: 'AI_OUTPUT_INVALID',
+      });
+      throw new DomainError('AI_OUTPUT_INVALID', 502, 'The extraction model returned invalid JSON');
+    }
+
+    const candidates = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray((parsed as { facts?: unknown[] }).facts)
+        ? (parsed as { facts: unknown[] }).facts
+        : null;
+    if (!candidates) {
+      throw new DomainError(
+        'AI_OUTPUT_INVALID',
+        502,
+        'The extraction model did not return a facts array',
+      );
+    }
+
+    await this.recordCall({
+      firmId,
+      routeKey: 'extraction.primary',
+      capability: 'extraction',
+      provider: config.provider,
+      model: config.model,
+      status: 'succeeded',
+      latencyMs: Date.now() - startedAt,
+      inputTokens: payload.usage?.prompt_tokens ?? null,
+      outputTokens: payload.usage?.completion_tokens ?? null,
+      degraded: false,
+    });
+
+    return {
+      candidates,
+      provider: config.provider,
+      model: config.model,
+      degraded: false,
+      usage: {
+        inputTokens: payload.usage?.prompt_tokens ?? 0,
+        outputTokens: payload.usage?.completion_tokens ?? 0,
+      },
     };
   }
 
@@ -404,7 +657,7 @@ export class ModelGatewayService {
       models?: { name?: string }[];
     };
     const ids = (payload.data ?? payload.models ?? [])
-      .map((item) => ('id' in item ? item.id : item.name))
+      .map((item) => (item as { id?: string }).id ?? (item as { name?: string }).name)
       .filter((id): id is string => typeof id === 'string')
       .map((id) => id.replace(/^models\//, ''));
     this.logger.debug(`Provider ${kind} exposes ${ids.length} models`);
@@ -426,4 +679,11 @@ export class ModelGatewayService {
       createdAt: row.createdAt,
     };
   }
+}
+
+function stripCodeFence(value: string): string {
+  return value
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '');
 }

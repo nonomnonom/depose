@@ -24,6 +24,7 @@ import { ApiSessionAuth } from '../../common/openapi/session-auth.decorator.js';
 import { zodToOpenApiSchema } from '../../common/openapi/zod-schema.js';
 import { RequestContextService } from '../../common/request-context.service.js';
 import { ZodBodyPipe } from '../../common/zod.pipe.js';
+import { PolicyService } from '../access-control/policy.service.js';
 import {
   createProviderSchema,
   updateProviderSchema,
@@ -44,6 +45,7 @@ export class ModelGatewayController {
   constructor(
     private readonly gateway: ModelGatewayService,
     private readonly context: RequestContextService,
+    private readonly policy: PolicyService,
   ) {}
 
   @Get()
@@ -51,6 +53,7 @@ export class ModelGatewayController {
   @ApiOkResponse({ description: 'Provider connections', type: AiProviderListDto })
   async list() {
     const actor = this.context.requireFirmActor();
+    this.policy.assertFirm(actor, 'firm.update');
     return { items: await this.gateway.list(actor) };
   }
 
@@ -62,6 +65,7 @@ export class ModelGatewayController {
   @ApiConflictResponse({ description: 'Label already used', type: ErrorEnvelopeDto })
   async create(@Body(new ZodBodyPipe(createProviderSchema)) body: CreateProviderInput) {
     const actor = this.context.requireFirmActor();
+    this.policy.assertFirm(actor, 'firm.update');
     return { provider: await this.gateway.create(actor, body) };
   }
 
@@ -76,6 +80,7 @@ export class ModelGatewayController {
     @Body(new ZodBodyPipe(updateProviderSchema)) body: UpdateProviderInput,
   ) {
     const actor = this.context.requireFirmActor();
+    this.policy.assertFirm(actor, 'firm.update');
     return { provider: await this.gateway.update(actor, id, body) };
   }
 
@@ -86,6 +91,7 @@ export class ModelGatewayController {
   @ApiNotFoundResponse({ description: 'Provider not found', type: ErrorEnvelopeDto })
   async test(@Param('id', ParseUUIDPipe) id: string) {
     const actor = this.context.requireFirmActor();
+    this.policy.assertFirm(actor, 'firm.update');
     return this.gateway.test(actor, id);
   }
 
@@ -96,6 +102,25 @@ export class ModelGatewayController {
   @ApiNotFoundResponse({ description: 'Provider not found', type: ErrorEnvelopeDto })
   async remove(@Param('id', ParseUUIDPipe) id: string) {
     const actor = this.context.requireFirmActor();
+    this.policy.assertFirm(actor, 'firm.update');
     return this.gateway.remove(actor, id);
+  }
+
+  @Get('catalogue')
+  @ApiOperation({ summary: 'List completion models the firm may select' })
+  @ApiOkResponse({ description: 'Catalogue' })
+  async catalogue() {
+    const actor = this.context.requireFirmActor();
+    this.policy.assertFirm(actor, 'ai.ask');
+    return this.gateway.catalogue(actor);
+  }
+
+  @Get('health')
+  @ApiOperation({ summary: 'Completion route health for the firm' })
+  @ApiOkResponse({ description: 'Route health' })
+  async health() {
+    const actor = this.context.requireFirmActor();
+    this.policy.assertFirm(actor, 'firm.update');
+    return this.gateway.health(actor);
   }
 }

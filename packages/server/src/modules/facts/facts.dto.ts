@@ -16,6 +16,14 @@ export const factSourceInputSchema = z
   })
   .strict();
 
+export const extractFactsSchema = z
+  .object({
+    documentId: z.uuid().optional(),
+  })
+  .strict();
+
+export type ExtractFactsInput = z.infer<typeof extractFactsSchema>;
+
 export const createFactSchema = z
   .object({
     text: z.string().trim().min(3).max(4000),

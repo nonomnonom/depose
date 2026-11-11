@@ -6,10 +6,15 @@ import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
-import { documents } from '../../infrastructure/database/schema/index.js';
+import {
+  documents,
+  documentPages,
+} from '../../infrastructure/database/schema/index.js';
 import { StorageService } from '../../infrastructure/storage/storage.service.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { JobsService } from '../jobs/jobs.service.js';
+import { INGEST_QUEUE } from '../jobs/queue.constants.js';
 import type { ListDocumentsQuery, UploadDocumentInput } from './documents.dto.js';
 
 const MAX_BYTES = 100 * 1024 * 1024;
@@ -51,6 +56,7 @@ export class DocumentsService {
     private readonly storage: StorageService,
     private readonly policy: PolicyService,
     private readonly audit: AuditService,
+    private readonly jobs: JobsService,
   ) {}
 
   async list(actor: FirmActor, matterId: string, query: ListDocumentsQuery) {
@@ -145,7 +151,43 @@ export class DocumentsService {
       metadata: { matterId, fileName, sizeBytes: input.data.length, mimeType },
     });
 
-    return { document: this.toDto(created, false) };
+    const job = await this.jobs.enqueue({
+      firmId: actor.firmId,
+      matterId,
+      type: INGEST_QUEUE,
+      idempotencyKey: `ingest:${created.id}:${sha256}`,
+      payload: { documentId: created.id },
+      createdBy: actor.userId,
+    });
+
+    return { document: this.toDto(created, false), jobId: job.id };
+  }
+
+  async page(
+    actor: FirmActor,
+    matterId: string,
+    documentId: string,
+    pageNumber: number,
+  ) {
+    await this.policy.assertMatter(actor, 'document.read', matterId);
+    const row = await this.requireDocument(actor, matterId, documentId);
+    const [page] = await this.db
+      .select({
+        pageNumber: documentPages.pageNumber,
+        text: documentPages.text,
+        charCount: documentPages.charCount,
+        ocrConfidence: documentPages.ocrConfidence,
+      })
+      .from(documentPages)
+      .where(
+        and(
+          eq(documentPages.documentId, row.id),
+          eq(documentPages.pageNumber, pageNumber),
+        ),
+      )
+      .limit(1);
+    if (!page) throw DomainError.notFound('Page not found');
+    return { documentId: row.id, ...page };
   }
 
   async download(actor: FirmActor, matterId: string, documentId: string) {
@@ -185,15 +227,23 @@ export class DocumentsService {
       })
       .where(eq(documents.id, row.id))
       .returning();
+    const job = await this.jobs.enqueue({
+      firmId: actor.firmId,
+      matterId,
+      type: INGEST_QUEUE,
+      idempotencyKey: `reprocess:${row.id}:${Date.now()}`,
+      payload: { documentId: row.id },
+      createdBy: actor.userId,
+    });
     await this.audit.log({
       firmId: actor.firmId,
       action: 'document.reprocess_requested',
       resourceType: 'document',
       resourceId: row.id,
       actor,
-      metadata: { matterId },
+      metadata: { matterId, jobId: job.id },
     });
-    return this.toDto(updated, false);
+    return { ...this.toDto(updated, false), jobId: job.id };
   }
 
   private async requireDocument(actor: FirmActor, matterId: string, documentId: string) {
