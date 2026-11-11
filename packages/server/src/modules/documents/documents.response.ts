@@ -50,6 +50,23 @@ export class DocumentListDto {
   nextCursor!: string | null;
 }
 
+export class DocumentPageDto {
+  @ApiProperty({ format: 'uuid' })
+  documentId!: string;
+
+  @ApiProperty()
+  pageNumber!: number;
+
+  @ApiProperty()
+  text!: string;
+
+  @ApiProperty()
+  charCount!: number;
+
+  @ApiProperty({ type: Number, nullable: true })
+  ocrConfidence!: number | null;
+}
+
 export class DocumentResponseDto {
   @ApiProperty({ type: DocumentDto })
   document!: DocumentDto;

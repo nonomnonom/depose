@@ -75,7 +75,7 @@ export class JobsService {
       .returning();
 
     const queue = input.type === INGEST_QUEUE ? this.ingestQueue : this.extractionQueue;
-    await queue.add(input.type, { jobId: created.id }, {
+    await queue.add(input.type, { jobId: created.id, ...input.payload }, {
       jobId: created.id,
       attempts: created.maxAttempts,
       backoff: { type: 'exponential', delay: 5_000 },

@@ -32,6 +32,7 @@ import type {
   AppControllerHealth200,
   DismissOnboardingResponseDto,
   DocumentListDto,
+  DocumentPageDto,
   DocumentResponseDto,
   DocumentsControllerListParams,
   DocumentsControllerRemove200,
@@ -80,6 +81,15 @@ import type {
   OnboardingStatusDto,
   PermissionsResponseDto,
   PublicInvitationResponseDto,
+  SearchControllerSearchMatterParams,
+  SubsetFactListDto,
+  SubsetListDto,
+  SubsetResponseDto,
+  SubsetsControllerCreateBody,
+  SubsetsControllerFactsParams,
+  SubsetsControllerFromSourcesBody,
+  SubsetsControllerSetDocumentsBody,
+  SubsetsControllerUpdateBody,
   TenantResponseDto,
   UnreadCountDto
 } from './schemas';
@@ -967,6 +977,60 @@ export const modelGatewayControllerTest = async (id: string, options?: Parameter
 
 
 
+export type modelGatewayControllerRoutesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type modelGatewayControllerRoutesResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type modelGatewayControllerRoutesResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type modelGatewayControllerRoutesResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type modelGatewayControllerRoutesResponseSuccess = (modelGatewayControllerRoutesResponse200) & {
+  headers: Headers;
+};
+export type modelGatewayControllerRoutesResponseError = (modelGatewayControllerRoutesResponse401 | modelGatewayControllerRoutesResponse403 | modelGatewayControllerRoutesResponse500) & {
+  headers: Headers;
+};
+
+export type modelGatewayControllerRoutesResponse = (modelGatewayControllerRoutesResponseSuccess | modelGatewayControllerRoutesResponseError)
+
+export const getModelGatewayControllerRoutesUrl = () => {
+
+
+
+
+  return `/api/v1/firm/ai/providers/routes`
+}
+
+/**
+ * Read-only. Pipeline routes are configured by the operator through env and cannot be changed from the firm UI.
+ * @summary Operator route status for decision and extraction
+ */
+export const modelGatewayControllerRoutes = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerRoutesResponse> => {
+
+  return customFetch<modelGatewayControllerRoutesResponse>(getModelGatewayControllerRoutesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
 export type modelGatewayControllerCatalogueResponse200 = {
   data: void
   status: 200
@@ -1063,6 +1127,69 @@ export const getModelGatewayControllerHealthUrl = () => {
 export const modelGatewayControllerHealth = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerHealthResponse> => {
 
   return customFetch<modelGatewayControllerHealthResponse>(getModelGatewayControllerHealthUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type searchControllerSearchMatterResponse200 = {
+  data: void
+  status: 200
+}
+
+export type searchControllerSearchMatterResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type searchControllerSearchMatterResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type searchControllerSearchMatterResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type searchControllerSearchMatterResponseSuccess = (searchControllerSearchMatterResponse200) & {
+  headers: Headers;
+};
+export type searchControllerSearchMatterResponseError = (searchControllerSearchMatterResponse401 | searchControllerSearchMatterResponse403 | searchControllerSearchMatterResponse500) & {
+  headers: Headers;
+};
+
+export type searchControllerSearchMatterResponse = (searchControllerSearchMatterResponseSuccess | searchControllerSearchMatterResponseError)
+
+export const getSearchControllerSearchMatterUrl = (matterId: string,
+    params?: SearchControllerSearchMatterParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/matters/${matterId}/search?${stringifiedParams}` : `/api/v1/matters/${matterId}/search`
+}
+
+/**
+ * Hybrid retrieval over confirmed facts and document chunks. Falls back to lexical search with a vector_unavailable warning when embeddings or Qdrant are off.
+ * @summary Search facts and source passages
+ */
+export const searchControllerSearchMatter = async (matterId: string,
+    params?: SearchControllerSearchMatterParams, options?: Parameters<typeof customFetch>[1]): Promise<searchControllerSearchMatterResponse> => {
+
+  return customFetch<searchControllerSearchMatterResponse>(getSearchControllerSearchMatterUrl(matterId,params),
   {
     ...options,
     method: 'GET'
@@ -1510,7 +1637,7 @@ export const documentsControllerRemove = async (matterId: string,
 
 
 export type documentsControllerPageResponse200 = {
-  data: void
+  data: DocumentPageDto
   status: 200
 }
 
@@ -3167,6 +3294,65 @@ return customFetch<mattersControllerCreateResponse>(getMattersControllerCreateUr
 
 
 
+export type mattersControllerOverviewResponse200 = {
+  data: void
+  status: 200
+}
+
+export type mattersControllerOverviewResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type mattersControllerOverviewResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type mattersControllerOverviewResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type mattersControllerOverviewResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type mattersControllerOverviewResponseSuccess = (mattersControllerOverviewResponse200) & {
+  headers: Headers;
+};
+export type mattersControllerOverviewResponseError = (mattersControllerOverviewResponse401 | mattersControllerOverviewResponse403 | mattersControllerOverviewResponse404 | mattersControllerOverviewResponse500) & {
+  headers: Headers;
+};
+
+export type mattersControllerOverviewResponse = (mattersControllerOverviewResponseSuccess | mattersControllerOverviewResponseError)
+
+export const getMattersControllerOverviewUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${id}/overview`
+}
+
+/**
+ * Counts, review queue, recent documents, and recently dated confirmed facts for the matter workspace.
+ * @summary Get the matter record overview
+ */
+export const mattersControllerOverview = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<mattersControllerOverviewResponse> => {
+
+  return customFetch<mattersControllerOverviewResponse>(getMattersControllerOverviewUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
 export type mattersControllerGetResponse200 = {
   data: MatterResponseDto
   status: 200
@@ -4170,6 +4356,514 @@ export const onboardingControllerDismiss = async ( options?: Parameters<typeof c
   {
     ...options,
     method: 'POST'
+
+
+  }
+);}
+
+
+
+export type subsetsControllerListResponse200 = {
+  data: SubsetListDto
+  status: 200
+}
+
+export type subsetsControllerListResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type subsetsControllerListResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type subsetsControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type subsetsControllerListResponseSuccess = (subsetsControllerListResponse200) & {
+  headers: Headers;
+};
+export type subsetsControllerListResponseError = (subsetsControllerListResponse401 | subsetsControllerListResponse403 | subsetsControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type subsetsControllerListResponse = (subsetsControllerListResponseSuccess | subsetsControllerListResponseError)
+
+export const getSubsetsControllerListUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/subsets`
+}
+
+/**
+ * @summary List subsets in a matter
+ */
+export const subsetsControllerList = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerListResponse> => {
+
+  return customFetch<subsetsControllerListResponse>(getSubsetsControllerListUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type subsetsControllerCreateResponse201 = {
+  data: SubsetResponseDto
+  status: 201
+}
+
+export type subsetsControllerCreateResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type subsetsControllerCreateResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type subsetsControllerCreateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type subsetsControllerCreateResponseSuccess = (subsetsControllerCreateResponse201) & {
+  headers: Headers;
+};
+export type subsetsControllerCreateResponseError = (subsetsControllerCreateResponse401 | subsetsControllerCreateResponse403 | subsetsControllerCreateResponse500) & {
+  headers: Headers;
+};
+
+export type subsetsControllerCreateResponse = (subsetsControllerCreateResponseSuccess | subsetsControllerCreateResponseError)
+
+export const getSubsetsControllerCreateUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/subsets`
+}
+
+/**
+ * @summary Create a subset from documents
+ */
+export const subsetsControllerCreate = async (matterId: string,
+    subsetsControllerCreateBody: SubsetsControllerCreateBody, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerCreateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<subsetsControllerCreateResponse>(getSubsetsControllerCreateUrl(matterId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(subsetsControllerCreateBody)
+  }
+);}
+
+
+
+export type subsetsControllerFromSourcesResponse201 = {
+  data: SubsetResponseDto
+  status: 201
+}
+
+export type subsetsControllerFromSourcesResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type subsetsControllerFromSourcesResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type subsetsControllerFromSourcesResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type subsetsControllerFromSourcesResponseSuccess = (subsetsControllerFromSourcesResponse201) & {
+  headers: Headers;
+};
+export type subsetsControllerFromSourcesResponseError = (subsetsControllerFromSourcesResponse401 | subsetsControllerFromSourcesResponse403 | subsetsControllerFromSourcesResponse500) & {
+  headers: Headers;
+};
+
+export type subsetsControllerFromSourcesResponse = (subsetsControllerFromSourcesResponseSuccess | subsetsControllerFromSourcesResponseError)
+
+export const getSubsetsControllerFromSourcesUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/subsets/from-sources`
+}
+
+/**
+ * @summary Create a subset from citations or documents
+ */
+export const subsetsControllerFromSources = async (matterId: string,
+    subsetsControllerFromSourcesBody: SubsetsControllerFromSourcesBody, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerFromSourcesResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<subsetsControllerFromSourcesResponse>(getSubsetsControllerFromSourcesUrl(matterId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(subsetsControllerFromSourcesBody)
+  }
+);}
+
+
+
+export type subsetsControllerGetResponse200 = {
+  data: SubsetResponseDto
+  status: 200
+}
+
+export type subsetsControllerGetResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type subsetsControllerGetResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type subsetsControllerGetResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type subsetsControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type subsetsControllerGetResponseSuccess = (subsetsControllerGetResponse200) & {
+  headers: Headers;
+};
+export type subsetsControllerGetResponseError = (subsetsControllerGetResponse401 | subsetsControllerGetResponse403 | subsetsControllerGetResponse404 | subsetsControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type subsetsControllerGetResponse = (subsetsControllerGetResponseSuccess | subsetsControllerGetResponseError)
+
+export const getSubsetsControllerGetUrl = (matterId: string,
+    subsetId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/subsets/${subsetId}`
+}
+
+/**
+ * @summary Get a subset
+ */
+export const subsetsControllerGet = async (matterId: string,
+    subsetId: string, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerGetResponse> => {
+
+  return customFetch<subsetsControllerGetResponse>(getSubsetsControllerGetUrl(matterId,subsetId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type subsetsControllerUpdateResponse200 = {
+  data: void
+  status: 200
+}
+
+export type subsetsControllerUpdateResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type subsetsControllerUpdateResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type subsetsControllerUpdateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type subsetsControllerUpdateResponseSuccess = (subsetsControllerUpdateResponse200) & {
+  headers: Headers;
+};
+export type subsetsControllerUpdateResponseError = (subsetsControllerUpdateResponse401 | subsetsControllerUpdateResponse403 | subsetsControllerUpdateResponse500) & {
+  headers: Headers;
+};
+
+export type subsetsControllerUpdateResponse = (subsetsControllerUpdateResponseSuccess | subsetsControllerUpdateResponseError)
+
+export const getSubsetsControllerUpdateUrl = (matterId: string,
+    subsetId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/subsets/${subsetId}`
+}
+
+/**
+ * @summary Rename a subset or change its issue mode
+ */
+export const subsetsControllerUpdate = async (matterId: string,
+    subsetId: string,
+    subsetsControllerUpdateBody: SubsetsControllerUpdateBody, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<subsetsControllerUpdateResponse>(getSubsetsControllerUpdateUrl(matterId,subsetId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(subsetsControllerUpdateBody)
+  }
+);}
+
+
+
+export type subsetsControllerRemoveResponse200 = {
+  data: void
+  status: 200
+}
+
+export type subsetsControllerRemoveResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type subsetsControllerRemoveResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type subsetsControllerRemoveResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type subsetsControllerRemoveResponseSuccess = (subsetsControllerRemoveResponse200) & {
+  headers: Headers;
+};
+export type subsetsControllerRemoveResponseError = (subsetsControllerRemoveResponse401 | subsetsControllerRemoveResponse403 | subsetsControllerRemoveResponse500) & {
+  headers: Headers;
+};
+
+export type subsetsControllerRemoveResponse = (subsetsControllerRemoveResponseSuccess | subsetsControllerRemoveResponseError)
+
+export const getSubsetsControllerRemoveUrl = (matterId: string,
+    subsetId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/subsets/${subsetId}`
+}
+
+/**
+ * @summary Delete a subset
+ */
+export const subsetsControllerRemove = async (matterId: string,
+    subsetId: string, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerRemoveResponse> => {
+
+  return customFetch<subsetsControllerRemoveResponse>(getSubsetsControllerRemoveUrl(matterId,subsetId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+export type subsetsControllerSetDocumentsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type subsetsControllerSetDocumentsResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type subsetsControllerSetDocumentsResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type subsetsControllerSetDocumentsResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type subsetsControllerSetDocumentsResponseSuccess = (subsetsControllerSetDocumentsResponse200) & {
+  headers: Headers;
+};
+export type subsetsControllerSetDocumentsResponseError = (subsetsControllerSetDocumentsResponse401 | subsetsControllerSetDocumentsResponse403 | subsetsControllerSetDocumentsResponse500) & {
+  headers: Headers;
+};
+
+export type subsetsControllerSetDocumentsResponse = (subsetsControllerSetDocumentsResponseSuccess | subsetsControllerSetDocumentsResponseError)
+
+export const getSubsetsControllerSetDocumentsUrl = (matterId: string,
+    subsetId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/subsets/${subsetId}/documents`
+}
+
+/**
+ * @summary Replace the documents in a subset
+ */
+export const subsetsControllerSetDocuments = async (matterId: string,
+    subsetId: string,
+    subsetsControllerSetDocumentsBody: SubsetsControllerSetDocumentsBody, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerSetDocumentsResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<subsetsControllerSetDocumentsResponse>(getSubsetsControllerSetDocumentsUrl(matterId,subsetId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(subsetsControllerSetDocumentsBody)
+  }
+);}
+
+
+
+export type subsetsControllerFactsResponse200 = {
+  data: SubsetFactListDto
+  status: 200
+}
+
+export type subsetsControllerFactsResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type subsetsControllerFactsResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type subsetsControllerFactsResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type subsetsControllerFactsResponseSuccess = (subsetsControllerFactsResponse200) & {
+  headers: Headers;
+};
+export type subsetsControllerFactsResponseError = (subsetsControllerFactsResponse401 | subsetsControllerFactsResponse403 | subsetsControllerFactsResponse500) & {
+  headers: Headers;
+};
+
+export type subsetsControllerFactsResponse = (subsetsControllerFactsResponseSuccess | subsetsControllerFactsResponseError)
+
+export const getSubsetsControllerFactsUrl = (matterId: string,
+    subsetId: string,
+    params?: SubsetsControllerFactsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/matters/${matterId}/subsets/${subsetId}/facts?${stringifiedParams}` : `/api/v1/matters/${matterId}/subsets/${subsetId}/facts`
+}
+
+/**
+ * @summary List facts in a subset
+ */
+export const subsetsControllerFacts = async (matterId: string,
+    subsetId: string,
+    params?: SubsetsControllerFactsParams, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerFactsResponse> => {
+
+  return customFetch<subsetsControllerFactsResponse>(getSubsetsControllerFactsUrl(matterId,subsetId,params),
+  {
+    ...options,
+    method: 'GET'
 
 
   }

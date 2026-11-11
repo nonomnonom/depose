@@ -97,6 +97,19 @@ export class MattersController {
     return { matter: await this.matters.create(actor, body) };
   }
 
+  @Get(':id/overview')
+  @ApiOperation({
+    summary: 'Get the matter record overview',
+    description:
+      'Counts, review queue, recent documents, and recently dated confirmed facts for the matter workspace.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ description: 'Matter overview' })
+  @ApiNotFoundResponse({ description: 'Matter not found', type: ErrorEnvelopeDto })
+  async overview(@Param('id', ParseUUIDPipe) id: string) {
+    return this.matters.overview(this.context.requireFirmActor(), id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a matter' })
   @ApiParam({ name: 'id', format: 'uuid', description: 'Matter id' })

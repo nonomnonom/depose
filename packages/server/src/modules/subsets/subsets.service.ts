@@ -35,12 +35,12 @@ export class SubsetsService {
     const rows = await this.db
       .select({
         subset: subsets,
-        documentCount: sql<number>`(select count(*) from ${subsetDocuments} where ${subsetDocuments.subsetId} = ${subsets.id})::int`,
+        documentCount: sql<number>`(select count(*) from subset_documents sd where sd.subset_id = subsets.id)::int`,
         factCount: sql<number>`(
-          select count(distinct ${factSources.factId})
-          from ${factSources}
-          join ${subsetDocuments} on ${subsetDocuments.documentId} = ${factSources.documentId}
-          where ${subsetDocuments.subsetId} = ${subsets.id}
+          select count(distinct fs.fact_id)
+          from fact_sources fs
+          join subset_documents sd on sd.document_id = fs.document_id
+          where sd.subset_id = subsets.id
         )::int`,
       })
       .from(subsets)
@@ -233,12 +233,12 @@ export class SubsetsService {
     const rows = await this.db
       .select({
         fact: facts,
-        sourceCount: sql<number>`(select count(*) from ${factSources} where ${factSources.factId} = ${facts.id})::int`,
+        sourceCount: sql<number>`(select count(*) from fact_sources fs where fs.fact_id = facts.id)::int`,
         subsetSourceCount: sql<number>`(
-          select count(*) from ${factSources}
-          join ${subsetDocuments} on ${subsetDocuments.documentId} = ${factSources.documentId}
-          where ${factSources.factId} = ${facts.id}
-            and ${subsetDocuments.subsetId} = ${subsetId}
+          select count(*) from fact_sources fs
+          join subset_documents sd on sd.document_id = fs.document_id
+          where fs.fact_id = facts.id
+            and sd.subset_id = ${subsetId}
         )::int`,
       })
       .from(facts)
@@ -332,12 +332,12 @@ export class SubsetsService {
   private async counts(actor: FirmActor, matterId: string, subsetId: string) {
     const [row] = await this.db
       .select({
-        documentCount: sql<number>`(select count(*) from ${subsetDocuments} where ${subsetDocuments.subsetId} = ${subsetId})::int`,
+        documentCount: sql<number>`(select count(*) from subset_documents sd where sd.subset_id = ${subsetId})::int`,
         factCount: sql<number>`(
-          select count(distinct ${factSources.factId})
-          from ${factSources}
-          join ${subsetDocuments} on ${subsetDocuments.documentId} = ${factSources.documentId}
-          where ${subsetDocuments.subsetId} = ${subsetId}
+          select count(distinct fs.fact_id)
+          from fact_sources fs
+          join subset_documents sd on sd.document_id = fs.document_id
+          where sd.subset_id = ${subsetId}
         )::int`,
       })
       .from(subsets)

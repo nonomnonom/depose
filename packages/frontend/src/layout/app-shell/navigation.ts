@@ -1,10 +1,5 @@
 import type { ComponentType } from 'react';
-import {
-  Building1,
-  FileText,
-  Scale,
-  Search,
-} from '@coolicons/react';
+import { Building1, Scale } from '@coolicons/react';
 import type { IconProps } from '@coolicons/react/dynamic';
 
 export interface NavItem {
@@ -24,11 +19,7 @@ export interface NavGroup {
 export const firmNavGroups: NavGroup[] = [
   {
     label: 'Workspace',
-    items: [
-      { href: '/matters', label: 'Matters', icon: Scale, permission: 'matter.read' },
-      { href: '/search', label: 'Search', icon: Search, permission: 'search.read' },
-      { href: '/outputs', label: 'Outputs', icon: FileText, permission: 'output.read' },
-    ],
+    items: [{ href: '/matters', label: 'Matters', icon: Scale, permission: 'matter.read' }],
   },
   {
     label: 'Firm',
@@ -55,27 +46,12 @@ export function matterSections(matterId: string): MatterSection[] {
       children: [
         { label: 'Documents', href: `${base}/documents`, permission: 'document.read' },
         { label: 'Facts', href: `${base}/facts`, permission: 'fact.read' },
+        { label: 'Search', href: `${base}/search`, permission: 'search.read' },
       ],
     },
     { label: 'Subsets', href: `${base}/subsets`, permission: 'subset.read' },
-    {
-      label: 'Analysis',
-      href: `${base}/summary`,
-      permission: 'summary.read',
-      children: [
-        { label: 'Summary', href: `${base}/summary`, permission: 'summary.read' },
-        { label: 'Chronology', href: `${base}/chronology`, permission: 'event.read' },
-        {
-          label: 'Contradictions',
-          href: `${base}/intelligence`,
-          permission: 'intelligence.read',
-        },
-        { label: 'Entities', href: `${base}/entities`, permission: 'matter.read' },
-      ],
-    },
-    { label: 'Outputs', href: `${base}/outputs`, permission: 'output.read' },
-    { label: 'Live', href: `${base}/realtime`, permission: 'realtime.start' },
-    { label: 'Ask Dep AI', href: `${base}/ai`, permission: 'ai.ask' },
+    { label: 'Chronology', href: `${base}/chronology`, permission: 'event.read' },
+    { label: 'Dep AI', href: `${base}/ai`, permission: 'ai.ask' },
   ];
 }
 
@@ -91,7 +67,7 @@ const SETTINGS_SECTIONS: Record<string, string> = {
   '/settings/firm': 'Firm',
   '/settings/firm/members': 'Members',
   '/settings/firm/domains': 'Domains',
-  '/settings/firm/ai': 'AI',
+  '/settings/firm/ai': 'AI providers',
   '/settings/firm/integrations/mcp': 'Integrations',
   '/settings/user/profile': 'Profile',
   '/settings/user/security': 'Security',
@@ -111,7 +87,7 @@ const MATTER_SECTION_LABELS: Record<string, string> = {
   entities: 'Entities',
   outputs: 'Outputs',
   realtime: 'Live',
-  ai: 'Ask Dep AI',
+  ai: 'Dep AI',
   settings: 'Settings',
 };
 

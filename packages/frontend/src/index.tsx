@@ -32,6 +32,13 @@ import { NotificationsPage } from '~/scenes/notifications/NotificationsPage';
 import { DocumentsPage } from '~/scenes/documents/DocumentsPage';
 import { FactsPage } from '~/scenes/facts/FactsPage';
 import { AiPage } from '~/scenes/ai/AiPage';
+import { OverviewPage } from '~/scenes/matter/OverviewPage';
+import { ChronologyPage } from '~/scenes/matter/ChronologyPage';
+import { MatterSettingsPage } from '~/scenes/settings/MatterSettingsPage';
+import { SearchPage } from '~/scenes/search/SearchPage';
+import { SubsetsPage } from '~/scenes/subsets/SubsetsPage';
+import { SubsetWorkspacePage } from '~/scenes/subsets/SubsetWorkspacePage';
+import { AiProvidersPage } from '~/scenes/settings/ai/AiProvidersPage';
 import { InvitationPage } from '~/scenes/invitations/InvitationPage';
 import {
   NotFoundPage,
@@ -103,14 +110,7 @@ const router = createBrowserRouter([
                 element: <MatterLayout />,
                 children: [
                   { index: true, element: <Navigate to="overview" replace /> },
-                  {
-                    path: 'overview',
-                    element: matterPlaceholder(
-                      'Overview',
-                      'No activity yet',
-                      'Upload evidence to start building the matter overview.',
-                    ),
-                  },
+                  { path: 'overview', element: <OverviewPage /> },
                   { path: 'documents', element: <DocumentsPage /> },
                   {
                     path: 'documents/:documentId',
@@ -121,23 +121,8 @@ const router = createBrowserRouter([
                     ),
                   },
                   { path: 'facts', element: <FactsPage /> },
-                  {
-                    path: 'subsets',
-                    element: matterPlaceholder(
-                      'Subsets',
-                      'No subsets yet',
-                      'Subsets let the team work on a scoped slice of the matter record.',
-                    ),
-                  },
-                  { path: 'subsets/new', element: <Navigate to="../" replace /> },
-                  {
-                    path: 'subsets/:subsetId/*',
-                    element: matterPlaceholder(
-                      'Subset',
-                      'Subset workspace not available',
-                      'The subset workspace ships with retrieval and issue scoping.',
-                    ),
-                  },
+                  { path: 'subsets', element: <SubsetsPage /> },
+                  { path: 'subsets/:subsetId', element: <SubsetWorkspacePage /> },
                   {
                     path: 'summary',
                     element: matterPlaceholder(
@@ -146,14 +131,7 @@ const router = createBrowserRouter([
                       'Themes and key facts are generated from confirmed facts.',
                     ),
                   },
-                  {
-                    path: 'chronology',
-                    element: matterPlaceholder(
-                      'Chronology',
-                      'No events yet',
-                      'Events are generated from dated facts.',
-                    ),
-                  },
+                  { path: 'chronology', element: <ChronologyPage /> },
                   {
                     path: 'intelligence',
                     element: matterPlaceholder(
@@ -186,7 +164,7 @@ const router = createBrowserRouter([
                       'The output editor ships with the outputs module.',
                     ),
                   },
-                  { path: 'search', element: <Navigate to="/search" replace /> },
+                  { path: 'search', element: <SearchPage /> },
                   {
                     path: 'realtime',
                     element: matterPlaceholder(
@@ -196,14 +174,7 @@ const router = createBrowserRouter([
                     ),
                   },
                   { path: 'ai', element: <AiPage /> },
-                  {
-                    path: 'settings',
-                    element: matterPlaceholder(
-                      'Matter settings',
-                      'Settings module not available',
-                      'Matter settings ship with the settings domain.',
-                    ),
-                  },
+                  { path: 'settings', element: <MatterSettingsPage /> },
                 ],
               },
               { path: 'search', element: <PlaceholderPage title="Search" description="Search across the matter record." emptyTitle="Search is not ready" emptyDescription="Search results appear after documents and facts are indexed." /> },
@@ -217,10 +188,7 @@ const router = createBrowserRouter([
                   { path: 'firm', element: <FirmSettingsPage /> },
                   { path: 'firm/members', element: <MembersPage /> },
                   { path: 'firm/domains', element: <FirmDomainsList firmId="current" /> },
-                  {
-                    path: 'firm/ai',
-                    element: <PlaceholderPage title="Firm AI" description="Firm default models and providers." emptyTitle="No provider connected" emptyDescription="The model gateway is not configured yet." />,
-                  },
+                  { path: 'firm/ai', element: <AiProvidersPage /> },
                   { path: 'firm/integrations/mcp', element: <McpSettingsPage /> },
                   { path: 'user', element: <Navigate to="/settings/user/profile" replace /> },
                   { path: 'user/profile', element: <ProfileSettingsPage /> },

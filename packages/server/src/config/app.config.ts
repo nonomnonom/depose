@@ -63,6 +63,15 @@ const envSchema = z
     MODEL_GATEWAY_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
     MODEL_GATEWAY_STRICT_CAPABILITY: booleanFlag('true'),
 
+    /* Decision route (System One, operator-owned, spec 48) */
+    DECISION_PROVIDER: z
+      .enum(['typesafe', 'openrouter', 'openai-compatible'])
+      .default('typesafe'),
+    DECISION_BASE_URL: optionalString,
+    DECISION_API_KEY: optionalString,
+    DECISION_MODEL: z.string().default('jev-latest'),
+    DECISION_THRESHOLD: z.coerce.number().min(0).max(1).default(0.8),
+
     /* Fact extraction pipeline route (operator-owned, spec 16/48) */
     EXTRACTION_PROVIDER: z
       .enum(['scaledown', 'openrouter', 'openai-compatible', 'cloudflare'])
@@ -204,6 +213,13 @@ export interface AppConfig {
     embeddingModel: string;
     embeddingDimension: number;
   };
+  decision: {
+    provider: 'typesafe' | 'openrouter' | 'openai-compatible';
+    baseUrl?: string;
+    apiKey?: string;
+    model: string;
+    threshold: number;
+  };
   extraction: {
     provider: 'scaledown' | 'openrouter' | 'openai-compatible' | 'cloudflare';
     baseUrl?: string;
@@ -308,6 +324,13 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
       embeddingApiKey: env.EMBEDDING_API_KEY,
       embeddingModel: env.EMBEDDING_MODEL,
       embeddingDimension: env.EMBEDDING_DIMENSION,
+    },
+    decision: {
+      provider: env.DECISION_PROVIDER,
+      baseUrl: env.DECISION_BASE_URL,
+      apiKey: env.DECISION_API_KEY,
+      model: env.DECISION_MODEL,
+      threshold: env.DECISION_THRESHOLD,
     },
     extraction: {
       provider: env.EXTRACTION_PROVIDER,

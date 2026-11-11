@@ -6,7 +6,7 @@ import {
   aiControllerRemove,
   aiControllerSend,
 } from '~/generated/endpoints';
-import type { AiControllerSendBody } from '~/generated/schemas';
+import type { AiControllerCreateBody, AiControllerSendBody } from '~/generated/schemas';
 import { unwrapData } from '~/lib/api/client';
 
 const threadsKey = (matterId: string) => ['matter', matterId, 'ai', 'threads'] as const;
@@ -32,7 +32,8 @@ export function useAiThread(matterId: string, threadId: string | null) {
 export function useCreateAiThread(matterId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => unwrapData(await aiControllerCreate(matterId, {})),
+    mutationFn: async (body: AiControllerCreateBody = {}) =>
+      unwrapData(await aiControllerCreate(matterId, body)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: threadsKey(matterId) });
     },

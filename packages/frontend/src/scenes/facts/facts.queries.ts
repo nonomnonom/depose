@@ -1,7 +1,14 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import {
   factsControllerConfirm,
   factsControllerCreate,
+  factsControllerExtract,
+  factsControllerGet,
   factsControllerList,
   factsControllerReject,
 } from '~/generated/endpoints';
@@ -9,7 +16,8 @@ import type {
   FactsControllerCreateBody,
   FactsControllerListStatus,
 } from '~/generated/schemas';
-import { unwrapData } from '~/lib/api/client';
+import { api, unwrapData } from '~/lib/api/client';
+import { queryKeys } from '~/lib/query/keys';
 
 export interface FactFilters {
   q?: string;
@@ -39,7 +47,60 @@ export function useFacts(matterId: string, filters: FactFilters) {
 
 function useInvalidateFacts(matterId: string) {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'facts'] });
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'facts'] });
+    void queryClient.invalidateQueries({ queryKey: [...queryKeys.matter(matterId), 'overview'] });
+  };
+}
+
+export function useFactDetail(matterId: string, factId: string | null) {
+  return useQuery({
+    queryKey: ['matter', matterId, 'fact', factId],
+    queryFn: async () => unwrapData(await factsControllerGet(matterId, factId!)).fact,
+    enabled: Boolean(matterId && factId),
+  });
+}
+
+export interface ExtractionAccepted {
+  accepted: boolean;
+  jobIds: string[];
+  message?: string;
+}
+
+export function useRunExtraction(matterId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (documentId?: string) =>
+      api.post<ExtractionAccepted>(`/api/v1/matters/${matterId}/facts/extract`, {
+        ...(documentId ? { documentId } : {}),
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'documents'] });
+      void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'facts'] });
+      void queryClient.invalidateQueries({ queryKey: [...queryKeys.matter(matterId), 'overview'] });
+    },
+  });
+}
+
+export interface JobState {
+  id: string;
+  status: string;
+  stage: string | null;
+  progress: number;
+  result: Record<string, unknown> | null;
+  error: { code: string; message: string | null } | null;
+}
+
+export function useJob(jobId: string | null) {
+  return useQuery({
+    queryKey: ['job', jobId],
+    queryFn: () => api.get<JobState>(`/api/v1/jobs/${jobId}`),
+    enabled: Boolean(jobId),
+    refetchInterval: (query) => {
+      const state = query.state.data?.status;
+      return state === 'succeeded' || state === 'failed' || state === 'dead' ? false : 1500;
+    },
+  });
 }
 
 export function useCreateFact(matterId: string) {

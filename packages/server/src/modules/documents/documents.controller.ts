@@ -35,6 +35,7 @@ import {
 } from './documents.dto.js';
 import {
   DocumentListDto,
+  DocumentPageDto,
   DocumentResponseDto,
 } from './documents.response.js';
 import { DocumentsService } from './documents.service.js';
@@ -113,7 +114,7 @@ export class DocumentsController {
   @ApiParam({ name: 'matterId', format: 'uuid' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiParam({ name: 'pageNumber', schema: { type: 'integer', minimum: 1 } })
-  @ApiOkResponse({ description: 'Page text' })
+  @ApiOkResponse({ description: 'Page text', type: DocumentPageDto })
   @ApiNotFoundResponse({ description: 'Page not found', type: ErrorEnvelopeDto })
   async page(
     @Param('matterId', ParseUUIDPipe) matterId: string,

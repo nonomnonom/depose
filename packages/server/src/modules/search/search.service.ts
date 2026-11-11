@@ -317,7 +317,7 @@ export class SearchService {
       eq(facts.matterId, matterId),
       parsed.status
         ? eq(facts.status, parsed.status as 'proposed' | 'confirmed' | 'rejected' | 'unsupported')
-        : inArray(facts.status, ['confirmed', 'proposed']),
+        : eq(facts.status, 'confirmed'),
     ];
     if (parsed.from) conditions.push(gte(facts.dateStart, parsed.from));
     if (parsed.to) conditions.push(lte(facts.dateStart, parsed.to));

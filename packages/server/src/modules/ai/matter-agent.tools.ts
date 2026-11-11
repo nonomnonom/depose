@@ -12,6 +12,7 @@ import {
   facts,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
+import { ModelGatewayService, type DecisionQuestion } from './model-gateway.service.js';
 
 interface AgentUser extends FirmActor {
   matterId: string;
@@ -37,11 +38,30 @@ const pageInput = z.object({
   pageNumber: z.number().int().min(1).describe('1-based page number'),
 });
 
+const DECISION_KEYS = [
+  'citation_supported',
+  'answer_scope_ok',
+  'tool_write_safe',
+  'contradiction_present',
+  'issue_relevance',
+] as const;
+
+const decisionInput = z.object({
+  decisionKey: z.enum(DECISION_KEYS),
+  text: z.string().min(1).max(8_000).describe('The claim, quote, or question to evaluate'),
+  context: z
+    .string()
+    .max(12_000)
+    .optional()
+    .describe('Relevant evidence, scope, or the second fact for contradictions'),
+});
+
 @Injectable()
 export class MatterAgentTools {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly policy: PolicyService,
+    private readonly gateway: ModelGatewayService,
   ) {}
 
   @AgentFunction({
@@ -193,6 +213,81 @@ export class MatterAgentTools {
     const user = this.user(ctx);
     await this.policy.assertMatter(user, 'ai.ask', user.matterId);
     return { now: new Date().toISOString() };
+  }
+
+  @AgentFunction({
+    name: 'decision_evaluate',
+    description:
+      'Ask the typed decision model one allowlisted question. Returns a probability, confidence, threshold, and recommended action. It never writes data and does not replace your answer.',
+    inputSchema: decisionInput,
+  })
+  async decisionEvaluate(
+    { decisionKey, text, context }: z.infer<typeof decisionInput>,
+    ctx: AgentFunctionContext,
+  ) {
+    const user = this.user(ctx);
+    await this.policy.assertMatter(user, 'ai.ask', user.matterId);
+
+    let question: DecisionQuestion;
+    if (decisionKey === 'issue_relevance') {
+      question = {
+        type: 'choice',
+        instructions: 'How relevant is the fact to the issue described in the context?',
+        options: ['key', 'relevant', 'maybe_relevant', 'not_relevant'],
+      };
+    } else {
+      const prompts: Record<string, string> = {
+        citation_supported: 'Does the quote in text support the claim?',
+        answer_scope_ok: 'Is the proposed answer within the matter or subset scope?',
+        tool_write_safe: 'Is this write action unambiguous and safe without extra approval?',
+        contradiction_present: 'Do the two facts in text and context truly contradict each other?',
+      };
+      question = {
+        type: 'noul',
+        instructions: prompts[decisionKey],
+        criteria: {
+          true: 'The evidence clearly supports a yes answer.',
+          false: 'The evidence is absent, weak, or contradicts a yes answer.',
+        },
+      };
+    }
+
+    try {
+      const result = await this.gateway.decide({
+        firmId: user.firmId,
+        state: {
+          text: context ? `${text}\n\nContext:\n${context}` : text,
+          context: { decisionKey, matterId: user.matterId },
+        },
+        questions: { evaluate: question },
+      });
+      const answer = result.answers.evaluate;
+      const value = answer.type === 'choice' ? answer.choice : answer.noul;
+      const recommendedAction =
+        answer.type === 'noul'
+          ? (answer.noul ?? 0) >= answer.threshold
+            ? 'accept'
+            : 'review'
+          : value;
+      return {
+        decisionKey,
+        value,
+        confidence: answer.confidence,
+        threshold: answer.threshold,
+        recommendedAction,
+        model: result.model,
+        degraded: result.degraded,
+      };
+    } catch (error) {
+      return {
+        decisionKey,
+        available: false,
+        note:
+          error instanceof Error
+            ? error.message
+            : 'The decision route is not available. Do not invent a probability.',
+      };
+    }
   }
 
   private async searchFacts(query: string, ctx: AgentFunctionContext) {

@@ -9,6 +9,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { AllowNonMember } from '../../common/decorators/allow-non-member.decorator.js';
 import { ErrorEnvelopeDto } from '../../common/openapi/error.model.js';
 import { ApiSessionAuth } from '../../common/openapi/session-auth.decorator.js';
 import { zodToOpenApiSchema } from '../../common/openapi/zod-schema.js';
@@ -39,6 +40,7 @@ export class FirmsController {
   ) {}
 
   @Post()
+  @AllowNonMember()
   @ApiOperation({
     summary: 'Create the first firm',
     description:

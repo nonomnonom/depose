@@ -34,17 +34,13 @@ export class SubsetListDto {
   items!: SubsetDto[];
 }
 
-export class SubsetDetailDto {
+
+export class SubsetResponseDto {
   @ApiProperty({ type: SubsetDto })
   subset!: SubsetDto;
 
   @ApiProperty({ type: [String], format: 'uuid' })
   documentIds!: string[];
-}
-
-export class SubsetResponseDto {
-  @ApiProperty({ type: SubsetDetailDto })
-  data!: SubsetDetailDto;
 }
 
 export class SubsetFactDto {

@@ -41,7 +41,16 @@ async function bootstrap() {
 
   app.use(
     raw({
-      type: ['application/octet-stream', 'application/pdf'],
+      type: [
+        'application/octet-stream',
+        'application/pdf',
+        'text/*',
+        'application/rtf',
+        'message/rfc822',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'image/*',
+      ],
       limit: '100mb',
     }),
   );

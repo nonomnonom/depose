@@ -34,6 +34,16 @@ export function useDocuments(matterId: string, filters: DocumentFilters) {
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor,
     enabled: Boolean(matterId),
+    refetchInterval: (query) => {
+      const pages = query.state.data?.pages ?? [];
+      const processing = pages.some((page) =>
+        page.items.some(
+          (document) =>
+            document.status === 'queued' || document.status === 'processing',
+        ),
+      );
+      return processing ? 2_000 : false;
+    },
   });
 }
 
@@ -46,6 +56,7 @@ export function useUploadDocument(matterId: string, filters: DocumentFilters) {
       ).document,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'documents'] });
+      void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'overview'] });
     },
   });
 }
@@ -57,6 +68,7 @@ export function useDeleteDocument(matterId: string) {
       unwrapData(await documentsControllerRemove(matterId, id)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'documents'] });
+      void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'overview'] });
     },
   });
 }
@@ -68,6 +80,7 @@ export function useReprocessDocument(matterId: string) {
       unwrapData(await documentsControllerReprocess(matterId, id)).document,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'documents'] });
+      void queryClient.invalidateQueries({ queryKey: ['matter', matterId, 'overview'] });
     },
   });
 }

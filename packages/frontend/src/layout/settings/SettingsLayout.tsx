@@ -24,7 +24,7 @@ const SETTINGS_GROUPS: SettingsGroup[] = [
       { href: '/settings/firm', label: 'General', permission: 'firm.read' },
       { href: '/settings/firm/members', label: 'Members', permission: 'firm.member.manage' },
       { href: '/settings/firm/domains', label: 'Domains', permission: 'firm.read' },
-      { href: '/settings/firm/ai', label: 'AI', permission: 'firm.read' },
+      { href: '/settings/firm/ai', label: 'AI providers', permission: 'firm.update' },
       { href: '/settings/firm/integrations/mcp', label: 'Integrations', permission: 'firm.mcp.manage' },
     ],
   },

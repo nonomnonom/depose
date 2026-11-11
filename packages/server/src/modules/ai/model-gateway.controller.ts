@@ -106,6 +106,19 @@ export class ModelGatewayController {
     return this.gateway.remove(actor, id);
   }
 
+  @Get('routes')
+  @ApiOperation({
+    summary: 'Operator route status for decision and extraction',
+    description:
+      'Read-only. Pipeline routes are configured by the operator through env and cannot be changed from the firm UI.',
+  })
+  @ApiOkResponse({ description: 'Route status' })
+  async routes() {
+    const actor = this.context.requireFirmActor();
+    this.policy.assertFirm(actor, 'firm.update');
+    return this.gateway.routeStatus();
+  }
+
   @Get('catalogue')
   @ApiOperation({ summary: 'List completion models the firm may select' })
   @ApiOkResponse({ description: 'Catalogue' })

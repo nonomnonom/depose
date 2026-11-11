@@ -39,6 +39,30 @@ export interface ExtractionModelResult {
   usage: { inputTokens: number; outputTokens: number };
 }
 
+export type DecisionQuestion =
+  | { type: 'noul'; instructions: string; criteria?: Record<string, string> }
+  | { type: 'choice'; instructions: string; options: string[] }
+  | { type: 'score'; instructions: string; min?: number; max?: number }
+  | { type: 'box'; instructions: string };
+
+export interface DecisionAnswer {
+  type: 'choice' | 'noul' | 'score' | 'box';
+  choice?: string;
+  noul?: number;
+  score?: number;
+  box?: number[];
+  confidence: number;
+  threshold: number;
+}
+
+export interface DecisionResult {
+  answers: Record<string, DecisionAnswer>;
+  model: string;
+  provider: string;
+  degraded: boolean;
+  usage: { inputTokens: number; outputTokens: number; costUsd: number | null };
+}
+
 export interface ModelCallRecord {
   firmId: string;
   routeKey: string;
@@ -369,6 +393,24 @@ export class ModelGatewayService {
     };
   }
 
+  private async recordDecisionFailure(
+    firmId: string,
+    config: typeof appConfig.decision,
+    startedAt: number,
+    errorCode: string,
+  ) {
+    await this.recordCall({
+      firmId,
+      routeKey: 'decision.primary',
+      capability: 'decision',
+      provider: config.provider,
+      model: config.model,
+      status: 'failed',
+      latencyMs: Date.now() - startedAt,
+      errorCode,
+    });
+  }
+
   async health(actor: FirmActor) {
     const connections = await this.db
       .select({
@@ -398,6 +440,170 @@ export class ModelGatewayService {
         lastTestedAt: connection.lastTestedAt,
         lastError: connection.lastError,
       })),
+    };
+  }
+
+  async decide(input: {
+    firmId: string;
+    state: { text: string; context?: Record<string, unknown> };
+    questions: Record<string, DecisionQuestion>;
+  }): Promise<DecisionResult> {
+    const config = appConfig.decision;
+    if (!config.baseUrl) {
+      throw new DomainError(
+        'DECISION_NOT_CONFIGURED',
+        503,
+        'The operator has not configured DECISION_BASE_URL for this instance',
+      );
+    }
+    if (Object.keys(input.questions).length === 0) {
+      throw DomainError.validation('Decision needs at least one typed question');
+    }
+
+    const path =
+      config.provider === 'openrouter'
+        ? '/alpha/decisions'
+        : config.provider === 'typesafe'
+          ? '/systemone'
+          : '/decisions';
+    const startedAt = Date.now();
+    let response: Response;
+    try {
+      response = await fetch(`${config.baseUrl.replace(/\/$/, '')}${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {}),
+        },
+        body: JSON.stringify({
+          model: config.model,
+          state: input.state,
+          questions: input.questions,
+        }),
+        signal: AbortSignal.timeout(appConfig.ai.timeoutMs),
+      });
+    } catch (error) {
+      await this.recordDecisionFailure(input.firmId, config, startedAt, 'DECISION_UNAVAILABLE');
+      throw new DomainError(
+        'DECISION_UNAVAILABLE',
+        503,
+        `The decision route could not be reached: ${
+          error instanceof Error ? error.message : 'network error'
+        }`,
+      );
+    }
+
+    if (!response.ok) {
+      await this.recordDecisionFailure(input.firmId, config, startedAt, 'DECISION_UNAVAILABLE');
+      throw new DomainError(
+        'DECISION_UNAVAILABLE',
+        503,
+        `The decision route returned ${response.status}`,
+      );
+    }
+
+    const payload = (await response.json().catch(() => null)) as {
+      answers?: Record<string, Record<string, unknown>>;
+      usage?: { inputTokens?: number; outputTokens?: number; input_tokens?: number; output_tokens?: number; costUsd?: number };
+    } | null;
+    const rawAnswers = payload?.answers;
+    if (!rawAnswers || typeof rawAnswers !== 'object') {
+      await this.recordDecisionFailure(input.firmId, config, startedAt, 'AI_OUTPUT_INVALID');
+      throw new DomainError(
+        'AI_OUTPUT_INVALID',
+        502,
+        'The decision model returned no typed answers',
+      );
+    }
+
+    const answers: Record<string, DecisionAnswer> = {};
+    for (const [key, question] of Object.entries(input.questions)) {
+      const raw = rawAnswers[key] as Record<string, unknown> | undefined;
+      if (!raw || raw.type !== question.type) {
+        throw new DomainError(
+          'AI_OUTPUT_INVALID',
+          502,
+          `Decision answer ${key} does not match the requested type`,
+        );
+      }
+      const confidence = Number(raw.confidence ?? 0);
+      const answer: DecisionAnswer = {
+        type: question.type,
+        confidence: Number.isFinite(confidence) ? Math.min(1, Math.max(0, confidence)) : 0,
+        threshold: config.threshold,
+      };
+      if (question.type === 'noul') {
+        const noul = Number(raw.noul);
+        if (!Number.isFinite(noul) || noul < 0 || noul > 1) {
+          throw new DomainError('AI_OUTPUT_INVALID', 502, `Decision answer ${key} is not a probability`);
+        }
+        answer.noul = noul;
+      } else if (question.type === 'choice') {
+        const choice = String(raw.choice ?? '');
+        if (!question.options.includes(choice)) {
+          throw new DomainError('AI_OUTPUT_INVALID', 502, `Decision answer ${key} is not an allowed choice`);
+        }
+        answer.choice = choice;
+      } else if (question.type === 'score') {
+        const score = Number(raw.score);
+        if (!Number.isFinite(score)) {
+          throw new DomainError('AI_OUTPUT_INVALID', 502, `Decision answer ${key} is not a score`);
+        }
+        answer.score = score;
+      } else if (question.type === 'box') {
+        if (!Array.isArray(raw.box) || raw.box.some((value) => !Number.isFinite(Number(value)))) {
+          throw new DomainError('AI_OUTPUT_INVALID', 502, `Decision answer ${key} is not a box`);
+        }
+        answer.box = (raw.box as unknown[]).map(Number);
+      }
+      answers[key] = answer;
+    }
+
+    await this.recordCall({
+      firmId: input.firmId,
+      routeKey: 'decision.primary',
+      capability: 'decision',
+      provider: config.provider,
+      model: config.model,
+      status: 'succeeded',
+      latencyMs: Date.now() - startedAt,
+      inputTokens: payload?.usage?.inputTokens ?? payload?.usage?.input_tokens ?? null,
+      outputTokens: payload?.usage?.outputTokens ?? payload?.usage?.output_tokens ?? null,
+      costUsd: payload?.usage?.costUsd !== undefined ? String(payload.usage.costUsd) : null,
+      degraded: false,
+    });
+
+    return {
+      answers,
+      model: config.model,
+      provider: config.provider,
+      degraded: false,
+      usage: {
+        inputTokens: payload?.usage?.inputTokens ?? payload?.usage?.input_tokens ?? 0,
+        outputTokens: payload?.usage?.outputTokens ?? payload?.usage?.output_tokens ?? 0,
+        costUsd: payload?.usage?.costUsd ?? null,
+      },
+    };
+  }
+
+  async routeStatus() {
+    return {
+      decision: {
+        routeKey: 'decision.primary',
+        capability: 'decision',
+        provider: appConfig.decision.provider,
+        model: appConfig.decision.model,
+        available: Boolean(appConfig.decision.baseUrl),
+        threshold: appConfig.decision.threshold,
+      },
+      extraction: {
+        routeKey: 'extraction.primary',
+        capability: 'extraction',
+        provider: appConfig.extraction.provider,
+        model: appConfig.extraction.model,
+        available: Boolean(appConfig.extraction.baseUrl),
+        fallbackEnabled: appConfig.extraction.fallbackEnabled,
+      },
     };
   }
 

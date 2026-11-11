@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
+import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import { appConfig } from '../../config/app.config.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
@@ -63,6 +64,15 @@ function hashQuote(value: string): string {
   return createHash('sha256').update(normalize(value)).digest('hex');
 }
 
+function tokenOverlap(left: string, right: string): number {
+  const a = new Set(normalize(left).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  const b = new Set(normalize(right).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+  if (a.size === 0 || b.size === 0) return 0;
+  let shared = 0;
+  for (const token of a) if (b.has(token)) shared += 1;
+  return shared / Math.max(a.size, b.size);
+}
+
 @Injectable()
 export class ExtractionService {
   private readonly logger = new Logger(ExtractionService.name);
@@ -105,16 +115,35 @@ export class ExtractionService {
     const version = appConfig.extraction.pipelineVersion;
     const jobIds: string[] = [];
     for (const row of rows) {
-      const job = await this.jobs.enqueue({
-        firmId: actor.firmId,
-        matterId,
-        type: EXTRACTION_QUEUE,
-        idempotencyKey: `extract:${row.id}:${row.sha256}:${version}`,
-        payload: { documentId: row.id, pipelineVersion: version },
-        maxAttempts: 2,
-        createdBy: actor.userId,
-      });
-      jobIds.push(job.id);
+      const baseKey = `extract:${row.id}:${row.sha256}:${version}`;
+      try {
+        const job = await this.jobs.enqueue({
+          firmId: actor.firmId,
+          matterId,
+          type: EXTRACTION_QUEUE,
+          idempotencyKey: baseKey,
+          payload: { documentId: row.id, pipelineVersion: version },
+          maxAttempts: 2,
+          createdBy: actor.userId,
+        });
+        jobIds.push(job.id);
+      } catch (error) {
+        if (error instanceof DomainError && error.code === 'JOB_DEAD') {
+          /* An explicit user re-run after the operator fixed the route. */
+          const retry = await this.jobs.enqueue({
+            firmId: actor.firmId,
+            matterId,
+            type: EXTRACTION_QUEUE,
+            idempotencyKey: `${baseKey}:retry:${Date.now()}`,
+            payload: { documentId: row.id, pipelineVersion: version },
+            maxAttempts: 2,
+            createdBy: actor.userId,
+          });
+          jobIds.push(retry.id);
+          continue;
+        }
+        throw error;
+      }
     }
 
     return { accepted: true, jobIds };
@@ -165,7 +194,13 @@ export class ExtractionService {
       const result = await this.gateway.extractFacts(document.firmId, text);
 
       await this.jobs.progress(jobId, 65, 'quote_verification');
-      const counts = { candidates: result.candidates.length, quote_rejected: 0, schema_rejected: 0, stored: 0 };
+      const counts = {
+        candidates: result.candidates.length,
+        quote_rejected: 0,
+        schema_rejected: 0,
+        fuzzy_verified: 0,
+        stored: 0,
+      };
       const verified: {
         candidate: z.infer<typeof candidateSchema>;
         pageNumber: number;
@@ -173,6 +208,7 @@ export class ExtractionService {
         charEnd: number;
         sentenceStart: number;
         sentenceEnd: number;
+        verification: 'verified' | 'fuzzy';
       }[] = [];
       const seen = new Set<string>();
 
@@ -189,9 +225,47 @@ export class ExtractionService {
           continue;
         }
 
-        const page = ingested.pages.find((item) =>
+        let page = ingested.pages.find((item) =>
           normalize(item.text).includes(normalizedQuote),
         );
+        let verification: 'verified' | 'fuzzy' = 'verified';
+        if (!page) {
+          /* Deterministic verification failed. Ask the typed decision route
+           * whether the quote is supported, then keep it in review as fuzzy. */
+          const nearest = ingested.pages
+            .map((item) => ({ item, overlap: tokenOverlap(item.text, candidate.sourceQuote) }))
+            .sort((a, b) => b.overlap - a.overlap)[0];
+          if (nearest && nearest.overlap >= 0.8) {
+            try {
+              const decision = await this.gateway.decide({
+                firmId: document.firmId,
+                state: {
+                  text: nearest.item.text.slice(0, 12_000),
+                  context: { pageNumber: nearest.item.pageNumber, documentId: document.id },
+                },
+                questions: {
+                  quote_supported: {
+                    type: 'noul',
+                    instructions:
+                      'Is this quote supported verbatim or near-verbatim by the page text?',
+                    criteria: {
+                      true: 'The claim and quote are clearly present in the text.',
+                      false: 'The quote is absent, materially different, or contradicted.',
+                    },
+                  },
+                },
+              });
+              const answer = decision.answers.quote_supported;
+              if ((answer?.noul ?? 0) >= answer.threshold) {
+                page = nearest.item;
+                verification = 'fuzzy';
+                counts.fuzzy_verified += 1;
+              }
+            } catch {
+              /* Decision is optional; unavailable means the candidate stays rejected. */
+            }
+          }
+        }
         if (!page) {
           counts.quote_rejected += 1;
           continue;
@@ -216,6 +290,7 @@ export class ExtractionService {
           charEnd: Math.max(0, charEnd),
           sentenceStart,
           sentenceEnd: sentenceStart + quoteSentences,
+          verification,
         });
       }
 
@@ -271,7 +346,7 @@ export class ExtractionService {
             quote: item.candidate.sourceQuote,
             quoteHash: hashQuote(item.candidate.sourceQuote),
             sourceKind: 'extracted',
-            verification: 'verified',
+            verification: item.verification,
             lastSeenAt: new Date(),
           });
           counts.stored += 1;

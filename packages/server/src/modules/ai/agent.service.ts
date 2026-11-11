@@ -104,11 +104,12 @@ export class AgentService {
   async run(actor: FirmActor, matterId: string, input: AgentRunInput): Promise<AgentResult> {
     const mode = input.mode ?? 'ask';
     const content = input.content ?? 'Summarize the attached context.';
-    const warnings = ['vector_unavailable'];
+    const warnings: string[] = [];
 
     if (input.subsetId) await this.assertSubset(actor, matterId, input.subsetId);
 
     const evidence = await this.evidence(actor, matterId, { ...input, content });
+    warnings.push(...evidence.warnings);
     if (evidence.sources.length === 0) {
       return {
         answer:
@@ -283,7 +284,7 @@ export class AgentService {
     actor: FirmActor,
     matterId: string,
     input: AgentRunInput,
-  ): Promise<{ sources: AgentSource[]; toolCalls: AgentToolCall[] }> {
+  ): Promise<{ sources: AgentSource[]; toolCalls: AgentToolCall[]; warnings: string[] }> {
     const result = await this.search.search(actor, matterId, {
       q: input.content ?? '',
       subsetId: input.subsetId ?? undefined,
@@ -352,7 +353,7 @@ export class AgentService {
       });
     }
 
-    return { sources, toolCalls };
+    return { sources, toolCalls, warnings: result.warnings };
   }
 
   private async assertSubset(actor: FirmActor, matterId: string, subsetId: string) {
