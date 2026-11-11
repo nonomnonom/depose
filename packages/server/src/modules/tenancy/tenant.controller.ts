@@ -53,6 +53,8 @@ export class TenantController {
         forceSso: appConfig.auth.forceSso,
         requireEmailVerification: appConfig.auth.requireEmailVerification,
         mailConfigured: appConfig.mail.transport === 'smtp',
+        aiEnabled: appConfig.ai.enabled,
+        mcpServerEnabled: Boolean(appConfig.mcp.token && appConfig.mcp.firmId),
       },
     };
   }

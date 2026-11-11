@@ -11,7 +11,11 @@ export type ErrorCode =
   | 'DOMAIN_NOT_VERIFIED'
   | 'DOMAIN_LIMIT_REACHED'
   | 'INTERNAL_ERROR'
-  | 'RATE_LIMITED';
+  | 'RATE_LIMITED'
+  | 'AI_PROVIDER_NOT_CONFIGURED'
+  | 'AI_MODEL_NOT_ALLOWED'
+  | 'AI_PROVIDER_UNAVAILABLE'
+  | 'AI_OUTPUT_INVALID';
 
 export interface ErrorDetail {
   path: string;

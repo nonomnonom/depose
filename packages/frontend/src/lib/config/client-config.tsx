@@ -27,6 +27,14 @@ export interface ClientFeatures {
     /** Mail delivery is configured, so verification/reset mail can be sent. */
     mailConfigured: boolean;
   };
+  ai: {
+    /** A model provider is configured; otherwise Dep AI uses grounded retrieval only. */
+    enabled: boolean;
+  };
+  mcpServer: {
+    /** Depose itself serves a read-only MCP endpoint. */
+    enabled: boolean;
+  };
   setup: {
     /** This host still has to create the first firm. */
     required: boolean;
@@ -55,6 +63,12 @@ function toClientConfig(tenant: TenantInfo): ClientConfig {
         ssoRequired: tenant.auth.forceSso && tenant.auth.ssoEnabled,
         emailVerification: tenant.auth.requireEmailVerification,
         mailConfigured: tenant.auth.mailConfigured,
+      },
+      ai: {
+        enabled: Boolean(tenant.auth.aiEnabled),
+      },
+      mcpServer: {
+        enabled: Boolean(tenant.auth.mcpServerEnabled),
       },
       setup: {
         required: tenant.requiresSetup,
@@ -92,10 +106,10 @@ export function ClientConfigProvider({ children }: { children: ReactNode }) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background px-4">
         <div className="flex w-full max-w-sm flex-col gap-3 rounded-lg border border-border bg-card p-5">
-          <p className="text-sm font-medium">Gagal memuat konfigurasi</p>
+          <p className="text-sm font-medium">Could not load configuration</p>
           <p className="text-sm text-muted-foreground">{message}</p>
           <Button variant="outline" size="sm" className="self-start" onClick={() => void query.refetch()}>
-            Coba lagi
+            Try again
           </Button>
         </div>
       </div>

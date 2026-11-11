@@ -10,5 +10,7 @@ export const queryKeys = {
   permissions: ['me', 'permissions'] as const,
   onboarding: ['onboarding'] as const,
   matters: (filters: MatterFilters = {}) => ['matters', filters] as const,
+  matter: (id: string) => ['matter', id] as const,
+  notifications: ['notifications'] as const,
   firmDomains: ['firm', 'domains'] as const,
 };

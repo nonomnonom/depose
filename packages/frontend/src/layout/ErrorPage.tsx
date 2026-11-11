@@ -16,12 +16,12 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  title = 'Terjadi kesalahan',
-  message = 'Permintaan tidak dapat diproses.',
+  title = 'Something went wrong',
+  message = 'The request could not be completed.',
   requestId,
   onRetry,
   secondaryHref = '/matters',
-  secondaryLabel = 'Kembali ke Matter',
+  secondaryLabel = 'Back to matters',
 }: ErrorStateProps) {
   return (
     <div className="flex flex-1 items-center justify-center py-10">
@@ -34,14 +34,14 @@ export function ErrorState({
           </Alert>
           {requestId ? (
             <p className="text-xs text-muted-foreground">
-              ID permintaan: <span className="font-mono">{requestId}</span>
+              Request ID: <span className="font-mono">{requestId}</span>
             </p>
           ) : null}
           <div className="flex flex-wrap items-center gap-2">
             {onRetry ? (
               <Button onClick={onRetry}>
                 <Reload size={16} />
-                Coba lagi
+                Try again
               </Button>
             ) : null}
             <Button variant="outline" render={<a href={secondaryHref} />}>
@@ -62,18 +62,18 @@ export function NotFoundPage() {
         <div className="flex flex-col gap-3">
           <Alert>
             <CircleWarning size={16} />
-            <AlertTitle>Halaman tidak ditemukan</AlertTitle>
+            <AlertTitle>Page not found</AlertTitle>
             <AlertDescription>
-              Alamat yang Anda buka tidak tersedia atau sudah dipindahkan.
+              This address does not exist or the page has moved.
             </AlertDescription>
           </Alert>
           <div className="flex flex-wrap gap-2">
             <Button onClick={() => navigate('/matters')}>
               <Dashboard size={16} />
-              Ke Matter
+              Go to matters
             </Button>
             <Button variant="outline" onClick={() => navigate(-1)}>
-              Kembali
+              Back
             </Button>
           </div>
         </div>
@@ -89,14 +89,51 @@ export function ForbiddenPage() {
         <div className="flex flex-col gap-3">
           <Alert variant="destructive">
             <ShieldWarning size={16} />
-            <AlertTitle>Akses ditolak</AlertTitle>
+            <AlertTitle>Access denied</AlertTitle>
             <AlertDescription>
-              Peran Anda tidak memiliki izin untuk halaman ini.
+              Your role does not have permission for this page.
             </AlertDescription>
           </Alert>
           <Button variant="outline" render={<a href="/matters" />}>
-            Kembali ke Matter
+            Back to matters
           </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+export function TenantNotFoundPage() {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md p-5">
+        <div className="flex flex-col gap-3">
+          <Alert variant="destructive">
+            <CircleWarning size={16} />
+            <AlertTitle>Instance not found</AlertTitle>
+            <AlertDescription>
+              This hostname is not mapped to a firm on this instance. Contact your instance admin.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+export function MaintenancePage() {
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md p-5">
+        <div className="flex flex-col gap-3">
+          <Alert>
+            <CircleWarning size={16} />
+            <AlertTitle>Under maintenance</AlertTitle>
+            <AlertDescription>
+              Depose is temporarily unavailable while the instance is being upgraded. Try again
+              shortly.
+            </AlertDescription>
+          </Alert>
         </div>
       </Card>
     </div>
@@ -113,7 +150,7 @@ export function RouteErrorPage() {
     return (
       <ErrorState
         title={`Error ${error.status}`}
-        message={error.statusText || 'Permintaan gagal.'}
+        message={error.statusText || 'Request failed.'}
         onRetry={() => navigate(0)}
       />
     );
@@ -124,7 +161,7 @@ export function RouteErrorPage() {
     if (error.isForbidden) return <ForbiddenPage />;
     return (
       <ErrorState
-        title="Permintaan gagal"
+        title="Request failed"
         message={error.message}
         requestId={error.requestId}
         onRetry={() => navigate(0)}
@@ -132,10 +169,10 @@ export function RouteErrorPage() {
     );
   }
 
-  const message = error instanceof Error ? error.message : 'Terjadi kesalahan tak terduga.';
+  const message = error instanceof Error ? error.message : 'An unexpected error occurred.';
   return (
     <ErrorState
-      title="Terjadi kesalahan tak terduga"
+      title="Something went wrong"
       message={message}
       onRetry={() => navigate(0)}
     />
@@ -160,12 +197,12 @@ export class RootErrorBoundary extends React.Component<{ children: React.ReactNo
       return (
         <div className="flex min-h-dvh items-center justify-center bg-background px-4">
           <Card className="w-full max-w-md p-5">
-            <p className="text-sm font-medium">Aplikasi mengalami kesalahan</p>
+            <p className="text-sm font-medium">The app hit an error</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Muat ulang halaman. Jika terus terjadi, hubungi admin instance.
+              Reload the page. If it keeps happening, contact your instance admin.
             </p>
             <Button className="mt-3" onClick={() => window.location.reload()}>
-              Muat ulang
+              Reload
             </Button>
           </Card>
         </div>

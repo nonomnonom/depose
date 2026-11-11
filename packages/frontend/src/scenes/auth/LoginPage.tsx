@@ -13,7 +13,7 @@ import { queryClient } from '~/lib/query/client';
 import { meControllerMe } from '~/generated/endpoints';
 import { unwrapData } from '~/lib/api/client';
 import { signInWithEmail, signInWithSso } from '~/lib/auth/api';
-import { AuthLayout } from '~/layout/AuthLayout';
+import { AuthLayout } from '~/layout/auth/AuthLayout';
 import { loginSchema, type LoginFormValues } from '~/scenes/auth/schemas/auth';
 
 export function LoginPage() {

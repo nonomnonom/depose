@@ -1,10 +1,10 @@
-const dateFormatter = new Intl.DateTimeFormat('id-ID', {
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
   month: 'short',
   year: 'numeric',
 });
 
-const dateTimeFormatter = new Intl.DateTimeFormat('id-ID', {
+const dateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
   month: 'short',
   year: 'numeric',
@@ -17,7 +17,7 @@ export function formatDate(value: string | Date | null | undefined, timeZone?: s
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   if (!timeZone) return dateFormatter.format(date);
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -30,7 +30,7 @@ export function formatDateTime(value: string | Date | null | undefined, timeZone
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   if (!timeZone) return dateTimeFormatter.format(date);
-  return new Intl.DateTimeFormat('id-ID', {
+  return new Intl.DateTimeFormat('en-US', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -38,6 +38,18 @@ export function formatDateTime(value: string | Date | null | undefined, timeZone
     minute: '2-digit',
     timeZone,
   }).format(date);
+}
+
+export function formatRelativeDate(value: string | Date | null | undefined): string {
+  if (!value) return '—';
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  const days = Math.floor((Date.now() - date.getTime()) / 86_400_000);
+  if (days < 0) return formatDate(value);
+  if (days === 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return `${days} days ago`;
+  return formatDate(value);
 }
 
 export function initials(name: string): string {

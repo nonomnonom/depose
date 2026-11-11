@@ -50,6 +50,30 @@ const envSchema = z
     AUTH_GOOGLE_ENABLED: booleanFlag('false'),
     AUTH_REQUIRE_EMAIL_VERIFICATION: booleanFlag('false'),
 
+    /* Depose MCP server (optional, read-only, instance token) */
+    MCP_SERVER_TOKEN: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.string().min(24, 'MCP_SERVER_TOKEN must be at least 24 characters').optional(),
+    ),
+    MCP_SERVER_FIRM_ID: z.uuid().optional(),
+
+    /* Completion BYOK and gateway policy (spec 48) */
+    AI_SECRET_ENCRYPTION_KEY: optionalString,
+    MODEL_GATEWAY_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+    MODEL_GATEWAY_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
+    MODEL_GATEWAY_STRICT_CAPABILITY: booleanFlag('true'),
+
+    /* Fact extraction pipeline route (operator-owned, spec 16/48) */
+    EXTRACTION_PROVIDER: z
+      .enum(['scaledown', 'openrouter', 'openai-compatible', 'cloudflare'])
+      .default('openai-compatible'),
+    EXTRACTION_BASE_URL: optionalString,
+    EXTRACTION_API_KEY: optionalString,
+    EXTRACTION_MODEL: z.string().default('extract'),
+    EXTRACTION_FALLBACK_ENABLED: booleanFlag('false'),
+    EXTRACTION_PIPELINE_VERSION: z.string().default('fact-extraction-1'),
+    EXTRACTION_NULL_THRESHOLD: z.coerce.number().min(0).max(1).default(0.6),
+
     /* Mail (spec 29) */
     MAIL_TRANSPORT: z.enum(['file', 'smtp']).default('file'),
     MAIL_FROM: z.string().default('Depose <no-reply@localhost>'),
@@ -154,6 +178,25 @@ export interface AppConfig {
   worker: {
     concurrency: number;
   };
+  ai: {
+    encryptionKey?: string;
+    timeoutMs: number;
+    maxRetries: number;
+    strictCapability: boolean;
+  };
+  extraction: {
+    provider: 'scaledown' | 'openrouter' | 'openai-compatible' | 'cloudflare';
+    baseUrl?: string;
+    apiKey?: string;
+    model: string;
+    fallbackEnabled: boolean;
+    pipelineVersion: string;
+    nullThreshold: number;
+  };
+  mcp: {
+    token?: string;
+    firmId?: string;
+  };
   ingest: {
     host: string;
     port: number;
@@ -225,6 +268,25 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
       transport: env.MAIL_TRANSPORT,
       from: env.MAIL_FROM,
       directory: env.MAIL_DIRECTORY,
+    },
+    mcp: {
+      token: env.MCP_SERVER_TOKEN,
+      firmId: env.MCP_SERVER_FIRM_ID,
+    },
+    ai: {
+      encryptionKey: env.AI_SECRET_ENCRYPTION_KEY,
+      timeoutMs: env.MODEL_GATEWAY_TIMEOUT_MS,
+      maxRetries: env.MODEL_GATEWAY_MAX_RETRIES,
+      strictCapability: env.MODEL_GATEWAY_STRICT_CAPABILITY,
+    },
+    extraction: {
+      provider: env.EXTRACTION_PROVIDER,
+      baseUrl: env.EXTRACTION_BASE_URL,
+      apiKey: env.EXTRACTION_API_KEY,
+      model: env.EXTRACTION_MODEL,
+      fallbackEnabled: env.EXTRACTION_FALLBACK_ENABLED,
+      pipelineVersion: env.EXTRACTION_PIPELINE_VERSION,
+      nullThreshold: env.EXTRACTION_NULL_THRESHOLD,
     },
     worker: {
       concurrency: env.WORKER_CONCURRENCY,

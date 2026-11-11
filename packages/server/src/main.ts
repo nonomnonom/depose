@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
-import { json, urlencoded, type RequestHandler } from 'express';
+import { json, raw, urlencoded, type RequestHandler } from 'express';
 import { AppModule } from './app.module.js';
 import { buildOpenApiConfig } from './common/openapi/document.js';
 import { appConfig } from './config/app.config.js';
@@ -39,6 +39,12 @@ async function bootstrap() {
   const auth = app.get(AuthService);
   app.getHttpAdapter().getInstance().all('/api/auth/*splat', auth.nodeHandler);
 
+  app.use(
+    raw({
+      type: ['application/octet-stream', 'application/pdf'],
+      limit: '100mb',
+    }),
+  );
   app.use(json({ limit: '2mb' }));
   app.use(urlencoded({ extended: true, limit: '2mb' }));
 

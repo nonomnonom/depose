@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { and, eq } from 'drizzle-orm';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { Request } from 'express';
+import { ALLOW_NON_MEMBER_KEY } from '../../common/decorators/allow-non-member.decorator.js';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator.js';
 import { DomainError } from '../../common/domain-error.js';
 import { RequestContextService } from '../../common/request-context.service.js';
@@ -42,6 +43,10 @@ export class SessionGuard implements CanActivate {
       ctx.getHandler(),
       ctx.getClass(),
     ]);
+    const allowNonMember = this.reflector.getAllAndOverride<boolean>(ALLOW_NON_MEMBER_KEY, [
+      ctx.getHandler(),
+      ctx.getClass(),
+    ]);
     if (isPublic) return true;
 
     const request = ctx.switchToHttp().getRequest<Request>();
@@ -71,12 +76,14 @@ export class SessionGuard implements CanActivate {
         .limit(1);
 
       if (!row) {
-        throw DomainError.forbidden('You are not a member of this firm');
+        if (!allowNonMember) {
+          throw DomainError.forbidden('You are not a member of this firm');
+        }
+      } else {
+        role = normalizeRole(row.role);
+        memberId = row.memberId;
+        firmId = row.firmId;
       }
-
-      role = normalizeRole(row.role);
-      memberId = row.memberId;
-      firmId = row.firmId;
     }
 
     this.context.setActor({

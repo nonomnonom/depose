@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@depose/ui/components/button';
 import { Alert, AlertDescription, AlertTitle } from '@depose/ui/components/alert';
 import { CircleWarning, Check } from '@coolicons/react';
@@ -13,18 +13,21 @@ import { queryClient } from '~/lib/query/client';
 import { meControllerMe } from '~/generated/endpoints';
 import { unwrapData } from '~/lib/api/client';
 import { signUpWithEmail } from '~/lib/auth/api';
-import { AuthLayout } from '~/layout/AuthLayout';
+import { AuthLayout } from '~/layout/auth/AuthLayout';
 import { signupSchema, type SignupFormValues } from '~/scenes/auth/schemas/auth';
 
 export function SignupPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
+  const presetEmail = searchParams.get('email') ?? '';
   const { firmName, features } = useClientConfig();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { name: '', email: '', password: '', confirmPassword: '' },
+    defaultValues: { name: '', email: presetEmail, password: '', confirmPassword: '' },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -34,7 +37,14 @@ export function SignupPage() {
       try {
         const me = unwrapData(await meControllerMe());
         queryClient.setQueryData(queryKeys.me, me);
-        navigate(me.setupRequired ? '/setup' : '/matters', { replace: true });
+        navigate(
+          me.setupRequired
+            ? '/setup'
+            : returnTo && returnTo.startsWith('/')
+              ? returnTo
+              : '/matters',
+          { replace: true },
+        );
       } catch {
         setDone(true);
       }

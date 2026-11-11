@@ -41,6 +41,10 @@ export async function signInWithSso(email: string): Promise<void> {
   window.location.assign(result.url);
 }
 
+export async function updateProfile(input: { name: string }): Promise<void> {
+  await api.post('/api/auth/update-user', { name: input.name });
+}
+
 export async function signOut(): Promise<void> {
   await api.post('/api/auth/sign-out', {});
 }
