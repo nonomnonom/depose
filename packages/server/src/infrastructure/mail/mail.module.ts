@@ -1,8 +1,9 @@
-import { Module } from '@nestjs/common';
-import { MailService } from './send-mail.js';
+import { Global, Module } from '@nestjs/common';
+import { MailService } from './mail.service.js';
 
+@Global()
 @Module({
   providers: [MailService],
   exports: [MailService],
 })
-export class MailInfrastructureModule {}
+export class MailModule {}

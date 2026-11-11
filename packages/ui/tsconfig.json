@@ -13,7 +13,11 @@
     "forceConsistentCasingInFileNames": true,
     "resolvePackageJsonImports": true,
     "composite": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@depose/ui/*": ["./src/*"]
+    }
   },
-  "include": ["src", "vite.config.ts", "components.json"]
+  "include": ["src"]
 }

@@ -1,18 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AuthModule as BetterAuthModule } from '@thallesp/nestjs-better-auth';
-import { createAuth } from './auth.config.js';
-import { MailService } from '../../infrastructure/mail/send-mail.js';
-import { AuthController } from './auth.controller.js';
+import { AuditModule } from '../audit/audit.module.js';
+import { AuthService } from './auth.service.js';
+import { MeController } from './me.controller.js';
 
 @Module({
-  imports: [
-    BetterAuthModule.forRootAsync({
-      inject: [MailService],
-      useFactory: (mailService: MailService) => ({
-        auth: createAuth(mailService),
-      }),
-    }),
-  ],
-  controllers: [AuthController],
+  imports: [AuditModule],
+  providers: [AuthService],
+  controllers: [MeController],
+  exports: [AuthService],
 })
 export class AuthModule {}

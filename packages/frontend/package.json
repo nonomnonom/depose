@@ -14,12 +14,17 @@
   },
   "dependencies": {
     "@depose/ui": "workspace:*",
+    "@hookform/resolvers": "^7.0.5",
     "@nestjs/swagger": "^12.1.1",
     "@orval/fetch": "^8.47.0",
     "@orval/zod": "^8.47.0",
+    "@tanstack/react-query": "^5.107.1",
     "orval": "^8.47.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.91.0",
+    "react-router-dom": "^7.18.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
@@ -29,7 +34,7 @@
     "@vitejs/plugin-react": "^4.0.0",
     "eslint": "^10.0.0",
     "globals": "^17.0.0",
-    "typescript": "^5.0.0",
+    "typescript": "^7.0.0",
     "typescript-eslint": "^8.0.0",
     "vite": "^5.0.0"
   }

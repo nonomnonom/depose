@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { FirmsModule } from '../firms/firms.module.js';
+import { AccessControlModule } from '../access-control/access-control.module.js';
 import { MattersController } from './matters.controller.js';
 import { MattersService } from './matters.service.js';
 
 @Module({
-  imports: [FirmsModule],
+  imports: [AccessControlModule],
   controllers: [MattersController],
   providers: [MattersService],
   exports: [MattersService],

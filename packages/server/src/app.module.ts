@@ -1,62 +1,55 @@
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { Module } from '@nestjs/common';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-import { FileTemplateEngine, MailModule as BaseMailModule } from '@nestjs/mail';
-import { MastraModule } from '@mastra/nestjs';
-import { appConfig } from './config/app.config.js';
+import {
+  type MiddlewareConsumer,
+  Module,
+  type NestModule,
+  RequestMethod,
+} from '@nestjs/common';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { AppController } from './app.controller.js';
+import { CommonModule } from './common/common.module.js';
+import { CsrfGuard } from './common/csrf.guard.js';
+import { AllExceptionsFilter } from './common/exception.filter.js';
+import { RequestIdMiddleware } from './common/request-id.middleware.js';
 import { AppConfigModule } from './config/config.module.js';
+import { DatabaseModule } from './infrastructure/database/database.module.js';
+import { MailModule } from './infrastructure/mail/mail.module.js';
+import { AccessControlModule } from './modules/access-control/access-control.module.js';
+import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
-import { DocumentsModule } from './modules/documents/documents.module.js';
-import { FactsModule } from './modules/facts/facts.module.js';
+import { SessionGuard } from './modules/auth/session.guard.js';
 import { FirmsModule } from './modules/firms/firms.module.js';
-import { IntelligenceModule } from './modules/intelligence/intelligence.module.js';
 import { MattersModule } from './modules/matters/matters.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
-import { PublicConfigModule } from './modules/public-config/public-config.module.js';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
-import { mastra } from './infrastructure/mastra/index.js';
-import { createMailTransport } from './infrastructure/mail/transport.js';
-import { MailInfrastructureModule } from './infrastructure/mail/mail.module.js';
-import { QueueModule } from './infrastructure/worker/queue.module.js';
+import { TenancyModule } from './modules/tenancy/tenancy.module.js';
+import { TenantGuard } from './modules/tenancy/tenant.guard.js';
+import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
 
 @Module({
   imports: [
     AppConfigModule,
-
-    // Mail infrastructure: SMTP or file transport + template engine
-    BaseMailModule.forRootAsync({
-      useFactory: () => ({
-        transport: createMailTransport(),
-        templateEngine: new FileTemplateEngine({
-          dir: resolve(__dirname, 'infrastructure/mail/templates'),
-          layout: 'layout',
-        }),
-      }),
-    }),
-    MailInfrastructureModule,
-
+    CommonModule,
+    DatabaseModule,
+    MailModule,
+    AuditModule,
+    AccessControlModule,
+    TenancyModule,
     AuthModule,
     FirmsModule,
     MattersModule,
-    DocumentsModule,
-    FactsModule,
-    IntelligenceModule,
     OnboardingModule,
-    PublicConfigModule,
-
-    // Global queue module that provides IngestQueueService for enqueueing jobs
-    QueueModule,
-
-    // Keep last: MastraModule registers a catch-all controller.
-    MastraModule.register({
-      mastra,
-      prefix: appConfig.mastra.prefix,
-    }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    { provide: APP_GUARD, useClass: TenantGuard },
+    { provide: APP_GUARD, useClass: SessionGuard },
+    { provide: APP_GUARD, useClass: CsrfGuard },
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer
+      .apply(RequestIdMiddleware, TenantMiddleware)
+      .forRoutes({ path: '{*path}', method: RequestMethod.ALL });
+  }
+}

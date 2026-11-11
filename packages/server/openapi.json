@@ -1,0 +1,1977 @@
+{
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "description": "Public and unversioned. Returns ok while the process serves requests.",
+        "operationId": "AppController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Service is up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Liveness probe",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/tenant": {
+      "get": {
+        "description": "Public. Resolves the firm bound to the request hostname and exposes the auth policy the UI must follow. Returns an empty hostname when the host is unmapped.",
+        "operationId": "TenantController_getTenant",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resolved tenant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Resolve the current host",
+        "tags": [
+          "Tenancy"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "description": "Returns the identity, firm membership details, current tenant, and auth policy in one call. `firm` is null until the user completes setup.",
+        "operationId": "MeController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get the signed-in user",
+        "tags": [
+          "Identity"
+        ]
+      }
+    },
+    "/api/v1/me/permissions": {
+      "get": {
+        "description": "Empty when the user has no firm membership yet.",
+        "operationId": "MeController_permissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Allowed actions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List permissions for the current role",
+        "tags": [
+          "Identity"
+        ]
+      }
+    },
+    "/api/v1/firm": {
+      "post": {
+        "description": "One-time bootstrap for this instance. Requires an authenticated user without a firm and self sign-up enabled. Creates the firm, its primary subdomain, and promotes the caller to admin.",
+        "operationId": "FirmsController_setup",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Firm setup payload",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "role": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "primaryLanguage": {
+                    "default": "id",
+                    "type": "string",
+                    "enum": [
+                      "id",
+                      "en"
+                    ]
+                  },
+                  "jurisdiction": {
+                    "default": "ID",
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 8
+                  },
+                  "timezone": {
+                    "default": "UTC",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "slug": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 40,
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Firm created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmSetupResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The instance is already configured or the slug is taken",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create the first firm",
+        "tags": [
+          "Firm"
+        ]
+      },
+      "get": {
+        "operationId": "FirmsController_current",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current firm",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Firm not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get the current firm",
+        "tags": [
+          "Firm"
+        ]
+      },
+      "patch": {
+        "operationId": "FirmsController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Fields to change",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "primaryLanguage": {
+                    "type": "string",
+                    "enum": [
+                      "id",
+                      "en"
+                    ]
+                  },
+                  "jurisdiction": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 8
+                  },
+                  "defaultTimezone": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated firm",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Firm not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Update firm settings",
+        "tags": [
+          "Firm"
+        ]
+      }
+    },
+    "/api/v1/firm/domains": {
+      "get": {
+        "operationId": "FirmsController_domains",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Domains bound to the firm",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmDomainsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Firm not configured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List firm domains",
+        "tags": [
+          "Firm"
+        ]
+      }
+    },
+    "/api/v1/matters": {
+      "get": {
+        "description": "Cursor paginated and ordered by last update, newest first. Admins see every matter in the firm; other roles see only matters they belong to.",
+        "operationId": "MattersController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Page size, default 20, maximum 100",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "description": "Opaque cursor returned as nextCursor by the previous page",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive search on the matter name",
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by matter status",
+            "schema": {
+              "enum": [
+                "active",
+                "closed",
+                "archived"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page of matters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatterListDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "List matters",
+        "tags": [
+          "Matters"
+        ]
+      },
+      "post": {
+        "description": "The caller becomes a full member and, unless another lead is given, the lead lawyer.",
+        "operationId": "MattersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "New matter",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "matterNumber": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
+                  },
+                  "type": {
+                    "default": "other",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "openedDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "leadLawyerId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "tags": {
+                    "default": [],
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Matter created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Create a matter",
+        "tags": [
+          "Matters"
+        ]
+      }
+    },
+    "/api/v1/matters/{id}": {
+      "get": {
+        "operationId": "MattersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Matter id",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Matter id is not a UUID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Matter not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get a matter",
+        "tags": [
+          "Matters"
+        ]
+      },
+      "patch": {
+        "description": "Field changes and status transitions in one call. Allowed transitions are active/closed/archived per spec 05; anything else returns 409.",
+        "operationId": "MattersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Matter id",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Fields to change",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "matterNumber": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 60
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  },
+                  "description": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "closed",
+                      "archived"
+                    ]
+                  },
+                  "leadLawyerId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "tags": {
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 40
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated matter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload or matter id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Matter not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Invalid status transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Update a matter",
+        "tags": [
+          "Matters"
+        ]
+      }
+    },
+    "/api/v1/onboarding": {
+      "get": {
+        "operationId": "OnboardingController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Checklist state for the current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatusDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get onboarding status",
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/dismiss": {
+      "post": {
+        "description": "Idempotent for the current user; creates the progress row on first call.",
+        "operationId": "OnboardingController_dismiss",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "Checklist dismissed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DismissOnboardingResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Dismiss the onboarding checklist",
+        "tags": [
+          "Onboarding"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Depose API",
+    "description": "Depose self-hosted API. All domain endpoints live under `/api/v1`; health lives at `/api/health`.\n\n## Authentication\nBrowser clients use the Better Auth session cookie. Mutations additionally require the `X-CSRF-Token` header or a trusted origin.\n\n## Errors\nFailures return `{ statusCode, code, message, details, requestId }`, where `code` comes from the registry in spec 31 and `requestId` matches the `X-Request-Id` response header.\n\n## Lists\nCollections are cursor paginated: `{ items, nextCursor, hasMore, warnings }`. Pass `cursor` and `limit` (max 100) to page.\n\n## Tenancy\nRequests are resolved by hostname. Use the subdomain of your firm or a verified custom domain.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Liveness probes, outside the versioned API"
+    },
+    {
+      "name": "Tenancy",
+      "description": "Host resolution for the current firm"
+    },
+    {
+      "name": "Identity",
+      "description": "The signed-in user and their permissions"
+    },
+    {
+      "name": "Firm",
+      "description": "Firm setup, settings, and domains"
+    },
+    {
+      "name": "Matters",
+      "description": "Matter records"
+    },
+    {
+      "name": "Onboarding",
+      "description": "First-run checklist state"
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://{host}",
+      "description": "Firm host",
+      "variables": {
+        "host": {
+          "default": "localhost:3000",
+          "description": "Firm subdomain or verified custom domain"
+        }
+      }
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "better-auth.session_token",
+        "description": "Better Auth session cookie. In production the browser prefixes it with `__Secure-`."
+      }
+    },
+    "schemas": {
+      "ErrorDetailDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Dotted path of the offending field",
+            "example": "name"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable reason",
+            "example": "Required"
+          }
+        },
+        "required": [
+          "path",
+          "message"
+        ]
+      },
+      "ErrorEnvelopeDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "description": "HTTP status code",
+            "example": 400
+          },
+          "code": {
+            "type": "string",
+            "description": "Machine readable code from the error registry (spec 31)",
+            "example": "VALIDATION_ERROR"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable message",
+            "example": "Validation failed"
+          },
+          "details": {
+            "description": "Field-level details, empty when none",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetailDto"
+            }
+          },
+          "requestId": {
+            "type": "string",
+            "description": "Request id, also returned in the X-Request-Id response header",
+            "example": "6d0b2d8e-5d1e-4a2a-9f52-0f0f0f0f0f0f"
+          }
+        },
+        "required": [
+          "statusCode",
+          "code",
+          "message",
+          "details",
+          "requestId"
+        ]
+      },
+      "TenantFirmDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "TenantAuthDto": {
+        "type": "object",
+        "properties": {
+          "allowSelfSignup": {
+            "type": "boolean"
+          },
+          "requireAdminApproval": {
+            "type": "boolean"
+          },
+          "ssoEnabled": {
+            "type": "boolean"
+          },
+          "forceSso": {
+            "type": "boolean"
+          },
+          "requireEmailVerification": {
+            "type": "boolean"
+          },
+          "mailConfigured": {
+            "type": "boolean",
+            "description": "True when SMTP is configured and mail can be delivered"
+          }
+        },
+        "required": [
+          "allowSelfSignup",
+          "requireAdminApproval",
+          "ssoEnabled",
+          "forceSso",
+          "requireEmailVerification",
+          "mailConfigured"
+        ]
+      },
+      "TenantResponseDto": {
+        "type": "object",
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "example": "malkan-partners.localhost"
+          },
+          "firm": {
+            "description": "Null on an unmapped or bootstrap host",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TenantFirmDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "domainType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "subdomain",
+              "custom",
+              null
+            ]
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "isBootstrapHost": {
+            "type": "boolean"
+          },
+          "requiresSetup": {
+            "type": "boolean",
+            "description": "True when this host still has to create the first firm"
+          },
+          "auth": {
+            "$ref": "#/components/schemas/TenantAuthDto"
+          }
+        },
+        "required": [
+          "hostname",
+          "firm",
+          "domainType",
+          "isPrimary",
+          "isBootstrapHost",
+          "requiresSetup",
+          "auth"
+        ]
+      },
+      "MeUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name"
+        ]
+      },
+      "MeFirmDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "primaryLanguage": {
+            "type": "string",
+            "enum": [
+              "id",
+              "en"
+            ]
+          },
+          "jurisdiction": {
+            "type": "string"
+          },
+          "defaultTimezone": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "lawyer",
+              "paralegal",
+              "viewer",
+              "guest"
+            ]
+          },
+          "memberId": {
+            "type": "string",
+            "description": "Firm membership id"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "primaryLanguage",
+          "jurisdiction",
+          "defaultTimezone",
+          "settings",
+          "role",
+          "memberId"
+        ]
+      },
+      "TenantDto": {
+        "type": "object",
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "example": "malkan-partners.localhost"
+          },
+          "domainType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "subdomain",
+              "custom",
+              null
+            ]
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "isBootstrapHost": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hostname",
+          "domainType",
+          "isPrimary",
+          "isBootstrapHost"
+        ]
+      },
+      "MeAuthDto": {
+        "type": "object",
+        "properties": {
+          "allowSelfSignup": {
+            "type": "boolean"
+          },
+          "forceSso": {
+            "type": "boolean"
+          },
+          "ssoEnabled": {
+            "type": "boolean"
+          },
+          "requireEmailVerification": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "allowSelfSignup",
+          "forceSso",
+          "ssoEnabled",
+          "requireEmailVerification"
+        ]
+      },
+      "MeResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/MeUserDto"
+          },
+          "firm": {
+            "description": "Null until the user joins a firm",
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeFirmDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tenant": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TenantDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "setupRequired": {
+            "type": "boolean",
+            "description": "True when the user still has to create a firm"
+          },
+          "auth": {
+            "$ref": "#/components/schemas/MeAuthDto"
+          }
+        },
+        "required": [
+          "user",
+          "firm",
+          "tenant",
+          "setupRequired",
+          "auth"
+        ]
+      },
+      "PermissionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "description": "Canonical action identifiers allowed for the current firm role",
+            "example": [
+              "firm.read",
+              "matter.read",
+              "matter.create"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "permissions"
+        ]
+      },
+      "FirmDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "organizationId": {
+            "type": "string",
+            "description": "Better Auth organization id"
+          },
+          "name": {
+            "type": "string",
+            "example": "Malkan & Partners"
+          },
+          "slug": {
+            "type": "string",
+            "example": "malkan-partners"
+          },
+          "primaryLanguage": {
+            "type": "string",
+            "enum": [
+              "id",
+              "en"
+            ],
+            "example": "id"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "example": "ID"
+          },
+          "defaultTimezone": {
+            "type": "string",
+            "example": "Asia/Jakarta"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "User id of the firm owner"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "name",
+          "slug",
+          "primaryLanguage",
+          "jurisdiction",
+          "defaultTimezone",
+          "ownerId",
+          "settings",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "FirmSetupResponseDto": {
+        "type": "object",
+        "properties": {
+          "firm": {
+            "$ref": "#/components/schemas/FirmDto"
+          },
+          "primaryHost": {
+            "type": "string",
+            "example": "malkan-partners.localhost"
+          },
+          "loginUrl": {
+            "type": "string",
+            "example": "https://malkan-partners.localhost"
+          },
+          "currentHostEnabled": {
+            "type": "boolean",
+            "description": "Whether the current host was mapped for local development"
+          }
+        },
+        "required": [
+          "firm",
+          "primaryHost",
+          "loginUrl",
+          "currentHostEnabled"
+        ]
+      },
+      "FirmResponseDto": {
+        "type": "object",
+        "properties": {
+          "firm": {
+            "$ref": "#/components/schemas/FirmDto"
+          }
+        },
+        "required": [
+          "firm"
+        ]
+      },
+      "FirmDomainDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hostname": {
+            "type": "string",
+            "example": "malkan-partners.localhost"
+          },
+          "domainType": {
+            "type": "string",
+            "enum": [
+              "subdomain",
+              "custom"
+            ]
+          },
+          "isPrimary": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "verifying",
+              "active",
+              "failed",
+              "disabled"
+            ]
+          },
+          "sslStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "issued",
+              "expired",
+              "failed",
+              "external"
+            ]
+          },
+          "lastCheckedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "hostname",
+          "domainType",
+          "isPrimary",
+          "status",
+          "sslStatus",
+          "lastCheckedAt",
+          "lastError"
+        ]
+      },
+      "FirmDomainsResponseDto": {
+        "type": "object",
+        "properties": {
+          "domains": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FirmDomainDto"
+            }
+          }
+        },
+        "required": [
+          "domains"
+        ]
+      },
+      "MatterDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firmId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Acquisition of PT Nusantara"
+          },
+          "matterNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "M-2026-014"
+          },
+          "type": {
+            "type": "string",
+            "example": "corporate"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed",
+              "archived"
+            ],
+            "example": "active"
+          },
+          "openedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "example": "2026-03-01"
+          },
+          "closedDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "example": null
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          },
+          "leadLawyerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "User id of the lead lawyer"
+          },
+          "tags": {
+            "example": [
+              "corporate",
+              "priority"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "deletedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "User id of the creator"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "firmId",
+          "name",
+          "matterNumber",
+          "type",
+          "status",
+          "openedDate",
+          "closedDate",
+          "description",
+          "leadLawyerId",
+          "tags",
+          "settings",
+          "deletedAt",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "MatterListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MatterDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Opaque cursor for the next page"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "warnings": {
+            "description": "Non-fatal warnings from the query",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "hasMore",
+          "warnings"
+        ]
+      },
+      "MatterResponseDto": {
+        "type": "object",
+        "properties": {
+          "matter": {
+            "$ref": "#/components/schemas/MatterDto"
+          }
+        },
+        "required": [
+          "matter"
+        ]
+      },
+      "OnboardingStepsDto": {
+        "type": "object",
+        "properties": {
+          "firmConfigured": {
+            "type": "boolean"
+          },
+          "firstMatter": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "firmConfigured",
+          "firstMatter"
+        ]
+      },
+      "OnboardingStatusDto": {
+        "type": "object",
+        "properties": {
+          "dismissed": {
+            "type": "boolean",
+            "description": "True after the user dismisses the checklist"
+          },
+          "steps": {
+            "$ref": "#/components/schemas/OnboardingStepsDto"
+          }
+        },
+        "required": [
+          "dismissed",
+          "steps"
+        ]
+      },
+      "DismissOnboardingResponseDto": {
+        "type": "object",
+        "properties": {
+          "dismissed": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "dismissed"
+        ]
+      }
+    }
+  }
+}

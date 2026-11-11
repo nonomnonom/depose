@@ -1,1 +1,13 @@
-/* Frontend-specific global styles can be added here */
+@import '@depose/ui/globals.css';
+
+@source "../../src/**/*.{ts,tsx}";
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
