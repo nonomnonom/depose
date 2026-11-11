@@ -2,18 +2,18 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AiService } from '@nestjs/ai';
 import { createHash } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
-import { DomainError } from '../../common/domain-error.js';
-import type { FirmActor } from '../../common/request-context.service.js';
-import type { Database } from '../../infrastructure/database/database.client.js';
-import { DATABASE } from '../../infrastructure/database/database.module.js';
+import { DomainError } from '../../../common/domain-error.js';
+import type { FirmActor } from '../../../common/request-context.service.js';
+import type { Database } from '../../../infrastructure/database/database.client.js';
+import { DATABASE } from '../../../infrastructure/database/database.module.js';
 import {
   documents,
   subsets,
-} from '../../infrastructure/database/schema/index.js';
-import { AuditService } from '../audit/audit.service.js';
-import { SearchService } from '../search/search.service.js';
+} from '../../../infrastructure/database/schema/index.js';
+import { AuditService } from '../../audit/audit.service.js';
+import { SearchService } from '../../search/search.service.js';
 import { MatterAgentTools } from './matter-agent.tools.js';
-import { ModelGatewayService } from './model-gateway.service.js';
+import { ModelGatewayService } from '../platform/model-gateway.service.js';
 
 export interface AgentSource {
   sourceId: string;

@@ -2,17 +2,17 @@ import { Inject, Injectable } from '@nestjs/common';
 import { AgentFunction, type AgentFunctionContext } from '@nestjs/ai';
 import { and, desc, eq, ilike, inArray, or } from 'drizzle-orm';
 import { z } from 'zod';
-import type { FirmActor } from '../../common/request-context.service.js';
-import type { Database } from '../../infrastructure/database/database.client.js';
-import { DATABASE } from '../../infrastructure/database/database.module.js';
+import type { FirmActor } from '../../../common/request-context.service.js';
+import type { Database } from '../../../infrastructure/database/database.client.js';
+import { DATABASE } from '../../../infrastructure/database/database.module.js';
 import {
   documents,
   documentPages,
   factSources,
   facts,
-} from '../../infrastructure/database/schema/index.js';
-import { PolicyService } from '../access-control/policy.service.js';
-import { ModelGatewayService, type DecisionQuestion } from './model-gateway.service.js';
+} from '../../../infrastructure/database/schema/index.js';
+import { PolicyService } from '../../access-control/policy.service.js';
+import { ModelGatewayService, type DecisionQuestion } from '../platform/model-gateway.service.js';
 
 interface AgentUser extends FirmActor {
   matterId: string;

@@ -12,7 +12,7 @@ import {
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
-import { VectorService } from '../search/vector.service.js';
+import { VectorService } from '../vector/vector.service.js';
 import type {
   CreateFactInput,
   ListFactsQuery,

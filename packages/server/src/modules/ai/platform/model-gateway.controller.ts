@@ -19,12 +19,12 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { ErrorEnvelopeDto } from '../../common/openapi/error.model.js';
-import { ApiSessionAuth } from '../../common/openapi/session-auth.decorator.js';
-import { zodToOpenApiSchema } from '../../common/openapi/zod-schema.js';
-import { RequestContextService } from '../../common/request-context.service.js';
-import { ZodBodyPipe } from '../../common/zod.pipe.js';
-import { PolicyService } from '../access-control/policy.service.js';
+import { ErrorEnvelopeDto } from '../../../common/openapi/error.model.js';
+import { ApiSessionAuth } from '../../../common/openapi/session-auth.decorator.js';
+import { zodToOpenApiSchema } from '../../../common/openapi/zod-schema.js';
+import { RequestContextService } from '../../../common/request-context.service.js';
+import { ZodBodyPipe } from '../../../common/zod.pipe.js';
+import { PolicyService } from '../../access-control/policy.service.js';
 import {
   createProviderSchema,
   updateProviderSchema,

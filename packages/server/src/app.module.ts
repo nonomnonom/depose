@@ -21,10 +21,13 @@ import { AccessControlModule } from './modules/access-control/access-control.mod
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { SessionGuard } from './modules/auth/session.guard.js';
-import { AiModule } from './modules/ai/ai.module.js';
+import { PlatformAiModule } from './modules/ai/platform/platform-ai.module.js';
+import { AgentModule } from './modules/ai/agent/agent.module.js';
+import { ConversationsModule } from './modules/ai/conversations/conversations.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
-import { ExtractionModule } from './modules/extraction/extraction.module.js';
+import { ExtractionsModule } from './modules/ai/extractions/extractions.module.js';
+import { SystemOneModule } from './modules/ai/system-one/system-one.module.js';
 import { FactsModule } from './modules/facts/facts.module.js';
 import { FirmsModule } from './modules/firms/firms.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
@@ -34,9 +37,13 @@ import { DeposeMcpServerModule } from './modules/mcp-server/mcp-server.module.js
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { SearchModule } from './modules/search/search.module.js';
+import { VectorModule } from './modules/vector/vector.module.js';
 import { SubsetsModule } from './modules/subsets/subsets.module.js';
 import { TenancyModule } from './modules/tenancy/tenancy.module.js';
 import { UserPreferencesModule } from './modules/settings/user-preferences.module.js';
+import { IntelligenceModule } from './modules/intelligence/intelligence.module.js';
+import { ChronologyModule } from './modules/chronology/chronology.module.js';
+import { WebhooksModule } from './modules/webhooks/webhooks.module.js';
 import { TenantGuard } from './modules/tenancy/tenant.guard.js';
 import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
 
@@ -71,10 +78,13 @@ import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
     AccessControlModule,
     TenancyModule,
     AuthModule,
-    AiModule,
+    PlatformAiModule,
+    AgentModule,
+    ConversationsModule,
     JobsModule,
     DocumentsModule,
-    ExtractionModule,
+    ExtractionsModule,
+    SystemOneModule,
     FactsModule,
     FirmsModule,
     IdentityModule,
@@ -84,8 +94,12 @@ import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
     NotificationsModule,
     OnboardingModule,
     SearchModule,
+    VectorModule,
     SubsetsModule,
     UserPreferencesModule,
+    IntelligenceModule,
+    ChronologyModule,
+    WebhooksModule,
   ],
   controllers: [AppController],
   providers: [

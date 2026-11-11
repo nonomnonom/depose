@@ -1,23 +1,23 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, desc, eq } from 'drizzle-orm';
-import { DomainError } from '../../common/domain-error.js';
-import type { FirmActor } from '../../common/request-context.service.js';
-import type { Database } from '../../infrastructure/database/database.client.js';
-import { DATABASE } from '../../infrastructure/database/database.module.js';
+import { DomainError } from '../../../common/domain-error.js';
+import type { FirmActor } from '../../../common/request-context.service.js';
+import type { Database } from '../../../infrastructure/database/database.client.js';
+import { DATABASE } from '../../../infrastructure/database/database.module.js';
 import {
   messageSources,
   messages,
   subsets,
   threads,
-} from '../../infrastructure/database/schema/index.js';
-import { PolicyService } from '../access-control/policy.service.js';
-import { AuditService } from '../audit/audit.service.js';
+} from '../../../infrastructure/database/schema/index.js';
+import { PolicyService } from '../../access-control/policy.service.js';
+import { AuditService } from '../../audit/audit.service.js';
 import {
   AgentService,
   type AgentSource,
   type AgentToolCall,
   type AgentRunInput,
-} from './agent.service.js';
+} from '../agent/agent.service.js';
 
 @Injectable()
 export class AiService {

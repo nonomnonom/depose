@@ -4,16 +4,16 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { LanguageModel } from 'ai';
 import { and, asc, eq } from 'drizzle-orm';
-import { DomainError } from '../../common/domain-error.js';
-import type { FirmActor } from '../../common/request-context.service.js';
-import { appConfig } from '../../config/app.config.js';
-import type { Database } from '../../infrastructure/database/database.client.js';
-import { DATABASE } from '../../infrastructure/database/database.module.js';
+import { DomainError } from '../../../common/domain-error.js';
+import type { FirmActor } from '../../../common/request-context.service.js';
+import { appConfig } from '../../../config/app.config.js';
+import type { Database } from '../../../infrastructure/database/database.client.js';
+import { DATABASE } from '../../../infrastructure/database/database.module.js';
 import {
   aiProviderConnections,
   modelCalls,
-} from '../../infrastructure/database/schema/index.js';
-import { AuditService } from '../audit/audit.service.js';
+} from '../../../infrastructure/database/schema/index.js';
+import { AuditService } from '../../audit/audit.service.js';
 import { decryptSecret, encryptSecret } from './secret-box.js';
 
 const DEFAULT_BASE_URL: Record<string, string> = {

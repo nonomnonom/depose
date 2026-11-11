@@ -144,6 +144,8 @@ export class FirmSettingsService {
         language: parsed.defaults.language ?? DEFAULT_FIRM_SETTINGS.defaults.language,
         timezone: parsed.defaults.timezone ?? DEFAULT_FIRM_SETTINGS.defaults.timezone,
       },
+      notifications:
+        parsed.notifications ?? DEFAULT_FIRM_SETTINGS.notifications,
       flags: parsed.flags ?? DEFAULT_FIRM_SETTINGS.flags,
     };
   }

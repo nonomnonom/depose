@@ -12,7 +12,7 @@ import {
   subsets,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
-import { VectorService } from './vector.service.js';
+import { VectorService } from '../vector/vector.service.js';
 
 const STOPWORDS = new Set([
   'the', 'and', 'for', 'with', 'that', 'this', 'what', 'when', 'where', 'who',

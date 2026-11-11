@@ -1,12 +1,9 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
-import { DomainError } from '../../common/domain-error.js';
-import { DocumentChunkService } from '../documents/document-chunk.service.js';
-import { DocumentTextService } from '../documents/document-text.service.js';
-import { JobsService } from '../jobs/jobs.service.js';
-import { VectorService } from '../search/vector.service.js';
-import { EXTRACTION_QUEUE, INGEST_QUEUE } from '../jobs/queue.constants.js';
+import { DomainError } from '../../../common/domain-error.js';
+import { JobsService } from '../../jobs/jobs.service.js';
+import { EXTRACTION_QUEUE } from '../../jobs/queue.constants.js';
 import { ExtractionService } from './extraction.service.js';
 
 abstract class TrackedProcessor extends WorkerHost {
@@ -49,45 +46,6 @@ abstract class TrackedProcessor extends WorkerHost {
     this.logger.error(
       JSON.stringify({ event: 'job.failed', jobId, code, message: message.slice(0, 200) }),
     );
-  }
-}
-
-@Processor(INGEST_QUEUE)
-export class IngestProcessor extends TrackedProcessor {
-  protected readonly logger = new Logger(IngestProcessor.name);
-
-  constructor(
-    jobs: JobsService,
-    private readonly documentText: DocumentTextService,
-    private readonly chunks: DocumentChunkService,
-    private readonly vector: VectorService,
-  ) {
-    super(jobs);
-  }
-
-  async process(job: Job): Promise<Record<string, unknown>> {
-    const { jobId, documentId } = await this.start(job);
-    try {
-      const result = await this.documentText.ingest(documentId);
-      let chunkCount = 0;
-      let indexed = 0;
-      if (result.status === 'done') {
-        await this.jobs.progress(jobId, 60, 'chunking');
-        chunkCount = await this.chunks.rebuild(documentId);
-        await this.jobs.progress(jobId, 80, 'embedding');
-        indexed = (await this.vector.indexDocument(documentId)).indexed;
-      }
-      return await this.finish(jobId, {
-        documentId,
-        pageCount: result.pageCount,
-        status: result.status,
-        chunks: chunkCount,
-        indexedChunks: indexed,
-      });
-    } catch (error) {
-      await this.recordFailure(jobId, error);
-      throw error;
-    }
   }
 }
 

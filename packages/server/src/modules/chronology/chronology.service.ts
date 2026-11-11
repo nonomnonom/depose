@@ -59,12 +59,16 @@ export class ChronologyService {
     const hasMore = datedRows.length > limit;
     const datedItems = datedRows.slice(0, limit).map(({ fact, sourceCount }) => {
       const dateStart = fact.dateStart;
-      if (!dateStart) throw new DomainError(INTERNAL_ERROR, 500, 'chronology query returned null dateStart');
-      return this.toDto(fact, sourceCount, dateStart);
+      if (!dateStart) throw new DomainError('INTERNAL_ERROR', 500, 'chronology query returned null dateStart');
+      return this.toDto(fact, sourceCount, dateStart as string, fact.dateEnd ?? null);
     });
 
     const undatedRow = await this.db
-      .select({ count: sql<number>`count(*)::int` })
+      .select(
+        {
+          count: sql<number>`count(*)::int`,
+        },
+      )
       .from(facts)
       .where(
         and(
@@ -76,7 +80,7 @@ export class ChronologyService {
       )
       .limit(1);
 
-    const undatedCount = undatedRow[0]?.count ?? 0;
+    const undatedCount = (undatedRow[0]?.count as number) ?? 0;
 
     return {
       items: datedItems,
@@ -85,14 +89,19 @@ export class ChronologyService {
     };
   }
 
-  private toDto(fact: typeof facts.$inferSelect, sourceCount: number, dateStart: Date): ChronologyRowDto {
+  private toDto(
+    fact: typeof facts.$inferSelect,
+    sourceCount: number,
+    dateStart: string,
+    dateEnd: string | null = null,
+  ): ChronologyRowDto {
     return {
       id: fact.id,
       matterId: fact.matterId,
       text: fact.text,
       factType: fact.factType,
-      dateStart: dateStart.toISOString().slice(0, 10),
-      dateEnd: fact.dateEnd ? fact.dateEnd.toISOString().slice(0, 10) : null,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
       dateText: fact.dateText,
       status: fact.status,
       origin: fact.origin,

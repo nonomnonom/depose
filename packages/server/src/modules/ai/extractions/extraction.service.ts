@@ -2,25 +2,25 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
-import { DomainError } from '../../common/domain-error.js';
+import { DomainError } from '../../../common/domain-error.js';
 
 import type { ExtractFactsInput } from './extraction.dto.js';
-import type { FirmActor } from '../../common/request-context.service.js';
-import { appConfig } from '../../config/app.config.js';
-import type { Database } from '../../infrastructure/database/database.client.js';
-import { DATABASE } from '../../infrastructure/database/database.module.js';
+import type { FirmActor } from '../../../common/request-context.service.js';
+import { appConfig } from '../../../config/app.config.js';
+import type { Database } from '../../../infrastructure/database/database.client.js';
+import { DATABASE } from '../../../infrastructure/database/database.module.js';
 import {
   documents,
   extractionRuns,
   factSources,
   facts,
-} from '../../infrastructure/database/schema/index.js';
-import { PolicyService } from '../access-control/policy.service.js';
-import { ModelGatewayService } from '../ai/model-gateway.service.js';
-import { DocumentTextService } from '../documents/document-text.service.js';
-import { JobsService } from '../jobs/jobs.service.js';
-import { EXTRACTION_QUEUE } from '../jobs/queue.constants.js';
-import { VectorService } from '../search/vector.service.js';
+} from '../../../infrastructure/database/schema/index.js';
+import { PolicyService } from '../../access-control/policy.service.js';
+import { ModelGatewayService } from '../platform/model-gateway.service.js';
+import { DocumentTextService } from '../../documents/document-text.service.js';
+import { JobsService } from '../../jobs/jobs.service.js';
+import { EXTRACTION_QUEUE } from '../../jobs/queue.constants.js';
+import { VectorService } from '../../vector/vector.service.js';
 
 const factTypeValues = [
   'event',
