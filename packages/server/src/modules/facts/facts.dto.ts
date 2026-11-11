@@ -16,14 +16,6 @@ export const factSourceInputSchema = z
   })
   .strict();
 
-export const extractFactsSchema = z
-  .object({
-    documentId: z.uuid().optional(),
-  })
-  .strict();
-
-export type ExtractFactsInput = z.infer<typeof extractFactsSchema>;
-
 export const createFactSchema = z
   .object({
     text: z.string().trim().min(3).max(4000),
@@ -33,10 +25,14 @@ export const createFactSchema = z
     source: factSourceInputSchema.optional(),
   })
   .strict()
-  .refine((value) => !value.dateStart || !value.dateEnd || value.dateEnd >= value.dateStart, {
-    message: 'dateEnd must be on or after dateStart',
-    path: ['dateEnd'],
-  });
+  .refine(
+    (value) =>
+      !value.dateStart || !value.dateEnd || value.dateEnd >= value.dateStart,
+    {
+      message: 'dateEnd must be on or after dateStart',
+      path: ['dateEnd'],
+    },
+  );
 
 export type CreateFactInput = z.infer<typeof createFactSchema>;
 

@@ -36,6 +36,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { SearchModule } from './modules/search/search.module.js';
 import { SubsetsModule } from './modules/subsets/subsets.module.js';
 import { TenancyModule } from './modules/tenancy/tenancy.module.js';
+import { UserPreferencesModule } from './modules/settings/user-preferences.module.js';
 import { TenantGuard } from './modules/tenancy/tenant.guard.js';
 import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
 
@@ -84,6 +85,7 @@ import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
     OnboardingModule,
     SearchModule,
     SubsetsModule,
+    UserPreferencesModule,
   ],
   controllers: [AppController],
   providers: [

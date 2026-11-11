@@ -23,8 +23,8 @@ export type ErrorCode =
   | 'DECISION_UNAVAILABLE'
   | 'DECISION_NOT_CONFIGURED'
   | 'DOCUMENT_TEXT_UNAVAILABLE'
-  | 'CITATION_NOT_FOUND';
-
+  | 'CITATION_NOT_FOUND'
+  | 'INTERNAL_ERROR';
 
 export interface ErrorDetail {
   path: string;
@@ -73,5 +73,9 @@ export class DomainError extends Error {
       409,
       `Cannot change status from ${from} to ${to}`,
     );
+  }
+
+  static internalServerError(message = 'Internal server error'): DomainError {
+    return new DomainError('INTERNAL_ERROR', 500, message);
   }
 }

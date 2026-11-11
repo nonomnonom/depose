@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DomainError } from '../../common/domain-error.js';
+
+import type { ExtractFactsInput } from './extraction.dto.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import { appConfig } from '../../config/app.config.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
@@ -89,7 +91,7 @@ export class ExtractionService {
   async request(
     actor: FirmActor,
     matterId: string,
-    input: { documentId?: string },
+    input: ExtractFactsInput,
   ) {
     await this.policy.assertMatter(actor, 'fact.create', matterId);
 

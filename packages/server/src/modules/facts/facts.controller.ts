@@ -30,15 +30,15 @@ import { parseOrThrow, ZodBodyPipe } from '../../common/zod.pipe.js';
 import { ExtractionService } from '../extraction/extraction.service.js';
 import {
   createFactSchema,
-  extractFactsSchema,
   factStatusValues,
   listFactsQuerySchema,
   updateFactSchema,
   type CreateFactInput,
-  type ExtractFactsInput,
   type ListFactsQuery,
   type UpdateFactInput,
 } from './facts.dto.js';
+import { extractFactsSchema } from '../extraction/extraction.dto.js';
+import type { ExtractFactsInput } from '../extraction/extraction.dto.js';
 import {
   FactDetailResponseDto,
   FactListDto,

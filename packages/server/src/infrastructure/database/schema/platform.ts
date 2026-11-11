@@ -533,3 +533,24 @@ export const usageCounters = pgTable(
   },
   (table) => [primaryKey({ columns: [table.firmId, table.periodStart, table.metric] })],
 );
+
+export const userPreferences = pgTable(
+  'user_preferences',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id').notNull().unique(),
+    locale: text('locale').notNull().default('en'),
+    timezone: text('timezone').notNull().default('UTC'),
+    theme: text('theme').notNull().default('system'),
+    density: text('density').notNull().default('comfortable'),
+    notifications: jsonb('notifications')
+      .$type<{ email: boolean; inApp: boolean; digest: boolean }>()
+      .notNull()
+      .default({ email: true, inApp: true, digest: false }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('user_preferences_user_id_unique').on(table.userId)],
+);
+
+export type UserPreferences = typeof userPreferences.$inferSelect;
