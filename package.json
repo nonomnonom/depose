@@ -18,8 +18,14 @@
     "turbo": "^2.11.10",
     "typescript": "7.0.2"
   },
+  "dependencies": {
+    "@coolicons/react": "^4.11.0"
+  },
   "packageManager": "pnpm@11.25.0",
   "engines": {
     "node": ">=24"
+  },
+  "dependencies": {
+    "@coolicons/react": "^5.2.0"
   }
 }
