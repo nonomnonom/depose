@@ -9,23 +9,28 @@
     "preview": "vite preview",
     "check-types": "tsc --noEmit",
     "lint": "eslint . --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
+    "generate:api": "orval"
   },
   "dependencies": {
     "@depose/ui": "workspace:*",
+    "@nestjs/swagger": "^12.1.1",
+    "@orval/fetch": "^8.47.0",
+    "@orval/zod": "^8.47.0",
+    "orval": "^8.47.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@tailwindcss/vite": "^4.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.0.0",
-    "@tailwindcss/vite": "^4.0.0",
     "eslint": "^10.0.0",
-    "@eslint/js": "^10.0.0",
     "globals": "^17.0.0",
-    "typescript-eslint": "^8.0.0",
     "typescript": "^5.0.0",
+    "typescript-eslint": "^8.0.0",
     "vite": "^5.0.0"
   }
 }

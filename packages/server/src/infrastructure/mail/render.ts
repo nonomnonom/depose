@@ -1,11 +1,7 @@
-import { renderTemplate } from "./render-template.js";
+import { renderTemplate } from './render-template.js';
 
 export type EmailTemplate =
-  | "reset-password"
-  | "verify-email"
-  | "welcome"
-  | "inquiry"
-  | "order-confirmation";
+  'reset-password' | 'verify-email' | 'welcome' | 'inquiry' | 'order-confirmation';
 
 export { renderTemplate };
 

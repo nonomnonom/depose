@@ -1,6 +1,6 @@
-import { Injectable } from "@nestjs/common";
-import { Mailer, type MailSendOptions } from "@nestjs/mail";
-import { renderTemplate } from "./render.js";
+import { Injectable } from '@nestjs/common';
+import { Mailer, type MailSendOptions } from '@nestjs/mail';
+import { renderTemplate } from './render.js';
 
 @Injectable()
 export class MailService {

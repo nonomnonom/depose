@@ -1,0 +1,38 @@
+FROM node:24-alpine AS base
+
+RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
+
+WORKDIR /app
+
+FROM base AS deps
+
+COPY package.json pnpm-lock.yaml ./
+COPY packages/frontend/package.json packages/frontend/package.json
+COPY packages/ui/package.json packages/ui/package.json
+
+RUN pnpm install --frozen-lockfile
+
+FROM base AS build
+
+COPY --from=deps /app/node_modules /app/node_modules
+COPY packages packages
+COPY . .
+
+WORKDIR /app/packages/frontend
+RUN pnpm install --frozen-lockfile --filter @depose/frontend
+RUN pnpm --filter @depose/frontend exec prettier --write "src/**/*.{ts,tsx,css,json,md}"
+RUN pnpm --filter @depose/frontend exec eslint . --fix
+RUN pnpm --filter @depose/frontend build
+
+FROM base AS dev
+
+WORKDIR /app
+COPY --from=deps /app/node_modules /app/node_modules
+COPY packages packages
+COPY . .
+
+WORKDIR /app/packages/frontend
+RUN pnpm install --frozen-lockfile --filter @depose/frontend
+
+EXPOSE 5173
+CMD ["pnpm", "--filter", "@depose/frontend", "exec", "vite", "--host", "0.0.0.0"]

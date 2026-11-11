@@ -1,19 +1,24 @@
-import { NestFactory } from "@nestjs/core";
-import { MASTRA } from "@mastra/nestjs";
-import type { Mastra } from "@mastra/core/mastra";
-import { AppModule } from "./app.module.js";
-import { appConfig } from "./config/app.config.js";
+import { NestFactory } from '@nestjs/core';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from './app.module.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    bodyParser: false,
+  const app = await NestFactory.create(AppModule);
+
+  app.setGlobalPrefix('api');
+
+  const config = new DocumentBuilder()
+    .setTitle('Depose API')
+    .setDescription('Depose backend API')
+    .setVersion('1.0')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document, {
+    customSiteTitle: 'Depose API',
   });
-  app.enableShutdownHooks();
-  await app.listen(appConfig.port);
-  await app.get<Mastra>(MASTRA).startWorkers();
+
+  await app.listen(3000);
 }
 
-bootstrap().catch((error: unknown) => {
-  console.error("Failed to start server:", error);
-  process.exit(1);
-});
+bootstrap();

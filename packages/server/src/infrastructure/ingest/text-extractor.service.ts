@@ -1,11 +1,11 @@
-import { Injectable, UnsupportedMediaTypeException } from "@nestjs/common";
+import { Injectable, UnsupportedMediaTypeException } from '@nestjs/common';
 
 const TEXT_MIME_TYPES = new Set([
-  "text/plain",
-  "text/markdown",
-  "text/csv",
-  "text/html",
-  "application/json",
+  'text/plain',
+  'text/markdown',
+  'text/csv',
+  'text/html',
+  'application/json',
 ]);
 
 /**
@@ -15,10 +15,10 @@ const TEXT_MIME_TYPES = new Set([
 @Injectable()
 export class TextExtractorService {
   extract(mimeType: string, content: string): string {
-    const normalizedType = mimeType.toLowerCase().split(";")[0]?.trim() ?? "";
-    if (normalizedType.startsWith("text/") || TEXT_MIME_TYPES.has(normalizedType)) {
+    const normalizedType = mimeType.toLowerCase().split(';')[0]?.trim() ?? '';
+    if (normalizedType.startsWith('text/') || TEXT_MIME_TYPES.has(normalizedType)) {
       const text = content.trim();
-      if (!text) throw new UnsupportedMediaTypeException("Document content is empty");
+      if (!text) throw new UnsupportedMediaTypeException('Document content is empty');
       return text;
     }
     throw new UnsupportedMediaTypeException(

@@ -22,12 +22,8 @@ function upperBound(values: number[], target: number): number {
  * records the sentence range it covers, so it can be cited as
  * "page N, sentences X-Y".
  */
-export function chunkText(
-  text: string,
-  maxLength = 1200,
-  overlap = 200,
-): TextChunk[] {
-  const normalized = text.replace(/\r\n/g, "\n").trim();
+export function chunkText(text: string, maxLength = 1200, overlap = 200): TextChunk[] {
+  const normalized = text.replace(/\r\n/g, '\n').trim();
   if (!normalized) return [];
 
   const sentenceEnds: number[] = [];
@@ -36,11 +32,8 @@ export function chunkText(
   }
   const sentencesAt = (offset: number) => upperBound(sentenceEnds, offset);
 
-  const effectiveOverlap = Math.min(
-    Math.max(overlap, 0),
-    Math.floor(maxLength / 2),
-  );
-  const pages = normalized.split("\f");
+  const effectiveOverlap = Math.min(Math.max(overlap, 0), Math.floor(maxLength / 2));
+  const pages = normalized.split('\f');
   const chunks: TextChunk[] = [];
   let pageOffset = 0;
 
@@ -55,8 +48,8 @@ export function chunkText(
     while (start < page.length) {
       let end = Math.min(start + maxLength, page.length);
       if (end < page.length) {
-        const paragraphBreak = page.lastIndexOf("\n\n", end);
-        const sentenceBreak = page.lastIndexOf(". ", end);
+        const paragraphBreak = page.lastIndexOf('\n\n', end);
+        const sentenceBreak = page.lastIndexOf('. ', end);
         const breakAt = Math.max(paragraphBreak, sentenceBreak);
         if (breakAt > start + maxLength / 2) end = breakAt + 1;
       }

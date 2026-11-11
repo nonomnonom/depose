@@ -1,0 +1,23 @@
+{
+  "name": "@depose/docker",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev:infra": "docker compose -f docker-compose.dev.yml up -d",
+    "dev:infra:down": "docker compose -f docker-compose.dev.yml down",
+    "dev:down": "docker compose -f docker-compose.dev.yml down -v",
+    "dev": "docker compose -f docker-compose.yml -f docker-compose.override.yml up --build",
+    "dev:stop": "docker compose -f docker-compose.yml -f docker-compose.override.yml stop",
+    "build": "docker compose -f docker-compose.yml -f docker-compose.override.yml build",
+    "up": "docker compose -f docker-compose.yml -f docker-compose.override.yml up -d",
+    "up:prod": "docker compose -f docker-compose.yml up -d",
+    "down": "docker compose -f docker-compose.yml -f docker-compose.override.yml down",
+    "down:prod": "docker compose -f docker-compose.yml down",
+    "logs": "docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f",
+    "logs:server": "docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f server",
+    "logs:worker": "docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f worker",
+    "lint": "echo skip",
+    "check-types": "echo skip",
+    "format": "echo skip"
+  }
+}

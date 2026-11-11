@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: depose-worker
+  labels:
+    app: depose-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: depose-worker
+  template:
+    metadata:
+      labels:
+        app: depose-worker
+    spec:
+      containers:
+        - name: worker
+          image: depose/server:latest
+          command: ["node", "dist/worker.main.js"]
+          env:
+            - name: DATABASE_URL
+              value: postgresql://depose:changethis@depose-postgres:5432/depose
+            - name: REDIS_HOST
+              value: depose-redis
+            - name: REDIS_PORT
+              value: "6379"

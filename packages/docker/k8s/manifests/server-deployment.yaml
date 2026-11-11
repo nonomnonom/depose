@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: depose-server
+  labels:
+    app: depose-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: depose-server
+  template:
+    metadata:
+      labels:
+        app: depose-server
+    spec:
+      containers:
+        - name: server
+          image: depose/server:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: postgresql://depose:changethis@depose-postgres:5432/depose
+            - name: REDIS_HOST
+              value: depose-redis
+            - name: REDIS_PORT
+              value: "6379"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10

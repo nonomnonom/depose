@@ -1,7 +1,7 @@
-import { Global, Module } from "@nestjs/common";
-import { appConfig, type AppConfig } from "./app.config.js";
+import { Global, Module } from '@nestjs/common';
+import { appConfig, type AppConfig } from './app.config.js';
 
-export const APP_CONFIG = Symbol("APP_CONFIG");
+export const APP_CONFIG = Symbol('APP_CONFIG');
 
 @Global()
 @Module({

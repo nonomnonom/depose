@@ -1,6 +1,6 @@
-import { Module } from "@nestjs/common";
-import { FirmsController } from "./firms.controller.js";
-import { FirmsService } from "./firms.service.js";
+import { Module } from '@nestjs/common';
+import { FirmsController } from './firms.controller.js';
+import { FirmsService } from './firms.service.js';
 
 @Module({
   controllers: [FirmsController],

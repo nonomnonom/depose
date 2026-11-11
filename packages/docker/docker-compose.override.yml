@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  server:
+    build:
+      context: ../../
+      dockerfile: packages/docker/Dockerfile.server
+      target: dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://${POSTGRES_USER:-depose}:${POSTGRES_PASSWORD:-depose}@db:5432/${POSTGRES_DB:-depose}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    ports:
+      - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
+    volumes:
+      - ../../packages/server/src:/app/packages/server/src:ro
+      - ../../packages/server/package.json:/app/packages/server/package.json:ro
+
+  frontend:
+    build:
+      context: ../../
+      dockerfile: packages/docker/Dockerfile.frontend
+      target: dev
+    environment:
+      NODE_ENV: development
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://host.docker.internal:3000/api}
+    ports:
+      - "${FRONTEND_PORT:-5173}:${FRONTEND_PORT:-5173}"
+    volumes:
+      - ../../packages/frontend/src:/app/packages/frontend/src:ro
+      - ../../packages/frontend/package.json:/app/packages/frontend/package.json:ro
+      - ../../vite.config.ts:/app/vite.config.ts:ro
