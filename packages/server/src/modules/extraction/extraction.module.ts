@@ -5,6 +5,7 @@ import { AccessControlModule } from '../access-control/access-control.module.js'
 import { AiModule } from '../ai/ai.module.js';
 import { DocumentsModule } from '../documents/documents.module.js';
 import { JobsModule } from '../jobs/jobs.module.js';
+import { SearchModule } from '../search/search.module.js';
 import { ExtractionProcessor, IngestProcessor } from './extraction.processor.js';
 import { ExtractionService } from './extraction.service.js';
 
@@ -15,6 +16,7 @@ import { ExtractionService } from './extraction.service.js';
     AiModule,
     DocumentsModule,
     JobsModule,
+    SearchModule,
   ],
   providers: [ExtractionService, ExtractionProcessor, IngestProcessor],
   exports: [ExtractionService],

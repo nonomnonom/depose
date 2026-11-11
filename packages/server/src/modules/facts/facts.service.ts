@@ -12,6 +12,7 @@ import {
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { VectorService } from '../search/vector.service.js';
 import type {
   CreateFactInput,
   ListFactsQuery,
@@ -28,6 +29,7 @@ export class FactsService {
     @Inject(DATABASE) private readonly db: Database,
     private readonly policy: PolicyService,
     private readonly audit: AuditService,
+    private readonly vector: VectorService,
   ) {}
 
   async list(actor: FirmActor, matterId: string, query: ListFactsQuery) {
@@ -128,6 +130,8 @@ export class FactsService {
       return fact;
     });
 
+    await this.vector.indexFacts([created.id]);
+
     await this.audit.log({
       firmId: actor.firmId,
       action: 'fact.created',
@@ -187,6 +191,7 @@ export class FactsService {
     await this.policy.assertMatter(actor, 'fact.delete', matterId);
     const fact = await this.requireFact(actor, matterId, factId);
     await this.db.delete(facts).where(eq(facts.id, fact.id));
+    await this.vector.removeFact(fact.id);
     await this.audit.log({
       firmId: actor.firmId,
       action: 'fact.deleted',
@@ -214,6 +219,8 @@ export class FactsService {
       .set({ status, updatedAt: new Date() })
       .where(eq(facts.id, fact.id))
       .returning();
+    if (status === 'confirmed') await this.vector.indexFacts([fact.id]);
+    else await this.vector.removeFact(fact.id);
     await this.audit.log({
       firmId: actor.firmId,
       action: status === 'confirmed' ? 'fact.confirmed' : 'fact.rejected',

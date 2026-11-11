@@ -74,6 +74,16 @@ const envSchema = z
     EXTRACTION_PIPELINE_VERSION: z.string().default('fact-extraction-1'),
     EXTRACTION_NULL_THRESHOLD: z.coerce.number().min(0).max(1).default(0.6),
 
+    /* Retrieval, embeddings, Qdrant (spec 22) */
+    VECTOR_SEARCH_ENABLED: booleanFlag('true'),
+    QDRANT_URL: optionalString,
+    QDRANT_API_KEY: optionalString,
+    QDRANT_COLLECTION_PREFIX: z.string().regex(/^[a-z0-9_]+$/).default('depose'),
+    EMBEDDING_BASE_URL: optionalString,
+    EMBEDDING_API_KEY: optionalString,
+    EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
+    EMBEDDING_DIMENSION: z.coerce.number().int().positive().default(1536),
+
     /* Mail (spec 29) */
     MAIL_TRANSPORT: z.enum(['file', 'smtp']).default('file'),
     MAIL_FROM: z.string().default('Depose <no-reply@localhost>'),
@@ -184,6 +194,16 @@ export interface AppConfig {
     maxRetries: number;
     strictCapability: boolean;
   };
+  retrieval: {
+    vectorEnabled: boolean;
+    qdrantUrl?: string;
+    qdrantApiKey?: string;
+    collectionPrefix: string;
+    embeddingBaseUrl?: string;
+    embeddingApiKey?: string;
+    embeddingModel: string;
+    embeddingDimension: number;
+  };
   extraction: {
     provider: 'scaledown' | 'openrouter' | 'openai-compatible' | 'cloudflare';
     baseUrl?: string;
@@ -278,6 +298,16 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
       timeoutMs: env.MODEL_GATEWAY_TIMEOUT_MS,
       maxRetries: env.MODEL_GATEWAY_MAX_RETRIES,
       strictCapability: env.MODEL_GATEWAY_STRICT_CAPABILITY,
+    },
+    retrieval: {
+      vectorEnabled: env.VECTOR_SEARCH_ENABLED,
+      qdrantUrl: env.QDRANT_URL,
+      qdrantApiKey: env.QDRANT_API_KEY,
+      collectionPrefix: env.QDRANT_COLLECTION_PREFIX,
+      embeddingBaseUrl: env.EMBEDDING_BASE_URL,
+      embeddingApiKey: env.EMBEDDING_API_KEY,
+      embeddingModel: env.EMBEDDING_MODEL,
+      embeddingDimension: env.EMBEDDING_DIMENSION,
     },
     extraction: {
       provider: env.EXTRACTION_PROVIDER,

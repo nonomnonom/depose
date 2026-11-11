@@ -1,19 +1,17 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AiService } from '@nestjs/ai';
 import { createHash } from 'node:crypto';
-import { and, desc, eq, ilike, inArray, or } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
   documents,
-  factSources,
-  facts,
-  subsetDocuments,
   subsets,
 } from '../../infrastructure/database/schema/index.js';
 import { AuditService } from '../audit/audit.service.js';
+import { SearchService } from '../search/search.service.js';
 import { MatterAgentTools } from './matter-agent.tools.js';
 import { ModelGatewayService } from './model-gateway.service.js';
 
@@ -72,25 +70,7 @@ export interface AgentRunInput {
   }[];
 }
 
-const STOPWORDS = new Set([
-  'the', 'and', 'for', 'with', 'that', 'this', 'what', 'when', 'where', 'who',
-  'does', 'did', 'was', 'were', 'are', 'from', 'into', 'about', 'yang', 'dan',
-  'untuk', 'dengan', 'apa', 'kapan', 'siapa', 'apakah', 'adalah', 'pada',
-]);
-
 const MAX_EVIDENCE = 8;
-
-function searchTerms(query: string): string[] {
-  return [
-    ...new Set(
-      query
-        .toLowerCase()
-        .split(/[^a-z0-9]+/i)
-        .map((term) => term.trim())
-        .filter((term) => term.length > 2 && !STOPWORDS.has(term)),
-    ),
-  ].slice(0, 6);
-}
 
 function normalizedQuote(value: string): string {
   return value
@@ -118,6 +98,7 @@ export class AgentService {
     private readonly ai: AiService,
     private readonly gateway: ModelGatewayService,
     private readonly audit: AuditService,
+    private readonly search: SearchService,
   ) {}
 
   async run(actor: FirmActor, matterId: string, input: AgentRunInput): Promise<AgentResult> {
@@ -303,43 +284,56 @@ export class AgentService {
     matterId: string,
     input: AgentRunInput,
   ): Promise<{ sources: AgentSource[]; toolCalls: AgentToolCall[] }> {
-    const toolCalls: AgentToolCall[] = [];
-    const terms = searchTerms(input.content ?? '');
-    const conditions = [
-      eq(facts.firmId, actor.firmId),
-      eq(facts.matterId, matterId),
-      eq(facts.status, 'confirmed'),
-    ];
-    if (terms.length > 0) {
-      conditions.push(or(...terms.map((term) => ilike(facts.text, `%${term}%`)))!);
-    }
-
-    const factRows = await this.db
-      .select({
-        id: facts.id,
-        text: facts.text,
-        status: facts.status,
-        origin: facts.origin,
-      })
-      .from(facts)
-      .where(and(...conditions))
-      .orderBy(desc(facts.dateStart), desc(facts.createdAt))
-      .limit(MAX_EVIDENCE);
-
-    toolCalls.push({
-      name: 'retrieval_search',
-      arguments: { query: input.content ?? '', terms },
-      summary: `${factRows.length} confirmed ${factRows.length === 1 ? 'fact' : 'facts'} matched`,
+    const result = await this.search.search(actor, matterId, {
+      q: input.content ?? '',
+      subsetId: input.subsetId ?? undefined,
+      limit: MAX_EVIDENCE,
     });
 
-    if (factRows.length === 0) {
+    const toolCalls: AgentToolCall[] = [
+      {
+        name: 'retrieval_search',
+        arguments: { query: input.content ?? '', scope: input.subsetId ? 'subset' : 'matter' },
+        summary: `${result.facts.length} ${result.facts.length === 1 ? 'fact' : 'facts'} matched`,
+      },
+    ];
+
+    const sources: AgentSource[] = [];
+    for (const fact of result.facts) {
+      const source = fact.sources[0];
+      if (!source && fact.origin !== 'manual') continue;
+      sources.push({
+        sourceId: source?.sourceId ?? fact.id,
+        factId: fact.id,
+        factText: fact.text,
+        factStatus: fact.status,
+        manual: fact.origin === 'manual' || !source,
+        documentId: source?.documentId ?? null,
+        documentName: source?.documentName ?? null,
+        matterId,
+        pageNumber: source?.pageNumber ?? null,
+        sentenceStart: null,
+        sentenceEnd: null,
+        charStart: null,
+        charEnd: null,
+        quote: source?.quote ?? null,
+        quoteHash: source?.quoteHash ?? null,
+        sourceKind: source ? 'extracted' : 'manual',
+        capturedAt: new Date().toISOString(),
+        sourceDeleted: source?.orphaned ?? false,
+        media: null,
+      });
+    }
+
+    if (sources.length === 0) {
       const [docRow] = await this.db
-        .select({ count: documents.id })
+        .select({ id: documents.id })
         .from(documents)
         .where(
           and(
             eq(documents.firmId, actor.firmId),
             eq(documents.matterId, matterId),
+            isNull(documents.deletedAt),
           ),
         )
         .limit(1);
@@ -350,80 +344,15 @@ export class AgentService {
           ? 'Matter has documents, but no confirmed facts matched'
           : 'No documents in matter',
       });
-      return { sources: [], toolCalls };
-    }
-
-    const sources = await this.db
-      .select({
-        factId: factSources.factId,
-        documentId: factSources.documentId,
-        documentName: documents.fileName,
-        pageNumber: factSources.pageNumber,
-        sentenceStart: factSources.sentenceStart,
-        sentenceEnd: factSources.sentenceEnd,
-        charStart: factSources.charStart,
-        charEnd: factSources.charEnd,
-        quote: factSources.quote,
-        quoteHash: factSources.quoteHash,
-        sourceKind: factSources.sourceKind,
-        capturedAt: factSources.createdAt,
-        orphaned: factSources.orphaned,
-      })
-      .from(factSources)
-      .innerJoin(documents, eq(documents.id, factSources.documentId))
-      .where(
-        inArray(
-          factSources.factId,
-          factRows.map((fact) => fact.id),
-        ),
-      )
-      .orderBy(factSources.pageNumber);
-
-    if (input.subsetId) {
-      const allowed = await this.db
-        .select({ documentId: subsetDocuments.documentId })
-        .from(subsetDocuments)
-        .where(eq(subsetDocuments.subsetId, input.subsetId));
-      const allowedIds = new Set(allowed.map((row) => row.documentId));
-      for (let index = sources.length - 1; index >= 0; index -= 1) {
-        if (!allowedIds.has(sources[index].documentId)) sources.splice(index, 1);
-      }
-    }
-
-    toolCalls.push({
-      name: 'facts_get',
-      arguments: { factIds: factRows.map((fact) => fact.id) },
-      summary: `${sources.length} cited sources`,
-    });
-
-    const sourcesByFact = new Map<string, AgentSource>();
-    for (const fact of factRows) {
-      const source = sources.find((item) => item.factId === fact.id);
-      if (!source && fact.origin !== 'manual') continue;
-      sourcesByFact.set(fact.id, {
-        sourceId: fact.id,
-        factId: fact.id,
-        factText: fact.text,
-        factStatus: fact.status,
-        manual: fact.origin === 'manual' || !source,
-        documentId: source?.documentId ?? null,
-        documentName: source?.documentName ?? null,
-        matterId,
-        pageNumber: source?.pageNumber ?? null,
-        sentenceStart: source?.sentenceStart ?? null,
-        sentenceEnd: source?.sentenceEnd ?? null,
-        charStart: source?.charStart ?? null,
-        charEnd: source?.charEnd ?? null,
-        quote: source?.quote ?? null,
-        quoteHash: source?.quoteHash ?? null,
-        sourceKind: source?.sourceKind ?? 'manual',
-        capturedAt: (source?.capturedAt ?? new Date()).toISOString(),
-        sourceDeleted: source?.orphaned ?? false,
-        media: null,
+    } else {
+      toolCalls.push({
+        name: 'facts_get',
+        arguments: { factIds: result.facts.map((fact) => fact.id) },
+        summary: `${sources.length} cited sources`,
       });
     }
 
-    return { sources: [...sourcesByFact.values()], toolCalls };
+    return { sources, toolCalls };
   }
 
   private async assertSubset(actor: FirmActor, matterId: string, subsetId: string) {

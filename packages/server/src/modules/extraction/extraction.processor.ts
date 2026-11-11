@@ -2,8 +2,10 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { DomainError } from '../../common/domain-error.js';
+import { DocumentChunkService } from '../documents/document-chunk.service.js';
 import { DocumentTextService } from '../documents/document-text.service.js';
 import { JobsService } from '../jobs/jobs.service.js';
+import { VectorService } from '../search/vector.service.js';
 import { EXTRACTION_QUEUE, INGEST_QUEUE } from '../jobs/queue.constants.js';
 import { ExtractionService } from './extraction.service.js';
 
@@ -57,6 +59,8 @@ export class IngestProcessor extends TrackedProcessor {
   constructor(
     jobs: JobsService,
     private readonly documentText: DocumentTextService,
+    private readonly chunks: DocumentChunkService,
+    private readonly vector: VectorService,
   ) {
     super(jobs);
   }
@@ -65,10 +69,20 @@ export class IngestProcessor extends TrackedProcessor {
     const { jobId, documentId } = await this.start(job);
     try {
       const result = await this.documentText.ingest(documentId);
+      let chunkCount = 0;
+      let indexed = 0;
+      if (result.status === 'done') {
+        await this.jobs.progress(jobId, 60, 'chunking');
+        chunkCount = await this.chunks.rebuild(documentId);
+        await this.jobs.progress(jobId, 80, 'embedding');
+        indexed = (await this.vector.indexDocument(documentId)).indexed;
+      }
       return await this.finish(jobId, {
         documentId,
         pageCount: result.pageCount,
         status: result.status,
+        chunks: chunkCount,
+        indexedChunks: indexed,
       });
     } catch (error) {
       await this.recordFailure(jobId, error);

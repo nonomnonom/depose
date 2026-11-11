@@ -7,6 +7,7 @@ import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
   messageSources,
   messages,
+  subsets,
   threads,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
@@ -49,6 +50,21 @@ export class AiService {
     subsetId?: string,
   ) {
     await this.policy.assertMatter(actor, 'ai.ask', matterId);
+    if (subsetId) {
+      const [subset] = await this.db
+        .select({ id: subsets.id })
+        .from(subsets)
+        .where(
+          and(
+            eq(subsets.id, subsetId),
+            eq(subsets.firmId, actor.firmId),
+            eq(subsets.matterId, matterId),
+          ),
+        )
+        .limit(1);
+      if (!subset) throw DomainError.notFound('Subset not found');
+    }
+
     const [thread] = await this.db
       .insert(threads)
       .values({

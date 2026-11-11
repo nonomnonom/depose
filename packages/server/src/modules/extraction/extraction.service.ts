@@ -17,6 +17,7 @@ import { ModelGatewayService } from '../ai/model-gateway.service.js';
 import { DocumentTextService } from '../documents/document-text.service.js';
 import { JobsService } from '../jobs/jobs.service.js';
 import { EXTRACTION_QUEUE } from '../jobs/queue.constants.js';
+import { VectorService } from '../search/vector.service.js';
 
 const factTypeValues = [
   'event',
@@ -72,6 +73,7 @@ export class ExtractionService {
     private readonly gateway: ModelGatewayService,
     private readonly documentText: DocumentTextService,
     private readonly jobs: JobsService,
+    private readonly vector: VectorService,
   ) {}
 
   async request(
@@ -218,7 +220,8 @@ export class ExtractionService {
       }
 
       await this.jobs.progress(jobId, 85, 'persist');
-      await this.db.transaction(async (tx) => {
+      const createdFactIds = await this.db.transaction(async (tx) => {
+        const insertedIds: string[] = [];
         const existing = await tx
           .select({ id: facts.id })
           .from(facts)
@@ -272,8 +275,12 @@ export class ExtractionService {
             lastSeenAt: new Date(),
           });
           counts.stored += 1;
+          insertedIds.push(fact.id);
         }
+        return insertedIds;
       });
+
+      await this.vector.indexFacts(createdFactIds);
 
       await this.db
         .update(extractionRuns)

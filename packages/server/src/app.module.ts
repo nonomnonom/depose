@@ -33,6 +33,8 @@ import { McpModule } from './modules/mcp/mcp.module.js';
 import { DeposeMcpServerModule } from './modules/mcp-server/mcp-server.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
+import { SearchModule } from './modules/search/search.module.js';
+import { SubsetsModule } from './modules/subsets/subsets.module.js';
 import { TenancyModule } from './modules/tenancy/tenancy.module.js';
 import { TenantGuard } from './modules/tenancy/tenant.guard.js';
 import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
@@ -80,6 +82,8 @@ import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
     DeposeMcpServerModule,
     NotificationsModule,
     OnboardingModule,
+    SearchModule,
+    SubsetsModule,
   ],
   controllers: [AppController],
   providers: [
