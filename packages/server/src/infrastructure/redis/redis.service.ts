@@ -1,5 +1,5 @@
 import { Injectable, Logger, type OnApplicationShutdown } from '@nestjs/common';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 import { appConfig } from '../../config/app.config.js';
 
 /**

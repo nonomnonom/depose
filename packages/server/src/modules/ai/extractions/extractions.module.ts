@@ -6,7 +6,7 @@ import { PlatformAiModule } from '../platform/platform-ai.module.js';
 import { SystemOneModule } from '../system-one/system-one.module.js';
 import { DocumentsModule } from '../../documents/documents.module.js';
 import { JobsModule } from '../../jobs/jobs.module.js';
-import { ExtractionProcessor } from './extraction.processor.js';
+import { WebhooksModule } from '../../webhooks/webhooks.module.js';
 import { ExtractionService } from './extraction.service.js';
 
 /**
@@ -39,8 +39,9 @@ import { ExtractionService } from './extraction.service.js';
     SystemOneModule,
     DocumentsModule,
     JobsModule,
+    WebhooksModule,
   ],
-  providers: [ExtractionService, ExtractionProcessor],
+  providers: [ExtractionService],
   exports: [ExtractionService],
 })
 export class ExtractionsModule {}

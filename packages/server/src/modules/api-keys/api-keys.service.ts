@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, isNull } from 'drizzle-orm';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
@@ -8,6 +8,7 @@ import { DATABASE } from '../../infrastructure/database/database.module.js';
 import { apiKeys } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { READ_ONLY_ACTIONS, isAction } from '../access-control/permissions.js';
 
 @Injectable()
 export class ApiKeysService {
@@ -29,9 +30,18 @@ export class ApiKeysService {
 
   async create(actor: FirmActor, input: { name: string; scopes?: string[] }) {
     this.policy.assertFirm(actor, 'firm.api_key.manage');
+    const requested = input.scopes?.length ? input.scopes : READ_ONLY_ACTIONS;
+    const unknown = requested.filter((scope) => !isAction(scope));
+    if (unknown.length > 0) {
+      throw DomainError.validation('Unknown API key scope', [
+        { path: 'scopes', message: unknown.join(', ') },
+      ]);
+    }
+    const scopes = [...new Set(requested)];
+
     const id = randomUUID();
-    const rawKey = randomUUID() + '-' + randomUUID();
-    const prefix = rawKey.slice(0, 8);
+    const rawKey = `dp_${randomBytes(32).toString('base64url')}`;
+    const prefix = rawKey.slice(0, 11);
     const [key] = await this.db
       .insert(apiKeys)
       .values({
@@ -40,7 +50,7 @@ export class ApiKeysService {
         name: input.name.trim(),
         prefix,
         secretHash: this.hashKey(rawKey),
-        scopes: input.scopes ?? [],
+        scopes,
         createdBy: actor.userId,
       })
       .returning();
@@ -79,18 +89,22 @@ export class ApiKeysService {
   }
 
   async validate(rawKey: string) {
+    if (!rawKey.startsWith('dp_') || rawKey.length < 20) return null;
     const hash = this.hashKey(rawKey);
     const [key] = await this.db
       .select()
       .from(apiKeys)
-      .where(
-        and(
-          eq(apiKeys.secretHash, hash),
-          isNull(apiKeys.revokedAt),
-        ),
-      )
+      .where(and(eq(apiKeys.secretHash, hash), isNull(apiKeys.revokedAt)))
       .limit(1);
     if (!key) return null;
+
+    /* Touch last-used without blocking the request on a write. */
+    void this.db
+      .update(apiKeys)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(apiKeys.id, key.id))
+      .catch(() => undefined);
+
     return {
       id: key.id,
       firmId: key.firmId,
@@ -99,8 +113,12 @@ export class ApiKeysService {
     };
   }
 
+  /**
+   * Keys are 256-bit random values, so a plain SHA-256 digest is sufficient and
+   * non-reversible. Never store the key or a reversible encoding of it.
+   */
   private hashKey(key: string): string {
-    return Buffer.from(key).toString('base64');
+    return createHash('sha256').update(key).digest('hex');
   }
 
   private keyDto(row: typeof apiKeys.$inferSelect) {

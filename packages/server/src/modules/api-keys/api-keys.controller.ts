@@ -7,7 +7,8 @@ import { z } from 'zod';
 
 const createKeySchema = z.object({
   name: z.string().trim().min(1).max(100),
-  scopes: z.array(z.string().trim().min(1).max(50)).optional(),
+  /** Action names from the permission matrix. Defaults to read-only access. */
+  scopes: z.array(z.string().trim().min(1).max(80)).max(100).optional(),
 });
 
 @ApiTags('API Keys')

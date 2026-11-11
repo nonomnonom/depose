@@ -127,9 +127,10 @@ export class FirmsService {
     });
 
     const frontendOrigin = appConfig.auth.trustedOrigins[0] ?? '';
+    const protocol = frontendOrigin.startsWith('https://') ? 'https' : 'http';
     const loginUrl = appConfig.isProduction
-      ? `${frontendOrigin.includes('https') ? 'https' : 'https'}://${primaryHost}`
-      : frontendOrigin;
+      ? `${protocol}://${primaryHost}`
+      : frontendOrigin || `${protocol}://${primaryHost}`;
 
     return {
       firm: result,

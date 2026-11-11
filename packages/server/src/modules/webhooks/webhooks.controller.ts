@@ -1,14 +1,14 @@
 import { Controller, Get, Post, Delete, Param, Body, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiOkResponse, ApiCreatedResponse, ApiNotFoundResponse } from '@nestjs/swagger';
-import { WebhooksService } from './webhooks.service.js';
+import { WEBHOOK_EVENTS, WebhooksService } from './webhooks.service.js';
 import { RequestContextService } from '../../common/request-context.service.js';
-import { parseOrThrow, ZodBodyPipe } from '../../common/zod.pipe.js';
+import { ZodBodyPipe } from '../../common/zod.pipe.js';
 import { z } from 'zod';
 
 const createWebhookSchema = z.object({
   url: z.string().trim().min(1).max(2000).url(),
-  events: z.array(z.string().trim().min(1).max(100)).min(1),
-  secret: z.string().trim().max(500).optional(),
+  events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).max(WEBHOOK_EVENTS.length),
+  secret: z.string().trim().min(16).max(500).optional(),
   enabled: z.boolean().optional(),
 });
 
@@ -51,7 +51,7 @@ export class WebhooksController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.service.deleteWebhook(actor, id);
+    return this.service.deleteWebhook(actor, matterId, id);
   }
 
   @Get(':webhookId/deliveries')
@@ -64,6 +64,6 @@ export class WebhooksController {
     @Param('webhookId', ParseUUIDPipe) webhookId: string,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.service.listDeliveries(actor, webhookId);
+    return this.service.listDeliveries(actor, matterId, webhookId);
   }
 }

@@ -76,6 +76,8 @@ export class PolicyService {
   constructor(@Inject(DATABASE) private readonly db: Database) {}
 
   canFirm(actor: FirmActor, action: Action): boolean {
+    /* API keys carry an explicit action whitelist; role does not apply. */
+    if (actor.apiKeyId) return actor.scopes?.includes(action) ?? false;
     return roleAllows(actor.role, action);
   }
 
@@ -102,7 +104,9 @@ export class PolicyService {
       throw DomainError.notFound('Matter not found');
     }
 
-    if (actor.role === 'admin') {
+    /* Firm API keys are machine credentials scoped by action, not by matter
+     * membership; the firm check above is the tenant boundary. */
+    if (actor.role === 'admin' || actor.apiKeyId) {
       return { access: 'full', status: matter.status };
     }
 
@@ -127,7 +131,7 @@ export class PolicyService {
   }
 
   async assertMatter(actor: FirmActor, action: Action, matterId: string): Promise<MatterAccess> {
-    if (!roleAllows(actor.role, action)) {
+    if (!this.canFirm(actor, action)) {
       throw DomainError.forbidden(`Role ${actor.role} cannot perform ${action}`);
     }
 

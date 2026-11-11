@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:15-alpine
@@ -44,6 +42,22 @@ services:
       timeout: 5s
       retries: 5
 
+  migrate:
+    build:
+      context: ../../
+      dockerfile: packages/docker/Dockerfile.server
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-depose}:${POSTGRES_PASSWORD:-depose}@db:5432/${POSTGRES_DB:-depose}
+      REDIS_URL: redis://redis:6379
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["node", "dist/migrate.js"]
+    restart: "no"
+
   server:
     build:
       context: ../../
@@ -51,11 +65,17 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
+      PORT: ${SERVER_PORT:-3000}
       DATABASE_URL: postgres://${POSTGRES_USER:-depose}:${POSTGRES_PASSWORD:-depose}@db:5432/${POSTGRES_DB:-depose}
       REDIS_URL: redis://redis:6379
       QDRANT_URL: http://qdrant:6333
+      WORKER_ENABLED: "false"
+      STORAGE_TYPE: local
+      STORAGE_LOCAL_PATH: /data/storage
     env_file:
       - .env
+    volumes:
+      - storage-data:/data/storage
     depends_on:
       db:
         condition: service_healthy
@@ -63,6 +83,8 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "${SERVER_PORT:-3000}:${SERVER_PORT:-3000}"
 
@@ -76,8 +98,13 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-depose}:${POSTGRES_PASSWORD:-depose}@db:5432/${POSTGRES_DB:-depose}
       REDIS_URL: redis://redis:6379
       QDRANT_URL: http://qdrant:6333
+      WORKER_ENABLED: "true"
+      STORAGE_TYPE: local
+      STORAGE_LOCAL_PATH: /data/storage
     env_file:
       - .env
+    volumes:
+      - storage-data:/data/storage
     depends_on:
       db:
         condition: service_healthy
@@ -85,7 +112,12 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     command: ["node", "dist/worker.main.js"]
+    # The image healthcheck probes the HTTP API, which the worker does not serve.
+    healthcheck:
+      disable: true
 
   frontend:
     build:
@@ -104,3 +136,4 @@ volumes:
   postgres-data:
   redis-data:
   qdrant-data:
+  storage-data:

@@ -38,8 +38,9 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 const ALLOWED_MIME = new Set(Object.values(MIME_BY_EXTENSION));
 
 function safeFileName(value: string): string {
-  const name = basename(value)
-    .replace(/[\u0000-\u001f\u007f]/g, '')
+  const name = [...basename(value)]
+    .filter((char) => char.charCodeAt(0) > 0x1f && char.charCodeAt(0) !== 0x7f)
+    .join('')
     .trim();
   return name.slice(0, 240) || 'document';
 }
@@ -194,6 +195,14 @@ export class DocumentsService {
     await this.policy.assertMatter(actor, 'document.download', matterId);
     const row = await this.requireDocument(actor, matterId, documentId);
     const data = await this.storage.get(row.storageKey);
+    await this.audit.log({
+      firmId: actor.firmId,
+      action: 'document.downloaded',
+      resourceType: 'document',
+      resourceId: row.id,
+      actor,
+      metadata: { matterId, fileName: row.fileName, sizeBytes: data.length },
+    });
     return { document: row, data };
   }
 

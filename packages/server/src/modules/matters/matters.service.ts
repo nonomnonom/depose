@@ -56,7 +56,8 @@ export class MattersService {
             ),
           )
         : undefined,
-      actor.role === 'admin'
+      /* Admins and firm API keys see every matter in the firm. */
+      actor.role === 'admin' || actor.apiKeyId
         ? undefined
         : sql`exists (select 1 from ${matterMembers} mm where mm.matter_id = ${matters.id} and mm.user_id = ${actor.userId})`,
     ].filter((value): value is NonNullable<typeof value> => value !== undefined);
@@ -233,7 +234,6 @@ export class MattersService {
   }
 
   async update(actor: FirmActor, matterId: string, input: UpdateMatterInput) {
-    let statusAction: 'matter.close' | 'matter.reopen' | 'matter.archive' | null = null;
     let currentStatus: string | null = null;
 
     if (input.status) {
@@ -243,7 +243,7 @@ export class MattersService {
         if (!STATUS_TRANSITIONS[current.status]?.includes(input.status)) {
           throw DomainError.invalidTransition(current.status, input.status);
         }
-        statusAction =
+        const statusAction =
           input.status === 'closed'
             ? 'matter.close'
             : input.status === 'archived'

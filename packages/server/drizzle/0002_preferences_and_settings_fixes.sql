@@ -1,5 +1,5 @@
 -- Create user_preferences table (spec 06 — user preferences)
-CREATE TABLE "user_preferences" (
+CREATE TABLE IF NOT EXISTS "user_preferences" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   "user_id" text NOT NULL,
   "locale" text NOT NULL DEFAULT 'en',
@@ -11,7 +11,7 @@ CREATE TABLE "user_preferences" (
   "updated_at" timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE UNIQUE INDEX "user_preferences_user_id_unique" ON "user_preferences" USING btree ("user_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "user_preferences_user_id_unique" ON "user_preferences" USING btree ("user_id");
 
 -- Fix firms table: remove country default from jurisdiction (spec 02/03 — free text, no country default)
 ALTER TABLE "firms" ALTER COLUMN "jurisdiction" DROP DEFAULT;

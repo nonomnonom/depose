@@ -6,6 +6,7 @@ import { DocumentChunkService } from './document-chunk.service.js';
 import { DocumentTextService } from './document-text.service.js';
 import { JobsService } from '../jobs/jobs.service.js';
 import { VectorService } from '../vector/vector.service.js';
+import { WebhooksService } from '../webhooks/webhooks.service.js';
 import { INGEST_QUEUE } from '../jobs/queue.constants.js';
 
 abstract class TrackedProcessor extends WorkerHost {
@@ -60,6 +61,7 @@ export class IngestProcessor extends TrackedProcessor {
     private readonly documentText: DocumentTextService,
     private readonly chunks: DocumentChunkService,
     private readonly vector: VectorService,
+    private readonly webhooks: WebhooksService,
   ) {
     super(jobs);
   }
@@ -76,6 +78,14 @@ export class IngestProcessor extends TrackedProcessor {
         await this.jobs.progress(jobId, 80, 'embedding');
         indexed = (await this.vector.indexDocument(documentId)).indexed;
       }
+      await this.webhooks.dispatch(result.firmId, 'document.processed', {
+        documentId,
+        matterId: result.matterId,
+        pageCount: result.pageCount,
+        status: result.status,
+        chunks: chunkCount,
+      });
+
       return await this.finish(jobId, {
         documentId,
         pageCount: result.pageCount,

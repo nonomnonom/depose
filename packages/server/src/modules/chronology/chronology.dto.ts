@@ -6,6 +6,7 @@ export const chronologyQuerySchema = z
   .object({
     q: z.string().trim().max(200).optional(),
     limit: z.coerce.number().int().positive().max(100).optional(),
+    cursor: z.string().trim().max(500).optional(),
     hasDateStart: z.enum(['true', 'false']).optional().transform((v) => v === 'true'),
   })
   .strict();

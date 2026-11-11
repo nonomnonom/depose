@@ -22,8 +22,8 @@ interface Point {
   payload: Record<string, unknown>;
 }
 
-const FACTS: 'facts' = 'facts';
-const CHUNKS: 'chunks' = 'chunks';
+const FACTS = 'facts' as const;
+const CHUNKS = 'chunks' as const;
 
 @Injectable()
 export class VectorService {

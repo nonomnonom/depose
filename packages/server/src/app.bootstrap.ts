@@ -92,9 +92,17 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
   instance.use(urlencoded({ extended: true, limit: '1mb' }));
 }
 
-export async function createHttpApp(): Promise<NestExpressApplication> {
+export interface HttpAppOptions {
+  httpsOptions?: { key: Buffer; cert: Buffer };
+}
+
+export async function createHttpApp(
+  options: HttpAppOptions = {},
+): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
+    logger: ['error', 'warn', 'log'],
+    ...options,
   });
   await configureApp(app);
   return app;

@@ -7,7 +7,6 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBody,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,

@@ -5,6 +5,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { LanguageModel } from 'ai';
 import { and, asc, eq } from 'drizzle-orm';
 import { DomainError } from '../../../common/domain-error.js';
+import { assertSafeOutboundUrl } from '../../../common/outbound-url.js';
 import type { FirmActor } from '../../../common/request-context.service.js';
 import { appConfig } from '../../../config/app.config.js';
 import type { Database } from '../../../infrastructure/database/database.client.js';
@@ -149,13 +150,15 @@ export class ModelGatewayService {
       );
     }
     const apiKey = input.apiKey ?? '';
+    const baseUrl = input.baseUrl ?? DEFAULT_BASE_URL[input.kind] ?? null;
+    if (baseUrl) await assertSafeOutboundUrl(baseUrl);
     const [created] = await this.db
       .insert(aiProviderConnections)
       .values({
         firmId: actor.firmId,
         kind: input.kind as typeof aiProviderConnections.$inferInsert.kind,
         label: input.label,
-        baseUrl: input.baseUrl ?? DEFAULT_BASE_URL[input.kind] ?? null,
+        baseUrl,
         apiKeyCiphertext: encryptSecret(apiKey, encryptionKey),
         apiKeyLast4: apiKey.slice(-4).padStart(4, '•'),
         models: input.models,
@@ -199,6 +202,7 @@ export class ModelGatewayService {
       )
       .limit(1);
     if (!existing) throw DomainError.notFound('Provider connection not found');
+    if (input.baseUrl) await assertSafeOutboundUrl(input.baseUrl);
 
     let ciphertext = existing.apiKeyCiphertext;
     let last4 = existing.apiKeyLast4;
@@ -291,6 +295,7 @@ export class ModelGatewayService {
       /\/$/,
       '',
     );
+    await assertSafeOutboundUrl(baseUrl);
 
     let error: string | null = null;
     try {

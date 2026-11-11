@@ -12,6 +12,7 @@ import type { Database } from '../../infrastructure/database/database.client.js'
 import { firms, member } from '../../infrastructure/database/schema/index.js';
 import type { FirmRole } from '../../infrastructure/database/schema/enums.js';
 import { Inject } from '@nestjs/common';
+import { ApiKeysService } from '../api-keys/api-keys.service.js';
 import { AuthService } from './auth.service.js';
 
 function normalizeRole(role: string | undefined): FirmRole {
@@ -35,6 +36,7 @@ export class SessionGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly context: RequestContextService,
     private readonly auth: AuthService,
+    private readonly apiKeys: ApiKeysService,
     @Inject(DATABASE) private readonly db: Database,
   ) {}
 
@@ -50,6 +52,33 @@ export class SessionGuard implements CanActivate {
     if (isPublic) return true;
 
     const request = ctx.switchToHttp().getRequest<Request>();
+    const tenant = this.context.getTenant();
+
+    const authorization = request.headers.authorization;
+    const bearer =
+      typeof authorization === 'string' && authorization.startsWith('Bearer ')
+        ? authorization.slice(7).trim()
+        : '';
+    if (bearer) {
+      const key = await this.apiKeys.validate(bearer);
+      if (!key) throw DomainError.unauthorized('Invalid API key');
+      if (tenant?.firmId && tenant.firmId !== key.firmId) {
+        throw DomainError.forbidden('API key does not belong to this firm');
+      }
+      this.context.setActor({
+        userId: `api-key:${key.id}`,
+        email: '',
+        name: key.name,
+        sessionId: `api-key:${key.id}`,
+        firmId: key.firmId,
+        role: 'viewer',
+        memberId: key.id,
+        apiKeyId: key.id,
+        scopes: key.scopes,
+      });
+      return true;
+    }
+
     const session = await this.auth.api.getSession({
       headers: fromNodeHeaders(request.headers),
     });
@@ -57,8 +86,6 @@ export class SessionGuard implements CanActivate {
     if (!session?.user) {
       throw DomainError.unauthorized();
     }
-
-    const tenant = this.context.getTenant();
     let role: FirmRole | null = null;
     let memberId: string | null = null;
     let firmId: string | null = null;

@@ -1,5 +1,6 @@
 export const INGEST_QUEUE = 'document.ingest';
 export const EXTRACTION_QUEUE = 'fact.extraction';
+export const WEBHOOK_QUEUE = 'webhook.delivery';
 
 export type SupportedJobType = typeof INGEST_QUEUE | typeof EXTRACTION_QUEUE;
 

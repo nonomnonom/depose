@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, eq } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
+import { assertSafeOutboundUrl } from '../../common/outbound-url.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
@@ -74,6 +75,7 @@ export class McpService {
 
   async create(actor: FirmActor, input: CreateMcpServerInput) {
     this.policy.assertFirm(actor, 'firm.mcp.manage');
+    if (input.url) await assertSafeOutboundUrl(input.url);
     const serverKey = slugify(input.name);
     if (!serverKey) throw DomainError.validation('Give the server a usable name');
 
@@ -137,6 +139,7 @@ export class McpService {
       .where(and(eq(mcpServers.id, serverId), eq(mcpServers.firmId, actor.firmId)))
       .limit(1);
     if (!server?.url) throw DomainError.notFound('MCP server not found');
+    await assertSafeOutboundUrl(server.url);
 
     let tools: { name: string; description: string | null }[] = [];
     let error: string | null = null;

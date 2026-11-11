@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { firmSettingsSchema, type FirmSettings } from '../settings/settings.schema.js';
+import type { FirmSettings } from '../settings/settings.schema.js';
 
 export const updateFirmSettingsSchema = z
   .object({

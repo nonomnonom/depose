@@ -10,6 +10,8 @@ import { StorageService } from '../../infrastructure/storage/storage.service.js'
 
 export interface IngestedDocument {
   documentId: string;
+  firmId: string;
+  matterId: string;
   pageCount: number;
   pages: { pageNumber: number; text: string; charCount: number }[];
   status: 'done' | 'needs_review';
@@ -29,7 +31,7 @@ const DOCX_MIME =
 const PDF_MIME = 'application/pdf';
 
 function splitPages(text: string): string[] {
-  const normalized = text.replace(/\r\n?/g, '\n').replace(/\u0000/g, '');
+  const normalized = text.replace(/\r\n?/g, '\n').replaceAll('\u0000', '');
   const byFormFeed = normalized.split('\f');
   if (byFormFeed.length > 1) return byFormFeed;
   if (normalized.length <= 40_000) return [normalized];
@@ -78,6 +80,8 @@ export class DocumentTextService {
         await this.finish(document.id, 'needs_review', null, 'DOCUMENT_TEXT_UNAVAILABLE');
         return {
           documentId: document.id,
+          firmId: document.firmId,
+          matterId: document.matterId,
           pageCount: 0,
           pages: [],
           status: 'needs_review',
@@ -102,6 +106,8 @@ export class DocumentTextService {
       await this.finish(document.id, 'done', parsed.pages.length, null);
       return {
         documentId: document.id,
+        firmId: document.firmId,
+        matterId: document.matterId,
         pageCount: parsed.pages.length,
         pages: parsed.pages.map((text, index) => ({
           pageNumber: index + 1,

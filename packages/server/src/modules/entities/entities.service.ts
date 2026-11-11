@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
@@ -87,6 +87,18 @@ export class EntitiesService {
 
   async addAlias(actor: FirmActor, matterId: string, entityId: string, alias: string) {
     await this.policy.assertMatter(actor, 'matter.update', matterId);
+    const [entity] = await this.db
+      .select({ id: entities.id })
+      .from(entities)
+      .where(
+        and(
+          eq(entities.id, entityId),
+          eq(entities.firmId, actor.firmId),
+          eq(entities.matterId, matterId),
+        ),
+      )
+      .limit(1);
+    if (!entity) throw DomainError.notFound('Entity not found');
     const [a] = await this.db
       .insert(entityAliases)
       .values({

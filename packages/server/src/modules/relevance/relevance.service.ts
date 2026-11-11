@@ -1,11 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, eq, sql, desc } from 'drizzle-orm';
+import { and, eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
-import { factRelevance } from '../../infrastructure/database/schema/index.js';
+import {
+  factRelevance,
+  facts,
+  subsets,
+} from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
 
@@ -60,13 +64,48 @@ export class RelevanceService {
     const rows = await this.db
       .select()
       .from(factRelevance)
-      .where(and(eq(factRelevance.factId, factId), eq(factRelevance.firmId, actor.firmId)))
+      .where(
+        and(
+          eq(factRelevance.factId, factId),
+          eq(factRelevance.firmId, actor.firmId),
+          eq(factRelevance.matterId, matterId),
+        ),
+      )
       .orderBy(desc(factRelevance.updatedAt));
     return { items: rows.map(this.toDto) };
   }
 
   async assign(actor: FirmActor, matterId: string, input: z.infer<typeof assignRelevanceSchema>) {
     await this.policy.assertMatter(actor, 'fact.update', matterId);
+
+    const [fact] = await this.db
+      .select({ id: facts.id })
+      .from(facts)
+      .where(
+        and(
+          eq(facts.id, input.factId),
+          eq(facts.firmId, actor.firmId),
+          eq(facts.matterId, matterId),
+        ),
+      )
+      .limit(1);
+    if (!fact) throw DomainError.validation('Fact is not in this matter');
+
+    if (input.scopeType === 'subset') {
+      const [subset] = await this.db
+        .select({ id: subsets.id })
+        .from(subsets)
+        .where(
+          and(
+            eq(subsets.id, input.scopeId),
+            eq(subsets.firmId, actor.firmId),
+            eq(subsets.matterId, matterId),
+          ),
+        )
+        .limit(1);
+      if (!subset) throw DomainError.validation('Subset is not in this matter');
+    }
+
     const [row] = await this.db.insert(factRelevance).values({
       firmId: actor.firmId,
       matterId,

@@ -59,6 +59,8 @@ export class JobsService {
       return this.toDto(existing);
     }
 
+    /* Two requests with the same idempotency key can race between the lookup
+     * above and this insert; the unique index decides, not the reader. */
     const [created] = await this.db
       .insert(jobs)
       .values({
@@ -72,16 +74,48 @@ export class JobsService {
         maxAttempts: input.maxAttempts ?? (input.type === EXTRACTION_QUEUE ? 2 : 3),
         createdBy: input.createdBy ?? 'system',
       })
+      .onConflictDoNothing()
       .returning();
 
+    if (!created) {
+      const [winner] = await this.db
+        .select()
+        .from(jobs)
+        .where(
+          and(
+            eq(jobs.firmId, input.firmId),
+            eq(jobs.jobKey, input.type),
+            eq(jobs.idempotencyKey, input.idempotencyKey),
+          ),
+        )
+        .limit(1);
+      if (!winner) throw DomainError.internalServerError('Could not enqueue job');
+      return this.toDto(winner);
+    }
+
     const queue = input.type === INGEST_QUEUE ? this.ingestQueue : this.extractionQueue;
-    await queue.add(input.type, { jobId: created.id, ...input.payload }, {
-      jobId: created.id,
-      attempts: created.maxAttempts,
-      backoff: { type: 'exponential', delay: 5_000 },
-      removeOnComplete: false,
-      removeOnFail: false,
-    });
+    try {
+      await queue.add(input.type, { jobId: created.id, ...input.payload }, {
+        jobId: created.id,
+        attempts: created.maxAttempts,
+        backoff: { type: 'exponential', delay: 5_000 },
+        removeOnComplete: false,
+        removeOnFail: false,
+      });
+    } catch (error) {
+      await this.db
+        .update(jobs)
+        .set({
+          status: 'dead',
+          stage: 'dead',
+          errorCode: 'INTERNAL_ERROR',
+          errorMessage: 'Could not reach the job queue',
+          finishedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(jobs.id, created.id));
+      throw error;
+    }
 
     this.logger.log(
       JSON.stringify({

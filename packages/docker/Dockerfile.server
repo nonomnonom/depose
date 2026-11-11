@@ -7,10 +7,11 @@ WORKDIR /app
 
 FROM base AS deps
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/server/package.json packages/server/package.json
 COPY packages/frontend/package.json packages/frontend/package.json
 COPY packages/ui/package.json packages/ui/package.json
+COPY packages/docker/package.json packages/docker/package.json
 
 RUN pnpm install --frozen-lockfile
 
@@ -22,19 +23,32 @@ COPY . .
 
 WORKDIR /app/packages/server
 RUN pnpm install --frozen-lockfile --filter server
-RUN pnpm --filter server exec prettier --write "src/**/*.{ts,tsx}"
-RUN pnpm --filter server lint
 RUN pnpm --filter server build
 
-FROM base AS dev
+FROM base AS runner
 
+ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=deps /app/node_modules /app/node_modules
-COPY packages packages
-COPY . .
+
+# Runtime dependencies only are already resolved by pnpm; copy the workspace
+# node_modules so the server's symlinked packages stay intact.
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/server/node_modules ./packages/server/node_modules
+COPY --from=build /app/packages/server/dist ./packages/server/dist
+COPY --from=build /app/packages/server/drizzle ./packages/server/drizzle
+COPY packages/server/package.json ./packages/server/package.json
 
 WORKDIR /app/packages/server
-RUN pnpm install --frozen-lockfile --filter server
+
+# Uploaded documents are written under the local storage path; the runtime
+# user needs to own it, otherwise every ingest fails with EACCES.
+RUN mkdir -p /app/packages/server/.local-storage \
+  && chown -R node:node /app/packages/server
 
 EXPOSE 3000
-CMD ["pnpm", "--filter", "server", "exec", "node", "dist/main.js"]
+USER node
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
+  CMD wget -q -O - "http://127.0.0.1:${PORT:-3000}/api/health/ready" > /dev/null || exit 1
+
+CMD ["node", "dist/main.js"]

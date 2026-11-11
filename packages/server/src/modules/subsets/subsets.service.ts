@@ -243,7 +243,9 @@ export class SubsetsService {
       })
       .from(facts)
       .where(and(...conditions))
-      .orderBy(desc(facts.dateStart), desc(facts.createdAt))
+      /* Cursor is createdAt, so the sort must be too; ordering by dateStart made
+       * the next page skip or repeat rows. */
+      .orderBy(desc(facts.createdAt), desc(facts.id))
       .limit(limit + 1);
 
     const items = rows.slice(0, limit).map(({ fact, sourceCount, subsetSourceCount }) => ({
@@ -255,12 +257,13 @@ export class SubsetsService {
       sourceCount,
       subsetSourceCount,
       mixedSources: sourceCount > subsetSourceCount,
+      createdAt: fact.createdAt.toISOString(),
     }));
 
     return {
       items,
       nextCursor:
-        rows.length > limit ? rows[limit - 1]?.fact.createdAt.toISOString() ?? null : null,
+        rows.length > limit ? items.at(-1)?.createdAt ?? null : null,
     };
   }
 

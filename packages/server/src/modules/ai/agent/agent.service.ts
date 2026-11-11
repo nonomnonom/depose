@@ -1,6 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AiService } from '@nestjs/ai';
-import { createHash } from 'node:crypto';
 import { and, eq, isNull } from 'drizzle-orm';
 import { DomainError } from '../../../common/domain-error.js';
 import type { FirmActor } from '../../../common/request-context.service.js';
@@ -71,19 +70,6 @@ export interface AgentRunInput {
 }
 
 const MAX_EVIDENCE = 8;
-
-function normalizedQuote(value: string): string {
-  return value
-    .normalize('NFC')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/[\u201c\u201d]/g, '"')
-    .replace(/[\u2018\u2019]/g, "'");
-}
-
-function hashQuote(value: string): string {
-  return createHash('sha256').update(normalizedQuote(value)).digest('hex');
-}
 
 function citationMarkers(answer: string): number[] {
   return [...answer.matchAll(/\[(\d{1,2})\]/g)].map((match) => Number(match[1]));

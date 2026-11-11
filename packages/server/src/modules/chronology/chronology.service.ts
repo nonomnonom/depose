@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
+import { decodeCursor, encodeCursor } from '../../common/pagination.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
@@ -42,13 +43,26 @@ export class ChronologyService {
       if (search) conditions.push(search);
     }
 
-    const datedConditions = and(...conditions, sql`not isnull(${facts.dateStart})`);
+    const cursor = decodeCursor(query.cursor);
+    if (cursor) {
+      conditions.push(
+        or(
+          sql`${facts.dateStart} > ${cursor.sortValue}`,
+          and(
+            eq(facts.dateStart, cursor.sortValue),
+            sql`${facts.id} > ${cursor.id}`,
+          ),
+        )!,
+      );
+    }
+
+    const datedConditions = and(...conditions, sql`${facts.dateStart} is not null`);
 
     const datedRows = await this.db
       .select()
       .from(facts)
       .where(datedConditions)
-      .orderBy(facts.dateStart)
+      .orderBy(asc(facts.dateStart), asc(facts.id))
       .limit(limit + 1);
 
     const hasMore = datedRows.length > limit;
@@ -78,9 +92,13 @@ export class ChronologyService {
 
     const undatedCount = (undatedRow[0]?.count as number) ?? 0;
 
+    const last = datedItems.at(-1);
     return {
       items: datedItems,
-      nextCursor: hasMore ? datedItems.at(-1)!.createdAt : null,
+      nextCursor:
+        hasMore && last
+          ? encodeCursor({ sortValue: last.dateStart, id: last.id })
+          : null,
       undatedCount,
     };
   }

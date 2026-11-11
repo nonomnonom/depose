@@ -6,7 +6,6 @@ import type { Database } from '../../infrastructure/database/database.client.js'
 import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
   realtimeSessions,
-  realtimeLines,
   realtimeAlerts,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
@@ -44,6 +43,7 @@ export class RealtimeService {
         and(
           eq(realtimeSessions.id, sessionId),
           eq(realtimeSessions.firmId, actor.firmId),
+          eq(realtimeSessions.matterId, matterId),
         ),
       )
       .limit(1);
@@ -59,6 +59,7 @@ export class RealtimeService {
       .where(
         and(
           eq(realtimeAlerts.firmId, actor.firmId),
+          eq(realtimeAlerts.matterId, matterId),
           eq(realtimeAlerts.sessionId, sessionId),
         ),
       )

@@ -5,7 +5,7 @@ import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
-import { factIssues, issues } from '../../infrastructure/database/schema/index.js';
+import { factIssues, facts, issues, subsets } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
 
@@ -62,7 +62,13 @@ export class IssuesService {
     const [row] = await this.db
       .select()
       .from(issues)
-      .where(and(eq(issues.id, issueId), eq(issues.firmId, actor.firmId)))
+      .where(
+        and(
+          eq(issues.id, issueId),
+          eq(issues.firmId, actor.firmId),
+          eq(issues.matterId, matterId),
+        ),
+      )
       .limit(1);
     if (!row) throw DomainError.notFound('Issue not found');
     const factCount = await this.countFacts(row.id);
@@ -71,6 +77,20 @@ export class IssuesService {
 
   async create(actor: FirmActor, matterId: string, input: z.infer<typeof createIssueSchema>) {
     await this.policy.assertMatter(actor, 'matter.update', matterId);
+    if (input.subsetId) {
+      const [subset] = await this.db
+        .select({ id: subsets.id })
+        .from(subsets)
+        .where(
+          and(
+            eq(subsets.id, input.subsetId),
+            eq(subsets.firmId, actor.firmId),
+            eq(subsets.matterId, matterId),
+          ),
+        )
+        .limit(1);
+      if (!subset) throw DomainError.validation('Subset is not in this matter');
+    }
     const [row] = await this.db.insert(issues).values({
       firmId: actor.firmId,
       matterId,
@@ -96,7 +116,13 @@ export class IssuesService {
     const [row] = await this.db
       .update(issues)
       .set({ status, updatedAt: new Date() })
-      .where(and(eq(issues.id, issueId), eq(issues.firmId, actor.firmId)))
+      .where(
+        and(
+          eq(issues.id, issueId),
+          eq(issues.firmId, actor.firmId),
+          eq(issues.matterId, matterId),
+        ),
+      )
       .returning();
     if (!row) throw DomainError.notFound('Issue not found');
     await this.audit.log({
@@ -112,16 +138,52 @@ export class IssuesService {
 
   async getFacts(actor: FirmActor, matterId: string, issueId: string) {
     await this.policy.assertMatter(actor, 'fact.read', matterId);
+    await this.get(actor, matterId, issueId);
     const rows = await this.db
       .select({ factId: factIssues.factId, source: factIssues.source })
       .from(factIssues)
-      .where(and(eq(factIssues.issueId, issueId), eq(factIssues.firmId, actor.firmId)))
+      .where(
+        and(
+          eq(factIssues.issueId, issueId),
+          eq(factIssues.firmId, actor.firmId),
+          eq(factIssues.matterId, matterId),
+        ),
+      )
       .limit(1000);
     return { items: rows.map(r => ({ factId: r.factId, source: r.source })) };
   }
 
   async addFactToIssue(actor: FirmActor, matterId: string, issueId: string, factId: string, source: 'manual' | 'extraction' | 'workflow' = 'manual') {
     await this.policy.assertMatter(actor, 'fact.update', matterId);
+
+    /* Both sides must live in this firm and matter; ids alone are not enough. */
+    const [[issue], [fact]] = await Promise.all([
+      this.db
+        .select({ id: issues.id })
+        .from(issues)
+        .where(
+          and(
+            eq(issues.id, issueId),
+            eq(issues.firmId, actor.firmId),
+            eq(issues.matterId, matterId),
+          ),
+        )
+        .limit(1),
+      this.db
+        .select({ id: facts.id })
+        .from(facts)
+        .where(
+          and(
+            eq(facts.id, factId),
+            eq(facts.firmId, actor.firmId),
+            eq(facts.matterId, matterId),
+          ),
+        )
+        .limit(1),
+    ]);
+    if (!issue) throw DomainError.notFound('Issue not found');
+    if (!fact) throw DomainError.validation('Fact is not in this matter');
+
     // Check if already linked
     const existing = await this.db
       .select({ id: factIssues.id })
@@ -136,16 +198,6 @@ export class IssuesService {
       factId,
       source,
     });
-    // Fetch the inserted row
-    const [row] = await this.db
-      .select()
-      .from(factIssues)
-      .where(and(
-        eq(factIssues.firmId, actor.firmId),
-        eq(factIssues.issueId, issueId),
-        eq(factIssues.factId, factId),
-      ))
-      .limit(1);
     await this.audit.log({
       firmId: actor.firmId,
       action: 'issues.fact_added',
@@ -160,7 +212,12 @@ export class IssuesService {
   async removeFactFromIssue(actor: FirmActor, matterId: string, issueId: string, factId: string) {
     await this.policy.assertMatter(actor, 'fact.update', matterId);
     const deleted = await this.db.delete(factIssues)
-      .where(and(eq(factIssues.issueId, issueId), eq(factIssues.factId, factId), eq(factIssues.firmId, actor.firmId)))
+      .where(and(
+        eq(factIssues.issueId, issueId),
+        eq(factIssues.factId, factId),
+        eq(factIssues.firmId, actor.firmId),
+        eq(factIssues.matterId, matterId),
+      ))
       .returning();
     if (!deleted.length) throw DomainError.notFound('Fact not linked to this issue');
     await this.audit.log({

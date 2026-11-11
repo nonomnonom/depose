@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { DomainError } from '../../../common/domain-error.js';
 
@@ -299,6 +299,8 @@ export class ExtractionService {
       await this.jobs.progress(jobId, 85, 'persist');
       const createdFactIds = await this.db.transaction(async (tx) => {
         const insertedIds: string[] = [];
+        /* Only drop proposals that this document alone supports. A fact with
+         * sources in other documents must survive a reprocess of one of them. */
         const existing = await tx
           .select({ id: facts.id })
           .from(facts)
@@ -307,6 +309,11 @@ export class ExtractionService {
             and(
               eq(factSources.documentId, document.id),
               eq(facts.status, 'proposed'),
+              sql`not exists (
+                select 1 from fact_sources other
+                where other.fact_id = ${facts.id}
+                  and other.document_id <> ${document.id}
+              )`,
             ),
           );
         const proposedIds = [...new Set(existing.map((row) => row.id))];
@@ -370,6 +377,8 @@ export class ExtractionService {
 
       return {
         documentId: document.id,
+        firmId: document.firmId,
+        matterId: document.matterId,
         pipelineVersion: version,
         model: result.model,
         ...counts,

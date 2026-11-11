@@ -17,6 +17,20 @@ interface ErrorEnvelope {
   requestId: string;
 }
 
+const CODE_BY_STATUS: Record<number, ErrorCode> = {
+  400: 'VALIDATION_ERROR',
+  401: 'UNAUTHORIZED',
+  403: 'FORBIDDEN',
+  404: 'NOT_FOUND',
+  409: 'CONFLICT',
+  413: 'VALIDATION_ERROR',
+  415: 'VALIDATION_ERROR',
+  422: 'VALIDATION_ERROR',
+  429: 'RATE_LIMITED',
+  502: 'AI_OUTPUT_INVALID',
+  503: 'AI_PROVIDER_UNAVAILABLE',
+};
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -47,14 +61,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
             : exception.message;
       envelope = {
         statusCode: status,
-        code: status === 404 ? 'NOT_FOUND' : status === 401 ? 'UNAUTHORIZED' : status === 403 ? 'FORBIDDEN' : 'VALIDATION_ERROR',
+        code: CODE_BY_STATUS[status] ?? 'INTERNAL_ERROR',
         message: Array.isArray(rawMessage) ? rawMessage.join(', ') : rawMessage,
         details: [],
         requestId,
       };
     } else {
+      const cause =
+        exception instanceof Error && exception.cause instanceof Error
+          ? ` cause=${exception.cause.message}`
+          : '';
       this.logger.error(
-        `Unhandled error requestId=${requestId}`,
+        `Unhandled error requestId=${requestId}${cause}`,
         exception instanceof Error ? exception.stack : String(exception),
       );
       envelope = {

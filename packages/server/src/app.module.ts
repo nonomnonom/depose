@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { AiModule as NestAiModule } from '@nestjs/ai';
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { appConfig } from './config/app.config.js';
+import { aiRegistryOptions } from './config/ai-registry.js';
 import { AppController } from './app.controller.js';
 import { CommonModule } from './common/common.module.js';
 import { CsrfGuard } from './common/csrf.guard.js';
@@ -25,6 +25,7 @@ import { PlatformAiModule } from './modules/ai/platform/platform-ai.module.js';
 import { AgentModule } from './modules/ai/agent/agent.module.js';
 import { ConversationsModule } from './modules/ai/conversations/conversations.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
+import { WorkerProcessorsModule } from './modules/jobs/worker-processors.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ExtractionsModule } from './modules/ai/extractions/extractions.module.js';
 import { SystemOneModule } from './modules/ai/system-one/system-one.module.js';
@@ -35,6 +36,12 @@ import { MattersModule } from './modules/matters/matters.module.js';
 import { McpModule } from './modules/mcp/mcp.module.js';
 import { DeposeMcpServerModule } from './modules/mcp-server/mcp-server.module.js';
 import { NotificationsModule } from './modules/notifications/notifications.module.js';
+import { ApiKeysModule } from './modules/api-keys/api-keys.module.js';
+import { EntitiesModule } from './modules/entities/entities.module.js';
+import { IssuesModule } from './modules/issues/issues.module.js';
+import { RealtimeModule } from './modules/realtime/realtime.module.js';
+import { RelevanceModule } from './modules/relevance/relevance.module.js';
+import { SummaryThemeModule } from './modules/summary-theme/summary-theme.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { OutputsModule } from './modules/outputs/outputs.module.js';
 import { SearchModule } from './modules/search/search.module.js';
@@ -47,32 +54,16 @@ import { ChronologyModule } from './modules/chronology/chronology.module.js';
 import { WebhooksModule } from './modules/webhooks/webhooks.module.js';
 import { TenantGuard } from './modules/tenancy/tenant.guard.js';
 import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
+import { RedisModule } from './infrastructure/redis/redis.module.js';
+import { RateLimitGuard } from './common/rate-limit.guard.js';
 
 @Module({
   imports: [
-    NestAiModule.forRoot({
-      isGlobal: true,
-      /*
-       * Sentinel only: @nestjs/ai requires a registry entry, but every Dep AI
-       * call passes the firm's BYOK LanguageModel from ModelGatewayService.
-       * This endpoint is never reachable and holds no key from env.
-       */
-      models: {
-        unconfigured: createOpenAICompatible({
-          name: 'unconfigured',
-          baseURL: 'http://127.0.0.1:1/v1',
-          apiKey: 'unused',
-        })('unconfigured'),
-      },
-      defaults: {
-        timeout: `${appConfig.ai.timeoutMs}ms`,
-        retry: { attempts: appConfig.ai.maxRetries },
-        maxSteps: 10,
-      },
-    }),
+    NestAiModule.forRoot({ isGlobal: true, ...aiRegistryOptions() }),
     AppConfigModule,
     CommonModule,
     DatabaseModule,
+    RedisModule,
     MailModule,
     StorageModule,
     AuditModule,
@@ -102,10 +93,19 @@ import { TenantMiddleware } from './modules/tenancy/tenant.middleware.js';
     IntelligenceModule,
     ChronologyModule,
     WebhooksModule,
+    ApiKeysModule,
+    EntitiesModule,
+    IssuesModule,
+    RealtimeModule,
+    RelevanceModule,
+    SummaryThemeModule,
+    /* Consumers are opt-out so a single container still processes jobs by default. */
+    ...(appConfig.worker.enabled ? [WorkerProcessorsModule] : []),
   ],
   controllers: [AppController],
   providers: [
     { provide: APP_GUARD, useClass: TenantGuard },
+    { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_GUARD, useClass: SessionGuard },
     { provide: APP_GUARD, useClass: CsrfGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

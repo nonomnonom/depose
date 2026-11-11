@@ -1,14 +1,14 @@
 import { readFileSync } from 'node:fs';
-import { NestFactory } from '@nestjs/core';
-import type { NestExpressApplication } from '@nestjs/platform-express';
+import { Logger } from '@nestjs/common';
 import { SwaggerModule } from '@nestjs/swagger';
-import { json, raw, urlencoded, type RequestHandler } from 'express';
-import { AppModule } from './app.module.js';
+import type { RequestHandler } from 'express';
+import { createHttpApp } from './app.bootstrap.js';
 import { buildOpenApiConfig } from './common/openapi/document.js';
 import { appConfig } from './config/app.config.js';
-import { AuthService } from './modules/auth/auth.service.js';
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
+  const logger = new Logger('Bootstrap');
+
   const httpsOptions =
     appConfig.tls.mode === 'files' && appConfig.tls.keyPath && appConfig.tls.certPath
       ? {
@@ -17,45 +17,7 @@ async function bootstrap() {
         }
       : undefined;
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bodyParser: false,
-    ...(httpsOptions ? { httpsOptions } : {}),
-    logger: ['error', 'warn', 'log'],
-  });
-
-  app.setGlobalPrefix('api');
-  app.enableShutdownHooks();
-
-  if (appConfig.tenancy.trustProxy) {
-    app.getHttpAdapter().getInstance().set('trust proxy', 1);
-  }
-
-  app.enableCors({
-    origin: appConfig.auth.trustedOrigins,
-    credentials: true,
-  });
-
-  // Better Auth owns `/api/auth/*` and must see the raw request stream.
-  const auth = app.get(AuthService);
-  app.getHttpAdapter().getInstance().all('/api/auth/*splat', auth.nodeHandler);
-
-  app.use(
-    raw({
-      type: [
-        'application/octet-stream',
-        'application/pdf',
-        'text/*',
-        'application/rtf',
-        'message/rfc822',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'image/*',
-      ],
-      limit: '100mb',
-    }),
-  );
-  app.use(json({ limit: '2mb' }));
-  app.use(urlencoded({ extended: true, limit: '2mb' }));
+  const app = await createHttpApp(httpsOptions ? { httpsOptions } : {});
 
   if (appConfig.openapi.enabled) {
     const document = SwaggerModule.createDocument(app, buildOpenApiConfig());
@@ -66,7 +28,24 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app, document, { customSiteTitle: 'Depose API' });
   }
 
+  app.enableShutdownHooks();
   await app.listen(appConfig.port);
+
+  logger.log(
+    JSON.stringify({
+      event: 'server.started',
+      port: appConfig.port,
+      environment: appConfig.nodeEnv,
+      workers: appConfig.worker.enabled,
+      openapi: appConfig.openapi.enabled,
+    }),
+  );
 }
 
-void bootstrap();
+bootstrap().catch((error: unknown) => {
+  const logger = new Logger('Bootstrap');
+  logger.error(
+    `Server failed to start: ${error instanceof Error ? error.stack ?? error.message : String(error)}`,
+  );
+  process.exitCode = 1;
+});

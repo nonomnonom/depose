@@ -1,0 +1,16 @@
+.git
+.gitignore
+.turbo
+**/node_modules
+**/dist
+**/.next
+**/.test-dist
+**/coverage
+**/.local-storage
+**/var
+**/*.tsbuildinfo
+**/.env
+**/.env.*
+!**/.env.example
+out
+docs

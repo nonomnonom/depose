@@ -23,7 +23,8 @@ export class RelevanceController {
     @Query('scopeId') scopeId?: string,
   ) {
     const actor = this.context.requireFirmActor();
-    return this.service.list(actor, matterId, scopeType as any ?? undefined, scopeId);
+    const scope = scopeType === 'matter' || scopeType === 'subset' ? scopeType : undefined;
+    return this.service.list(actor, matterId, scope, scopeId);
   }
 
   @Get('fact/:factId')
@@ -72,7 +73,9 @@ export class RelevanceController {
     @Query('labels') labels: string,
   ) {
     const actor = this.context.requireFirmActor();
-    const labelArray = (labels || '').split(',').filter(Boolean) as any[];
+    const labelArray = (labels || '')
+      .split(',')
+      .filter(Boolean) as Parameters<RelevanceService['getByLabels']>[2];
     return this.service.getByLabels(actor, matterId, labelArray);
   }
 }

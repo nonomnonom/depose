@@ -251,7 +251,10 @@ export const webhooks = pgTable(
       .notNull()
       .references(() => firms.id, { onDelete: 'cascade' }),
     url: text('url').notNull(),
-    secretHash: text('secret_hash').notNull(),
+    /** SHA-256 of the signing secret; used only to detect "has a secret". */
+    secretHash: text('secret_hash').notNull().default(''),
+    /** AES-256-GCM ciphertext of the signing secret. Never returned by the API. */
+    secretCiphertext: text('secret_ciphertext'),
     events: text('events').array().notNull().default(sql`'{}'::text[]`),
     enabled: boolean('enabled').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

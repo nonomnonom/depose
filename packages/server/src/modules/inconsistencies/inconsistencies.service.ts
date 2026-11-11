@@ -139,7 +139,13 @@ export class InconsistenciesService {
     const [row] = await this.db
       .select()
       .from(contradictions)
-      .where(and(eq(contradictions.id, contradictionId), eq(contradictions.firmId, actor.firmId)))
+      .where(
+        and(
+          eq(contradictions.id, contradictionId),
+          eq(contradictions.firmId, actor.firmId),
+          eq(contradictions.matterId, matterId),
+        ),
+      )
       .limit(1);
     if (!row) throw DomainError.notFound('Contradiction not found');
     return { contradiction: this.toDto(row) };
@@ -156,7 +162,13 @@ export class InconsistenciesService {
         confidence: input.confidence ?? undefined,
         updatedAt: new Date(),
       })
-      .where(and(eq(contradictions.id, contradictionId), eq(contradictions.firmId, actor.firmId)))
+      .where(
+        and(
+          eq(contradictions.id, contradictionId),
+          eq(contradictions.firmId, actor.firmId),
+          eq(contradictions.matterId, matterId),
+        ),
+      )
       .returning();
     if (!row) throw DomainError.notFound('Contradiction not found');
     await this.audit.log({
@@ -175,9 +187,23 @@ export class InconsistenciesService {
     const [row] = await this.db
       .update(contradictions)
       .set({ severity, updatedAt: new Date() })
-      .where(and(eq(contradictions.id, contradictionId), eq(contradictions.firmId, actor.firmId)))
+      .where(
+        and(
+          eq(contradictions.id, contradictionId),
+          eq(contradictions.firmId, actor.firmId),
+          eq(contradictions.matterId, matterId),
+        ),
+      )
       .returning();
     if (!row) throw DomainError.notFound('Contradiction not found');
+    await this.audit.log({
+      firmId: actor.firmId,
+      action: 'inconsistencies.severity_updated',
+      resourceType: 'contradiction',
+      resourceId: contradictionId,
+      actor,
+      metadata: { matterId, severity },
+    });
     return { contradiction: this.toDto(row) };
   }
 
@@ -202,18 +228,16 @@ export class InconsistenciesService {
       .from(contradictions)
       .where(and(eq(contradictions.firmId, actor.firmId), eq(contradictions.matterId, matterId)))
       .limit(1);
-    const [byStatus] = await this.db
+    const byStatus = await this.db
       .select({ status: contradictions.status, count: sql<number>`count(*)::int` })
       .from(contradictions)
       .where(and(eq(contradictions.firmId, actor.firmId), eq(contradictions.matterId, matterId)))
-      .groupBy(contradictions.status)
-      .limit(20);
-    const [byKind] = await this.db
+      .groupBy(contradictions.status);
+    const byKind = await this.db
       .select({ kind: contradictions.kind, count: sql<number>`count(*)::int` })
       .from(contradictions)
       .where(and(eq(contradictions.firmId, actor.firmId), eq(contradictions.matterId, matterId)))
-      .groupBy(contradictions.kind)
-      .limit(20);
+      .groupBy(contradictions.kind);
 
     // candidate count
     const [candidates] = await this.db
@@ -228,8 +252,8 @@ export class InconsistenciesService {
 
     return {
       total: total?.count ?? 0,
-      byStatus: byStatus ?? [],
-      byKind: byKind ?? [],
+      byStatus,
+      byKind,
       candidateCount: candidates?.count ?? 0,
     };
   }

@@ -4,6 +4,7 @@ import type { Job } from 'bullmq';
 import { DomainError } from '../../../common/domain-error.js';
 import { JobsService } from '../../jobs/jobs.service.js';
 import { EXTRACTION_QUEUE } from '../../jobs/queue.constants.js';
+import { WebhooksService } from '../../webhooks/webhooks.service.js';
 import { ExtractionService } from './extraction.service.js';
 
 abstract class TrackedProcessor extends WorkerHost {
@@ -56,6 +57,7 @@ export class ExtractionProcessor extends TrackedProcessor {
   constructor(
     jobs: JobsService,
     private readonly extraction: ExtractionService,
+    private readonly webhooks: WebhooksService,
   ) {
     super(jobs);
   }
@@ -63,7 +65,18 @@ export class ExtractionProcessor extends TrackedProcessor {
   async process(job: Job): Promise<Record<string, unknown>> {
     const { jobId, documentId } = await this.start(job);
     try {
-      return await this.finish(jobId, await this.extraction.run(documentId, jobId));
+      const result = await this.extraction.run(documentId, jobId);
+      const firmId = result.firmId as string | undefined;
+      const matterId = result.matterId as string | undefined;
+      if (firmId) {
+        await this.webhooks.dispatch(firmId, 'facts.extracted', {
+          documentId,
+          matterId,
+          stored: result.stored,
+          candidates: result.candidates,
+        });
+      }
+      return await this.finish(jobId, result);
     } catch (error) {
       await this.recordFailure(jobId, error);
       throw error;
