@@ -127,7 +127,7 @@ export function testDatabaseUrl(): string {
   return connectionString;
 }
 
-export async function migrateTestDatabase(once?: boolean): Promise<void> {
+export async function migrateTestDatabase(_once?: boolean): Promise<void> {
   const client = new Client({ connectionString: testDatabaseUrl() });
   await client.connect();
   try {

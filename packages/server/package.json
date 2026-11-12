@@ -7,10 +7,10 @@
   "scripts": {
     "build": "node scripts/clean.mjs && tsc -p tsconfig.json",
     "clean": "node scripts/clean.mjs",
-    "dev": "nest start",
+    "dev": "node scripts/dev.mjs",
     "start": "node dist/main.js",
     "start:worker": "node dist/worker.main.js",
-    "start:dev": "nest start --watch",
+    "start:dev": "node scripts/dev.mjs",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix --no-warn-ignored",
     "format": "prettier --write \"**/*.{ts,tsx,css,json,md}\"",
     "check-types": "tsc --noEmit -p tsconfig.test.json",

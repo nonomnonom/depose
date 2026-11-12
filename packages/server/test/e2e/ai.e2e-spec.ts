@@ -39,8 +39,6 @@ describe('Dep AI evidence answer', () => {
     );
     const { db } = await import('../../src/infrastructure/database/database.client.js');
     const { facts } = await import('../../src/infrastructure/database/schema/index.js');
-    const { encryptSecret } = await import('../../src/common/secret-box.js');
-    const { TEST_SECRET_KEY } = await import('../support/env/test-env.js');
 
     const user = await signUpUser(e2e.baseUrl);
     const firm = await createFirmWithDomain({

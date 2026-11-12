@@ -21,7 +21,6 @@ function asJob(data: Record<string, unknown>): Job {
 describe('Job handlers', () => {
   let e2e: E2EApp;
   let fixture: JobFixture;
-  let jobs: import('../../src/modules/jobs/jobs.service.js').JobsService;
   let processor: import('../../src/modules/documents/ingest.processor.js').IngestProcessor;
 
   beforeAll(async () => {
