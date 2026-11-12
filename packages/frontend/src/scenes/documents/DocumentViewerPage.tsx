@@ -8,18 +8,10 @@ import { PageLoading } from '~/lib/components/PageLoading';
 import { ChevronLeft, ChevronRight, CircleWarning, Download } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { ErrorState } from '~/layout/ErrorPage';
+import { FactRow } from '~/lib/components/facts/FactRow';
 import { documentsControllerGet, documentsControllerPage, factsControllerList } from '~/generated/endpoints';
 import { unwrapData } from '~/lib/api/client';
 import { queryKeys } from '~/lib/query/keys';
-
-interface FactRow {
-  id: string;
-  text: string;
-  dateStart: string | null;
-  factType: string | null;
-  status: string;
-  confidence: number | null;
-}
 
 const STATUS_LABEL: Record<string, string> = {
   queued: 'Queued',
@@ -64,7 +56,7 @@ export function DocumentViewerPage() {
   };
 
   const totalPages = document.data?.pageCount ?? null;
-  const factRows = (facts.data?.items ?? []) as FactRow[];
+  const factRows = facts.data?.items ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -188,21 +180,19 @@ export function DocumentViewerPage() {
               ) : (
                 <ul className="max-h-[62dvh] divide-y divide-border overflow-y-auto">
                   {factRows.map((fact) => (
-                    <li key={fact.id} className="px-4 py-3">
-                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                        <span>{fact.dateStart ?? 'Undated'}</span>
-                        <Badge variant="outline" className="text-[10px] capitalize">
-                          {fact.status}
-                        </Badge>
-                      </div>
-                      <p className="mt-1 line-clamp-4 text-sm text-pretty">{fact.text}</p>
-                      <Link
-                        to={`/matters/${matterId}/data/facts?focus=${fact.id}`}
-                        className="mt-1 inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
-                      >
-                        Open in fact bank
-                      </Link>
-                    </li>
+                    <FactRow
+                      key={fact.id}
+                      fact={fact}
+                      clamp
+                      after={
+                        <Link
+                          to={`/matters/${matterId}/data/facts?focus=${fact.id}`}
+                          className="inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
+                        >
+                          Open in fact bank
+                        </Link>
+                      }
+                    />
                   ))}
                 </ul>
               )}

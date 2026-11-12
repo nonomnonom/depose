@@ -34,14 +34,7 @@ interface SummaryRow {
   generatedAt: string | null;
 }
 
-interface FactRow {
-  id: string;
-  text: string;
-  dateStart: string | null;
-  factType: string | null;
-  confidence: number | null;
-  sourceCount: number;
-}
+import type { FactDto } from '~/generated/schemas';
 
 export function SummaryPage() {
   const { matterId = '' } = useParams();
@@ -71,9 +64,9 @@ export function SummaryPage() {
 
   const factsQuery = useQuery({
     queryKey: [...queryKeys.matter(matterId), 'summary-facts'],
-    queryFn: async (): Promise<FactRow[]> => {
+    queryFn: async (): Promise<FactDto[]> => {
       const response = await factsControllerList(matterId, { status: 'confirmed', limit: 100 });
-      const payload = unwrapData(response) as unknown as { items?: FactRow[] };
+      const payload = unwrapData(response) as unknown as { items?: FactDto[] };
       return payload?.items ?? [];
     },
     enabled: Boolean(matterId),

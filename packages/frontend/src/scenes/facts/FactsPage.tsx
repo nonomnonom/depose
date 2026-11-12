@@ -17,6 +17,7 @@ import { PageLoading } from '~/lib/components/PageLoading';
 import { Check, CircleWarning, Sparkle } from '@coolicons/react';
 import type { FactDto, FactDtoStatus } from '~/generated/schemas';
 import { PageHeader } from '~/layout/PageHeader';
+import { FactRow } from '~/lib/components/facts/FactRow';
 import { ErrorState } from '~/layout/ErrorPage';
 import { useSession } from '~/lib/auth/session';
 import { formatRelativeDate } from '~/lib/format/date';
@@ -235,56 +236,6 @@ export function FactsPage() {
   );
 }
 
-function FactRow({
-  fact,
-  active,
-  onSelect,
-}: {
-  fact: FactDto;
-  active: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <li>
-      <button
-        type="button"
-        onClick={onSelect}
-        className={`flex w-full flex-col gap-1.5 px-4 py-3.5 text-left transition-colors ${
-          active ? 'bg-primary/5' : 'hover:bg-muted/40'
-        }`}
-      >
-        <div className="flex items-start gap-3">
-          <span
-            className={`mt-1.5 size-2 shrink-0 rounded-full ${
-              fact.status === 'confirmed'
-                ? 'bg-primary'
-                : fact.status === 'rejected'
-                  ? 'bg-muted-foreground/40'
-                  : 'border border-primary bg-transparent'
-            }`}
-            aria-hidden
-          />
-          <p className="min-w-0 flex-1 text-sm text-pretty">{fact.text}</p>
-          {fact.confidence !== null ? (
-            <Confidence value={fact.confidence} />
-          ) : null}
-        </div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pl-5 text-xs text-muted-foreground">
-          <span>{fact.dateStart ?? 'Undated'}</span>
-          <span>·</span>
-          <span className="capitalize">{fact.factType ?? 'fact'}</span>
-          <span>·</span>
-          <span>
-            {fact.sourceCount} {fact.sourceCount === 1 ? 'source' : 'sources'}
-          </span>
-          <span>·</span>
-          <span>{STATUS_LABEL[fact.status]}</span>
-        </div>
-      </button>
-    </li>
-  );
-}
-
 function FactDetail({
   matterId,
   factId,
@@ -423,24 +374,6 @@ function FactDetail({
         ) : null}
       </div>
     </aside>
-  );
-}
-
-function Confidence({ value }: { value: number }) {
-  const percent = Math.round(value * 100);
-  return (
-    <span
-      className="hidden shrink-0 items-center gap-1 text-[11px] tabular-nums text-muted-foreground sm:flex"
-      title={`Extraction confidence ${percent}%`}
-    >
-      <span className="h-1 w-8 overflow-hidden rounded-full bg-muted">
-        <span
-          className={`block h-full ${percent >= 70 ? 'bg-primary' : 'bg-muted-foreground/60'}`}
-          style={{ width: `${percent}%` }}
-        />
-      </span>
-      {percent}%
-    </span>
   );
 }
 
