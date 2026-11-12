@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, it } from '@jest/globals';
-import assert from './helpers/jest-assert.js';
-import type { E2EApp } from './helpers/e2e-app.factory.js';
-import { request } from './helpers/http.js';
+import assert from '../support/utils/jest-assert.js';
+import type { E2EApp } from '../support/app/create-test-app.js';
+import { request } from '../support/http.js';
 
 interface Fixture {
   cookie: string;
@@ -16,12 +16,12 @@ describe('Production hardening', () => {
   let fixture: Fixture;
 
   beforeAll(async () => {
-    const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
+    const { createE2EApp } = await import('../support/app/create-test-app.js');
     /* Production URL policy: private and plain-http outbound targets are denied. */
     e2e = await createE2EApp({ ALLOW_PRIVATE_OUTBOUND_URLS: 'false' });
 
     const { signUpUser, createFirmWithDomain, createMatter } = await import(
-      './helpers/auth.test-utils.js'
+      '../support/auth/auth.helper.js'
     );
     const user = await signUpUser(e2e.baseUrl, { name: 'Hardening Admin' });
     const firm = await createFirmWithDomain({
@@ -116,8 +116,8 @@ describe('Production hardening', () => {
   });
 
   it('stores only a one-way digest of the API key', async () => {
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { apiKeys } = await import('../src/infrastructure/database/schema/index.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { apiKeys } = await import('../../src/infrastructure/database/schema/index.js');
     const { eq } = await import('drizzle-orm');
 
     const created = await request(e2e.baseUrl, '/api/v1/api-keys', {
@@ -179,8 +179,8 @@ describe('Production hardening', () => {
     const webhook = created.json<{ webhook: { id: string; hasSecret: boolean } }>().webhook;
     assert.equal(webhook.hasSecret, true);
 
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { webhooks } = await import('../src/infrastructure/database/schema/index.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { webhooks } = await import('../../src/infrastructure/database/schema/index.js');
     const { eq } = await import('drizzle-orm');
     const [stored] = await db.select().from(webhooks).where(eq(webhooks.id, webhook.id));
     const secretCiphertext = stored.secretCiphertext ?? '';
@@ -210,9 +210,9 @@ describe('Production hardening', () => {
   });
 
   it('keeps issues, entities, relevance, and realtime inside their matter', async () => {
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const schema = await import('../src/infrastructure/database/schema/index.js');
-    const { createMatter } = await import('./helpers/auth.test-utils.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const schema = await import('../../src/infrastructure/database/schema/index.js');
+    const { createMatter } = await import('../support/auth/auth.helper.js');
 
     const other = await createMatter({
       firmId: fixture.firmId,
@@ -362,8 +362,8 @@ describe('Production hardening', () => {
   });
 
   it('paginates chronology without repeating a row', async () => {
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { facts } = await import('../src/infrastructure/database/schema/index.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { facts } = await import('../../src/infrastructure/database/schema/index.js');
 
     await db.insert(facts).values(
       ['2020-01-01', '2020-01-02', '2020-01-03'].map((dateStart) => ({

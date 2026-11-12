@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, it } from '@jest/globals';
-import assert from './helpers/jest-assert.js';
-import type { E2EApp } from './helpers/e2e-app.factory.js';
-import type { FakeModelServer } from './helpers/fake-model-server.js';
-import { request } from './helpers/http.js';
+import assert from '../support/utils/jest-assert.js';
+import type { E2EApp } from '../support/app/create-test-app.js';
+import type { FakeModelServer } from '../support/fakes/model-server.fake.js';
+import { request } from '../support/http.js';
 
 interface AiFixture {
   cookie: string;
@@ -17,8 +17,8 @@ describe('Dep AI evidence answer', () => {
   let fixture: AiFixture;
 
   beforeAll(async () => {
-    const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
-    const { startFakeModelServer } = await import('./helpers/fake-model-server.js');
+    const { createE2EApp } = await import('../support/app/create-test-app.js');
+    const { startFakeModelServer } = await import('../support/fakes/model-server.fake.js');
     fake = await startFakeModelServer();
     e2e = await createE2EApp({
       AI_PROVIDER: 'openai-compatible',
@@ -35,12 +35,12 @@ describe('Dep AI evidence answer', () => {
 
   it('answers only from the evidence pack and maps citations to source ids', async () => {
     const { signUpUser, createFirmWithDomain, createMatter } = await import(
-      './helpers/auth.test-utils.js'
+      '../support/auth/auth.helper.js'
     );
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { facts } = await import('../src/infrastructure/database/schema/index.js');
-    const { encryptSecret } = await import('../src/common/secret-box.js');
-    const { TEST_SECRET_KEY } = await import('./helpers/test-env.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { facts } = await import('../../src/infrastructure/database/schema/index.js');
+    const { encryptSecret } = await import('../../src/common/secret-box.js');
+    const { TEST_SECRET_KEY } = await import('../support/env/test-env.js');
 
     const user = await signUpUser(e2e.baseUrl);
     const firm = await createFirmWithDomain({

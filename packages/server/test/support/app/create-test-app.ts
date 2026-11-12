@@ -1,8 +1,8 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import type { INestApplication } from '@nestjs/common';
-import { applyTestEnv, type TestEnvOverrides } from './test-env.js';
-import { setupTestDatabase, teardownTestDatabase } from './test-database.js';
-import { setupTestRedis, teardownTestRedis } from './test-redis.js';
+import { applyTestEnv, type TestEnvOverrides } from '../env/test-env.js';
+import { setupTestDatabase, teardownTestDatabase } from '../db/test-database.js';
+import { setupTestRedis, teardownTestRedis } from '../db/test-redis.js';
 
 export interface E2EApp {
   app: INestApplication;
@@ -25,8 +25,8 @@ export async function createE2EApp(overrides: TestEnvOverrides = {}): Promise<E2
 
   const [{ NestFactory }, { configureApp }, { AppModule }] = await Promise.all([
     import('@nestjs/core'),
-    import('../../src/app.bootstrap.js'),
-    import('../../src/app.module.js'),
+    import('../../../src/app.bootstrap.js'),
+    import('../../../src/app.module.js'),
   ]);
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -52,9 +52,9 @@ export async function createE2EApp(overrides: TestEnvOverrides = {}): Promise<E2
 /** App-level services and helpers a spec needs, resolved after boot. */
 export async function e2eHelpers() {
   const [{ db }, authUtils, http] = await Promise.all([
-    import('../../src/infrastructure/database/database.client.js'),
-    import('./auth.test-utils.js'),
-    import('./http.js'),
+    import('../../../src/infrastructure/database/database.client.js'),
+    import('../auth/auth.helper.js'),
+    import('../http.js'),
   ]);
   return { db, ...authUtils, ...http };
 }

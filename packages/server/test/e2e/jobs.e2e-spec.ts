@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, it } from '@jest/globals';
-import assert from './helpers/jest-assert.js';
+import assert from '../support/utils/jest-assert.js';
 import { randomUUID } from 'node:crypto';
 import type { Job } from 'bullmq';
-import type { E2EApp } from './helpers/e2e-app.factory.js';
-import { request } from './helpers/http.js';
+import type { E2EApp } from '../support/app/create-test-app.js';
+import { request } from '../support/http.js';
 
 const DOCUMENT_TEXT = 'The lease started on 1 January 2023 and ends on 31 December 2025.';
 
@@ -21,18 +21,18 @@ function asJob(data: Record<string, unknown>): Job {
 describe('Job handlers', () => {
   let e2e: E2EApp;
   let fixture: JobFixture;
-  let jobs: import('../src/modules/jobs/jobs.service.js').JobsService;
-  let processor: import('../src/modules/documents/ingest.processor.js').IngestProcessor;
+  let jobs: import('../../src/modules/jobs/jobs.service.js').JobsService;
+  let processor: import('../../src/modules/documents/ingest.processor.js').IngestProcessor;
 
   beforeAll(async () => {
-    const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
+    const { createE2EApp } = await import('../support/app/create-test-app.js');
     e2e = await createE2EApp();
 
     const { signUpUser, createFirmWithDomain, createMatter } = await import(
-      './helpers/auth.test-utils.js'
+      '../support/auth/auth.helper.js'
     );
-    const { JobsService } = await import('../src/modules/jobs/jobs.service.js');
-    const { IngestProcessor } = await import('../src/modules/documents/ingest.processor.js');
+    const { JobsService } = await import('../../src/modules/jobs/jobs.service.js');
+    const { IngestProcessor } = await import('../../src/modules/documents/ingest.processor.js');
 
     jobs = e2e.app.get(JobsService);
     processor = e2e.app.get(IngestProcessor);
@@ -68,8 +68,8 @@ describe('Job handlers', () => {
   });
 
   it('marks a successful ingest job as succeeded with its result', async () => {
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { jobs: jobsTable } = await import('../src/infrastructure/database/schema/index.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { jobs: jobsTable } = await import('../../src/infrastructure/database/schema/index.js');
     const { eq } = await import('drizzle-orm');
 
     const jobId = randomUUID();
@@ -100,8 +100,8 @@ describe('Job handlers', () => {
   });
 
   it('requeues a retryable failure and records the error', async () => {
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { jobs: jobsTable } = await import('../src/infrastructure/database/schema/index.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { jobs: jobsTable } = await import('../../src/infrastructure/database/schema/index.js');
     const { eq } = await import('drizzle-orm');
 
     const jobId = randomUUID();
@@ -136,8 +136,8 @@ describe('Job handlers', () => {
   });
 
   it('reports a terminal state once attempts are exhausted', async () => {
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { jobs: jobsTable } = await import('../src/infrastructure/database/schema/index.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { jobs: jobsTable } = await import('../../src/infrastructure/database/schema/index.js');
     const { eq } = await import('drizzle-orm');
 
     const jobId = randomUUID();

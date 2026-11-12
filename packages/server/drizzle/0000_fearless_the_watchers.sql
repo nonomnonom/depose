@@ -1303,7 +1303,6 @@ CREATE INDEX "realtime_alerts_session_status_idx" ON "realtime_alerts" USING btr
 CREATE UNIQUE INDEX "realtime_lines_session_sequence_unique" ON "realtime_lines" USING btree ("session_id","sequence");--> statement-breakpoint
 CREATE INDEX "realtime_sessions_matter_status_idx" ON "realtime_sessions" USING btree ("matter_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "saved_searches_user_matter_name_unique" ON "saved_searches" USING btree ("user_id","matter_id","name");--> statement-breakpoint
-CREATE UNIQUE INDEX "user_preferences_user_id_unique" ON "user_preferences" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "webhook_deliveries_webhook_status_next_idx" ON "webhook_deliveries" USING btree ("webhook_id","status","next_attempt_at");--> statement-breakpoint
 CREATE INDEX "webhooks_firm_id_idx" ON "webhooks" USING btree ("firm_id");--> statement-breakpoint
 CREATE INDEX "workflow_runs_firm_status_started_idx" ON "workflow_runs" USING btree ("firm_id","status","started_at");

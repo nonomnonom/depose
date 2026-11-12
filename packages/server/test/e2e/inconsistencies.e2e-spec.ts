@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, it } from '@jest/globals';
-import assert from './helpers/jest-assert.js';
-import type { E2EApp } from './helpers/e2e-app.factory.js';
-import type { FakeModelServer } from './helpers/fake-model-server.js';
-import { request } from './helpers/http.js';
+import assert from '../support/utils/jest-assert.js';
+import type { E2EApp } from '../support/app/create-test-app.js';
+import type { FakeModelServer } from '../support/fakes/model-server.fake.js';
+import { request } from '../support/http.js';
 
 interface MatterFixture {
   cookie: string;
@@ -14,7 +14,7 @@ interface MatterFixture {
 
 async function seedMatter(label: string): Promise<MatterFixture> {
   const { signUpUser, createFirmWithDomain, createMatter } = await import(
-    './helpers/auth.test-utils.js'
+    '../support/auth/auth.helper.js'
   );
   const user = await signUpUser(e2e.baseUrl, { name: `${label} user` });
   const firm = await createFirmWithDomain({
@@ -39,8 +39,8 @@ async function seedFact(
   fixture: MatterFixture,
   input: { text: string; entity: string; factType?: string },
 ): Promise<string> {
-  const { db } = await import('../src/infrastructure/database/database.client.js');
-  const { facts } = await import('../src/infrastructure/database/schema/index.js');
+  const { db } = await import('../../src/infrastructure/database/database.client.js');
+  const { facts } = await import('../../src/infrastructure/database/schema/index.js');
 
   const [row] = await db
     .insert(facts)
@@ -60,8 +60,8 @@ async function seedFact(
 
 describe('Contradiction detector', () => {
   beforeAll(async () => {
-    const { startFakeModelServer } = await import('./helpers/fake-model-server.js');
-    const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
+    const { startFakeModelServer } = await import('../support/fakes/model-server.fake.js');
+    const { createE2EApp } = await import('../support/app/create-test-app.js');
     fake = await startFakeModelServer();
     e2e = await createE2EApp({
       DECISION_PROVIDER: 'openai-compatible',
@@ -117,9 +117,9 @@ describe('Contradiction detector', () => {
     assert.equal(body.items[0].status, 'candidate');
     assert.equal(body.items[0].detectedBy, 'contradiction-detector');
 
-    const { db } = await import('../src/infrastructure/database/database.client.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
     const { contradictionFacts, contradictions } = await import(
-      '../src/infrastructure/database/schema/index.js'
+      '../../src/infrastructure/database/schema/index.js'
     );
     const { eq } = await import('drizzle-orm');
 
@@ -189,8 +189,8 @@ describe('Contradiction detector', () => {
       'a known pair is skipped before spending a model call',
     );
 
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { contradictions } = await import('../src/infrastructure/database/schema/index.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { contradictions } = await import('../../src/infrastructure/database/schema/index.js');
     const { eq } = await import('drizzle-orm');
     const rows = await db
       .select()

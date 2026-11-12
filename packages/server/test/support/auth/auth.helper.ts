@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { db } from '../../src/infrastructure/database/database.client.js';
+import { db } from '../../../src/infrastructure/database/database.client.js';
 import {
   firmDomains,
   firms,
@@ -8,9 +8,9 @@ import {
   messages,
   organization,
   threads,
-} from '../../src/infrastructure/database/schema/index.js';
-import type { FirmRole } from '../../src/infrastructure/database/schema/enums.js';
-import { request } from './http.js';
+} from '../../../src/infrastructure/database/schema/index.js';
+import type { FirmRole } from '../../../src/infrastructure/database/schema/enums.js';
+import { request } from '../http.js';
 
 export interface TestUser {
   userId: string;

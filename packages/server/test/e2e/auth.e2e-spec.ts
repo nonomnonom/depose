@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, describe, it } from '@jest/globals';
-import assert from './helpers/jest-assert.js';
-import type { E2EApp } from './helpers/e2e-app.factory.js';
-import { request } from './helpers/http.js';
+import assert from '../support/utils/jest-assert.js';
+import type { E2EApp } from '../support/app/create-test-app.js';
+import { request } from '../support/http.js';
 
-describe('Auth session lifecycle', () => {
+describe('Auth session lifecycle @smoke', () => {
   let e2e: E2EApp;
 
   beforeAll(async () => {
-    const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
+    const { createE2EApp } = await import('../support/app/create-test-app.js');
     e2e = await createE2EApp();
   });
 
@@ -16,7 +16,7 @@ describe('Auth session lifecycle', () => {
   });
 
   it('signs up, resolves the session, and rejects a missing cookie', async () => {
-    const { signUpUser } = await import('./helpers/auth.test-utils.js');
+    const { signUpUser } = await import('../support/auth/auth.helper.js');
     const user = await signUpUser(e2e.baseUrl);
 
     const anonymous = await request(e2e.baseUrl, '/api/v1/me');
@@ -31,7 +31,7 @@ describe('Auth session lifecycle', () => {
   });
 
   it('signs in again with the same credentials', async () => {
-    const { signUpUser, signInUser } = await import('./helpers/auth.test-utils.js');
+    const { signUpUser, signInUser } = await import('../support/auth/auth.helper.js');
     const user = await signUpUser(e2e.baseUrl);
 
     const cookie = await signInUser(e2e.baseUrl, user.email, user.password);
@@ -42,7 +42,7 @@ describe('Auth session lifecycle', () => {
   });
 
   it('returns the firm and role once the user is a member', async () => {
-    const { signUpUser, createFirmWithDomain } = await import('./helpers/auth.test-utils.js');
+    const { signUpUser, createFirmWithDomain } = await import('../support/auth/auth.helper.js');
     const user = await signUpUser(e2e.baseUrl);
     const firm = await createFirmWithDomain({ ownerId: user.userId, role: 'lawyer' });
 
@@ -60,7 +60,7 @@ describe('Auth session lifecycle', () => {
   });
 
   it('revokes the session on sign-out', async () => {
-    const { signUpUser } = await import('./helpers/auth.test-utils.js');
+    const { signUpUser } = await import('../support/auth/auth.helper.js');
     const user = await signUpUser(e2e.baseUrl);
 
     const signOut = await request(e2e.baseUrl, '/api/auth/sign-out', {

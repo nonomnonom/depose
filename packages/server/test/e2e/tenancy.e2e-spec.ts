@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, it } from '@jest/globals';
-import assert from './helpers/jest-assert.js';
-import type { E2EApp } from './helpers/e2e-app.factory.js';
-import { request } from './helpers/http.js';
+import assert from '../support/utils/jest-assert.js';
+import type { E2EApp } from '../support/app/create-test-app.js';
+import { request } from '../support/http.js';
 
 interface TenantFixture {
   cookie: string;
@@ -18,14 +18,14 @@ describe('Tenancy and access isolation', () => {
   let beta: TenantFixture;
 
   beforeAll(async () => {
-    const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
+    const { createE2EApp } = await import('../support/app/create-test-app.js');
     e2e = await createE2EApp();
 
     const { signUpUser, createFirmWithDomain, createMatter } = await import(
-      './helpers/auth.test-utils.js'
+      '../support/auth/auth.helper.js'
     );
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { member } = await import('../src/infrastructure/database/schema/index.js');
+    const { db } = await import('../../src/infrastructure/database/database.client.js');
+    const { member } = await import('../../src/infrastructure/database/schema/index.js');
 
     const build = async (label: string): Promise<TenantFixture> => {
       const user = await signUpUser(e2e.baseUrl, { name: `${label} user` });
@@ -103,7 +103,7 @@ describe('Tenancy and access isolation', () => {
   });
 
   it('does not leak thread messages across firms (IDOR regression)', async () => {
-    const { createThreadWithMessage } = await import('./helpers/auth.test-utils.js');
+    const { createThreadWithMessage } = await import('../support/auth/auth.helper.js');
 
     const thread = await createThreadWithMessage({
       firmId: alpha.firmId,
@@ -112,7 +112,7 @@ describe('Tenancy and access isolation', () => {
       content: 'alpha privileged note',
     });
 
-    const { OutputsService } = await import('../src/modules/outputs/outputs.service.js');
+    const { OutputsService } = await import('../../src/modules/outputs/outputs.service.js');
     const outputs = e2e.app.get(OutputsService);
 
     const outsider = {

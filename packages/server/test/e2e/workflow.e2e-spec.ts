@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, it } from '@jest/globals';
-import assert from './helpers/jest-assert.js';
-import type { E2EApp } from './helpers/e2e-app.factory.js';
-import type { FakeModelServer } from './helpers/fake-model-server.js';
-import { request } from './helpers/http.js';
+import assert from '../support/utils/jest-assert.js';
+import type { E2EApp } from '../support/app/create-test-app.js';
+import type { FakeModelServer } from '../support/fakes/model-server.fake.js';
+import { request } from '../support/http.js';
 
 const QDRANT_PREFIX = `depose_e2e_workflow_${Date.now()}`;
 
@@ -62,8 +62,8 @@ describe('Critical matter workflow', () => {
   };
 
   beforeAll(async () => {
-    const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
-    const { startFakeModelServer } = await import('./helpers/fake-model-server.js');
+    const { createE2EApp } = await import('../support/app/create-test-app.js');
+    const { startFakeModelServer } = await import('../support/fakes/model-server.fake.js');
     fake = await startFakeModelServer();
 
     fake.onChatCompletion((body) => {
@@ -133,7 +133,7 @@ describe('Critical matter workflow', () => {
     });
 
     const { signUpUser, createFirmWithDomain, createMatter } = await import(
-      './helpers/auth.test-utils.js'
+      '../support/auth/auth.helper.js'
     );
     const user = await signUpUser(e2e.baseUrl, { name: 'Workflow Lawyer' });
     const firm = await createFirmWithDomain({

@@ -1,18 +1,9 @@
-/** Jest runs the critical E2E paths only. Legacy node:test specs stay out. */
+/** Jest E2E level: cross-module business flows through real HTTP and database. */
 const config = {
   rootDir: '.',
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
-  testMatch: [
-    '<rootDir>/test/auth.e2e.spec.ts',
-    '<rootDir>/test/tenancy.e2e.spec.ts',
-    '<rootDir>/test/ingest.e2e.spec.ts',
-    '<rootDir>/test/ai.e2e.spec.ts',
-    '<rootDir>/test/inconsistencies.e2e.spec.ts',
-    '<rootDir>/test/jobs.e2e.spec.ts',
-    '<rootDir>/test/production-hardening.e2e.spec.ts',
-    '<rootDir>/test/workflow.e2e.spec.ts',
-  ],
+  testMatch: ['<rootDir>/test/e2e/**/*.e2e-spec.ts'],
   transform: {
     '^.+\\.tsx?$': [
       '@swc/jest',

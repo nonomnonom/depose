@@ -134,16 +134,6 @@ export async function migrateTestDatabase(once?: boolean): Promise<void> {
     await migrate(drizzle(client), {
       migrationsFolder: resolve(process.cwd(), 'drizzle'),
     });
-  } catch (error) {
-    // The first migration defines `user_preferences.user_id` as UNIQUE in its
-    // DDL and then also emits a standalone `CREATE UNIQUE INDEX` for it, so a
-    // rerun can hit `relation already exists`. Treat that as already migrated.
-    const message =
-      error instanceof Error ? error.message : String(error);
-    if (message.includes('user_preferences_user_id_unique')) {
-      return;
-    }
-    throw error;
   } finally {
     await client.end();
   }

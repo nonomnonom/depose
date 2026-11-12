@@ -1,4 +1,4 @@
-import { TEST_AUTH_ORIGIN } from './test-env.js';
+import { TEST_AUTH_ORIGIN } from './env/test-env.js';
 
 export interface E2ERequestInit {
   method?: string;
