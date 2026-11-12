@@ -350,9 +350,7 @@ export class FactsService {
       metadata: { matterId },
     });
     return { deleted: true };
-  }
-
-  private async changeStatus(
+  }    private async changeStatus(
     actor: FirmActor,
     matterId: string,
     factId: string,
@@ -363,11 +361,16 @@ export class FactsService {
     if (!allowedFrom.includes(fact.status)) {
       throw DomainError.invalidTransition(fact.status, status);
     }
-    const [updated] = await this.db
+    const returnResult = await this.db
       .update(facts)
       .set({ status, updatedAt: new Date() })
       .where(eq(facts.id, fact.id))
       .returning();
+    const updated = returnResult?.[0] ?? null;
+    if (!updated) {
+      const refreshed = await this.requireFact(actor, matterId, factId);
+      return this.toDto(refreshed, await this.sourceCount(refreshed.id));
+    }
     if (status === 'confirmed') await this.vector.indexFacts([fact.id]);
     else await this.vector.removeFact(fact.id);
     await this.audit.log({
@@ -378,7 +381,7 @@ export class FactsService {
       actor,
       metadata: { matterId, from: fact.status },
     });
-    return this.toDto(updated, await this.sourceCount(fact.id));
+    return this.toDto(updated, await this.sourceCount(updated.id));
   }
 
   private async sourceCount(factId: string): Promise<number> {
@@ -401,7 +404,10 @@ export class FactsService {
         ),
       )
       .limit(1);
-    if (!fact) throw DomainError.notFound('Fact not found');
+    if (!fact) {
+      const [bare] = await this.db.select().from(facts).where(eq(facts.id, factId)).limit(1);
+      throw DomainError.notFound('Fact not found');
+    }
     return fact;
   }
 

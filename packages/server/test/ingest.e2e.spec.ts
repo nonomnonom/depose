@@ -34,7 +34,7 @@ describe('Document ingest and fact extraction', () => {
     const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
 
     fake = await startFakeModelServer();
-    e2e = await createE2EApp({ EXTRACTION_BASE_URL: fake.url });
+    e2e = await createE2EApp({ EXTRACTION_BASE_URL: fake.url, EXTRACTION_AUTO_RUN: 'false' });
 
     const { signUpUser, createFirmWithDomain, createMatter } = await import(
       './helpers/auth.test-utils.js'

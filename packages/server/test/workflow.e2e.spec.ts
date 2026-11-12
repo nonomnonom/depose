@@ -119,6 +119,7 @@ describe('Critical matter workflow', () => {
       EXTRACTION_BASE_URL: `${fake.url}/v1`,
       EXTRACTION_API_KEY: 'test-key',
       EXTRACTION_MODEL: 'fake-model',
+      EXTRACTION_AUTO_RUN: 'false',
       DECISION_PROVIDER: 'openai-compatible',
       DECISION_BASE_URL: `${fake.url}/decisions`,
       DECISION_API_KEY: 'test-key',

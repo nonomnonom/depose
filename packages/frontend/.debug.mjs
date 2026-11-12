@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const BASE = 'http://localhost:5173';
+const browser = await chromium.launch({ headless: true, args: ['--no-proxy-server'] });
+const page = await browser.newPage();
+page.on('console', (m) => console.log('CONSOLE', m.type(), m.text().slice(0, 200)));
+page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
+await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(1200);
+await page.locator('#login-email').fill('verify-1762930000000@depose.test');
+console.log('--- fill with a real account instead; showing current body ---');
+console.log((await page.locator('body').innerText()).slice(0, 400));
+await browser.close();
