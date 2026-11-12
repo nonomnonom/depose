@@ -113,6 +113,9 @@ const envSchema = z
     QDRANT_URL: optionalString,
     QDRANT_API_KEY: optionalString,
     QDRANT_COLLECTION_PREFIX: z.string().regex(/^[a-z0-9_]+$/).default('depose'),
+    /* An embedding model turns text into the vectors Qdrant stores and searches.
+     * When off, Qdrant is not queried and retrieval falls back to lexical search. */
+    EMBEDDING_ENABLED: booleanFlag('true'),
     EMBEDDING_BASE_URL: optionalString,
     EMBEDDING_API_KEY: optionalString,
     EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
@@ -263,6 +266,7 @@ export interface AppConfig {
     qdrantUrl?: string;
     qdrantApiKey?: string;
     collectionPrefix: string;
+    embeddingEnabled: boolean;
     embeddingBaseUrl?: string;
     embeddingApiKey?: string;
     embeddingModel: string;
@@ -398,6 +402,7 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
       qdrantUrl: env.QDRANT_URL,
       qdrantApiKey: env.QDRANT_API_KEY,
       collectionPrefix: env.QDRANT_COLLECTION_PREFIX,
+      embeddingEnabled: env.EMBEDDING_ENABLED,
       embeddingBaseUrl: env.EMBEDDING_BASE_URL,
       embeddingApiKey: env.EMBEDDING_API_KEY,
       embeddingModel: env.EMBEDDING_MODEL,

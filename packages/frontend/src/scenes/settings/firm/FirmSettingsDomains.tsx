@@ -43,9 +43,9 @@ function FirmDomainsList({ firmId }: { firmId?: string }) {
             </CardHeader>
             <CardContent className="pt-3 text-sm text-muted-foreground">
               {domain.status === FirmDomainDtoStatus.active ? (
-                <span className="text-foreground">Domain aktif</span>
+                <span className="text-foreground">Active domain</span>
               ) : (
-                <span className="text-muted-foreground">{domain.status === FirmDomainDtoStatus.failed ? 'Verifikasi gagal' : domain.status === FirmDomainDtoStatus.verifying ? 'Verifikasi...' : domain.status}</span>
+                <span className="text-muted-foreground">{domain.status === FirmDomainDtoStatus.failed ? 'Verification failed' : domain.status === FirmDomainDtoStatus.verifying ? 'Verifying...' : domain.status}</span>
               )}
               {domain.lastError ? (
                 <details className="mt-2">
@@ -62,11 +62,11 @@ function FirmDomainsList({ firmId }: { firmId?: string }) {
 }
 
 const STATUS_LABELS: Record<FirmDomainDtoStatus, string> = {
-  pending: 'Menunggu',
-  verifying: 'Verifikasi...',
-  active: 'Aktif',
+  pending: 'Pending',
+  verifying: 'Verifying...',
+  active: 'Active',
   failed: 'Failed',
-  disabled: 'Nonaktif',
+  disabled: 'Disabled',
 };
 
 const SSL_LABELS: Record<FirmDomainDtoSslStatus, string> = {
@@ -74,7 +74,7 @@ const SSL_LABELS: Record<FirmDomainDtoSslStatus, string> = {
   issued: 'Issued',
   expired: 'Expired',
   failed: 'Failed',
-  external: 'Eksternal',
+  external: 'External',
 };
 
 function StatusBadge({ status, ssl, type }: { status: FirmDomainDtoStatus; ssl: FirmDomainDtoSslStatus; type: FirmDomainDtoDomainType }) {

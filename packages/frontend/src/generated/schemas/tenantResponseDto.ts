@@ -25,6 +25,8 @@ export interface TenantResponseDto {
   hostname: string;
   /** Null on an unmapped or bootstrap host */
   firm: TenantFirmDto | null;
+  /** True when a model provider is configured for this instance */
+  aiEnabled: boolean;
   /** @nullable */
   domainType: TenantResponseDtoDomainType;
   isPrimary: boolean;

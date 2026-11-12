@@ -30,15 +30,25 @@ import { ProfileSettingsPage } from '~/scenes/settings/user/ProfileSettingsPage'
 import { PlaceholderPage } from '~/lib/components/PlaceholderPage';
 import { NotificationsPage } from '~/scenes/notifications/NotificationsPage';
 import { DocumentsPage } from '~/scenes/documents/DocumentsPage';
+import { DocumentViewerPage } from '~/scenes/documents/DocumentViewerPage';
 import { FactsPage } from '~/scenes/facts/FactsPage';
 import { AiPage } from '~/scenes/ai/AiPage';
 import { OverviewPage } from '~/scenes/matter/OverviewPage';
+import { SummaryPage } from '~/scenes/matter/SummaryPage';
+import { ContradictionsPage } from '~/scenes/matter/ContradictionsPage';
+import { EntitiesPage } from '~/scenes/matter/EntitiesPage';
+import { OutputsPage } from '~/scenes/matter/OutputsPage';
+import { OutputDetailPage } from '~/scenes/matter/OutputDetailPage';
+import { LivePage } from '~/scenes/matter/LivePage';
 import { ChronologyPage } from '~/scenes/matter/ChronologyPage';
 import { MatterSettingsPage } from '~/scenes/settings/MatterSettingsPage';
 import { SearchPage } from '~/scenes/search/SearchPage';
 import { SubsetsPage } from '~/scenes/subsets/SubsetsPage';
 import { SubsetWorkspacePage } from '~/scenes/subsets/SubsetWorkspacePage';
 import { AiProvidersPage } from '~/scenes/settings/ai/AiProvidersPage';
+import { AppearanceSettingsPage } from '~/scenes/settings/user/AppearanceSettingsPage';
+import { NotificationSettingsPage } from '~/scenes/settings/user/NotificationSettingsPage';
+import { HelpPage } from '~/scenes/help/HelpPage';
 import { InvitationPage } from '~/scenes/invitations/InvitationPage';
 import {
   NotFoundPage,
@@ -69,15 +79,6 @@ function SetupShell() {
     </div>
   );
 }
-
-const matterPlaceholder = (title: string, emptyTitle: string, emptyDescription: string) => (
-  <PlaceholderPage
-    title={title}
-    description={`${title} for this matter.`}
-    emptyTitle={emptyTitle}
-    emptyDescription={emptyDescription}
-  />
-);
 
 const router = createBrowserRouter([
   {
@@ -112,67 +113,18 @@ const router = createBrowserRouter([
                   { index: true, element: <Navigate to="overview" replace /> },
                   { path: 'overview', element: <OverviewPage /> },
                   { path: 'documents', element: <DocumentsPage /> },
-                  {
-                    path: 'documents/:documentId',
-                    element: matterPlaceholder(
-                      'Document',
-                      'Document viewer not available',
-                      'The document viewer ships with the evidence pipeline.',
-                    ),
-                  },
+                  { path: 'documents/:documentId', element: <DocumentViewerPage /> },
                   { path: 'facts', element: <FactsPage /> },
                   { path: 'subsets', element: <SubsetsPage /> },
                   { path: 'subsets/:subsetId', element: <SubsetWorkspacePage /> },
-                  {
-                    path: 'summary',
-                    element: matterPlaceholder(
-                      'Summary',
-                      'No summary yet',
-                      'Themes and key facts are generated from confirmed facts.',
-                    ),
-                  },
+                  { path: 'summary', element: <SummaryPage /> },
                   { path: 'chronology', element: <ChronologyPage /> },
-                  {
-                    path: 'intelligence',
-                    element: matterPlaceholder(
-                      'Contradictions',
-                      'No contradictions or gaps',
-                      'Detection runs after facts are confirmed.',
-                    ),
-                  },
-                  {
-                    path: 'entities',
-                    element: matterPlaceholder(
-                      'Entities',
-                      'No entities yet',
-                      'People and organisations are resolved from extracted facts.',
-                    ),
-                  },
-                  {
-                    path: 'outputs',
-                    element: matterPlaceholder(
-                      'Outputs',
-                      'No outputs yet',
-                      'Chronologies, matrices, memos, and bundles will be created here.',
-                    ),
-                  },
-                  {
-                    path: 'outputs/:outputId',
-                    element: matterPlaceholder(
-                      'Output',
-                      'Output editor not available',
-                      'The output editor ships with the outputs module.',
-                    ),
-                  },
+                  { path: 'intelligence', element: <ContradictionsPage /> },
+                  { path: 'entities', element: <EntitiesPage /> },
+                  { path: 'outputs', element: <OutputsPage /> },
+                  { path: 'outputs/:outputId', element: <OutputDetailPage /> },
                   { path: 'search', element: <SearchPage /> },
-                  {
-                    path: 'realtime',
-                    element: matterPlaceholder(
-                      'Live',
-                      'No live session',
-                      'Live text fact-checking ships after the fact bank.',
-                    ),
-                  },
+                  { path: 'realtime', element: <LivePage /> },
                   { path: 'ai', element: <AiPage /> },
                   { path: 'settings', element: <MatterSettingsPage /> },
                 ],
@@ -196,14 +148,8 @@ const router = createBrowserRouter([
                     path: 'user/security',
                     element: <PlaceholderPage title="Security" description="Password, sessions, and SSO." emptyTitle="Security settings not available" emptyDescription="Session and password controls ship with the identity module." />,
                   },
-                  {
-                    path: 'user/notifications',
-                    element: <PlaceholderPage title="Notifications" description="Choose what reaches you and when." emptyTitle="Preferences not available" emptyDescription="Notification preferences ship with the notifications module." />,
-                  },
-                  {
-                    path: 'user/appearance',
-                    element: <PlaceholderPage title="Appearance" description="Theme and density." emptyTitle="Appearance options not available" emptyDescription="Theme and density controls ship with the design system settings." />,
-                  },
+                  { path: 'user/notifications', element: <NotificationSettingsPage /> },
+                  { path: 'user/appearance', element: <AppearanceSettingsPage /> },
                   {
                     path: 'user/ai',
                     element: <PlaceholderPage title="My AI" description="Your default model and effort." emptyTitle="No model configured" emptyDescription="Personal model defaults ship with the model gateway." />,
@@ -211,14 +157,8 @@ const router = createBrowserRouter([
                   { path: 'profile', element: <Navigate to="/settings/user/profile" replace /> },
                 ],
               },
-              {
-                path: 'help',
-                element: <PlaceholderPage title="Help" description="Guides and diagnostics." emptyTitle="No articles yet" emptyDescription="Help articles ship with the onboarding polish." />,
-              },
-              {
-                path: 'help/:slug',
-                element: <PlaceholderPage title="Help article" description="Guide." emptyTitle="Article not available" emptyDescription="This article has not been written yet." />,
-              },
+              { path: 'help', element: <HelpPage /> },
+              { path: 'help/:slug', element: <HelpPage /> },
               {
                 path: 'admin',
                 element: <PlaceholderPage title="Admin" description="Usage, storage, and queue health." emptyTitle="Admin dashboard not available" emptyDescription="Admin metrics ship with the usage module." />,

@@ -3,9 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 export class TenantFirmDto {
   @ApiProperty()
   name!: string;
-
-  @ApiProperty()
-  aiEnabled!: boolean;
 }
 
 export class TenantAuthDto {
@@ -27,6 +24,9 @@ export class TenantAuthDto {
   @ApiProperty({ description: 'True when SMTP is configured and mail can be delivered' })
   mailConfigured!: boolean;
 
+  @ApiProperty({ description: 'True when a model provider is configured for this instance' })
+  aiEnabled!: boolean;
+
   @ApiProperty({ description: 'True when the Depose MCP server token and firm are configured' })
   mcpServerEnabled!: boolean;
 }
@@ -41,6 +41,9 @@ export class TenantResponseDto {
     description: 'Null on an unmapped or bootstrap host',
   })
   firm!: TenantFirmDto | null;
+
+  @ApiProperty({ description: 'True when a model provider is configured for this instance' })
+  aiEnabled!: boolean;
 
   @ApiProperty({ type: String, enum: ['subdomain', 'custom'], nullable: true })
   domainType!: string | null;

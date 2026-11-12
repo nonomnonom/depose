@@ -1,7 +1,7 @@
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Skeleton } from '@depose/ui/components/skeleton';
-import type { InvitationDto } from '~/generated/schemas';
+import type { InvitationSummaryDto } from '~/generated/schemas';
 import { formatRelativeDate } from '~/lib/format/date';
 import { useFirmInvitations, useResendInvitation, useRevokeInvitation } from '../members.queries';
 import { ROLE_LABELS } from '../roles';
@@ -68,7 +68,7 @@ function InvitationRow({
   onRevoke,
   busy,
 }: {
-  invitation: InvitationDto;
+  invitation: InvitationSummaryDto;
   onResend: () => void;
   onRevoke: () => void;
   busy: boolean;

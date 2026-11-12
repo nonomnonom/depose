@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  aiControllerCreate,
-  aiControllerGet,
-  aiControllerList,
-  aiControllerRemove,
-  aiControllerSend,
+  conversationControllerCreate,
+  conversationControllerGet,
+  conversationControllerList,
+  conversationControllerRemove,
+  conversationControllerSend,
 } from '~/generated/endpoints';
-import type { AiControllerCreateBody, AiControllerSendBody } from '~/generated/schemas';
+import type {
+  ConversationControllerCreateBody,
+  ConversationControllerSendBody,
+} from '~/generated/schemas';
 import { unwrapData } from '~/lib/api/client';
 
 const threadsKey = (matterId: string) => ['matter', matterId, 'ai', 'threads'] as const;
@@ -16,7 +19,7 @@ const threadKey = (matterId: string, threadId: string) =>
 export function useAiThreads(matterId: string) {
   return useQuery({
     queryKey: threadsKey(matterId),
-    queryFn: async () => unwrapData(await aiControllerList(matterId)).items,
+    queryFn: async () => unwrapData(await conversationControllerList(matterId)).items,
     enabled: Boolean(matterId),
   });
 }
@@ -24,7 +27,7 @@ export function useAiThreads(matterId: string) {
 export function useAiThread(matterId: string, threadId: string | null) {
   return useQuery({
     queryKey: threadKey(matterId, threadId ?? 'none'),
-    queryFn: async () => unwrapData(await aiControllerGet(matterId, threadId!)),
+    queryFn: async () => unwrapData(await conversationControllerGet(matterId, threadId!)),
     enabled: Boolean(matterId && threadId),
   });
 }
@@ -32,8 +35,8 @@ export function useAiThread(matterId: string, threadId: string | null) {
 export function useCreateAiThread(matterId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: AiControllerCreateBody = {}) =>
-      unwrapData(await aiControllerCreate(matterId, body)),
+    mutationFn: async (body: ConversationControllerCreateBody = {}) =>
+      unwrapData(await conversationControllerCreate(matterId, body)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: threadsKey(matterId) });
     },
@@ -43,8 +46,8 @@ export function useCreateAiThread(matterId: string) {
 export function useSendAiMessage(matterId: string, threadId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: AiControllerSendBody) =>
-      unwrapData(await aiControllerSend(matterId, threadId, body)),
+    mutationFn: async (body: ConversationControllerSendBody) =>
+      unwrapData(await conversationControllerSend(matterId, threadId, body)),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: threadKey(matterId, threadId) });
       void queryClient.invalidateQueries({ queryKey: threadsKey(matterId) });
@@ -56,7 +59,7 @@ export function useDeleteAiThread(matterId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (threadId: string) =>
-      unwrapData(await aiControllerRemove(matterId, threadId)),
+      unwrapData(await conversationControllerRemove(matterId, threadId)),
     onSuccess: (_data, threadId) => {
       void queryClient.removeQueries({ queryKey: threadKey(matterId, threadId) });
       void queryClient.invalidateQueries({ queryKey: threadsKey(matterId) });

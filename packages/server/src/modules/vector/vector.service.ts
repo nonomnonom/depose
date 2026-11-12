@@ -40,7 +40,10 @@ export class VectorService {
   get configured(): boolean {
     const config = appConfig.retrieval;
     return Boolean(
-      config.vectorEnabled && config.qdrantUrl && config.embeddingBaseUrl,
+      config.vectorEnabled &&
+        config.embeddingEnabled &&
+        config.qdrantUrl &&
+        config.embeddingBaseUrl,
     );
   }
 

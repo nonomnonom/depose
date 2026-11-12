@@ -54,7 +54,7 @@ export function MembersPage() {
                 <TableRow>
                   <TableHead>Member</TableHead>
                   <TableHead className="w-40">Role</TableHead>
-                  <TableHead className="w-28">Email</TableHead>
+                  <TableHead className="w-28">Status</TableHead>
                   <TableHead className="w-24 text-right" />
                 </TableRow>
               </TableHeader>
@@ -64,7 +64,7 @@ export function MembersPage() {
                     key={member.id}
                     member={member}
                     canManage={canManage}
-                    isSelf={member.userId === me?.user.id}
+                    isSelf={member.email === me?.user.email}
                   />
                 ))}
               </TableBody>

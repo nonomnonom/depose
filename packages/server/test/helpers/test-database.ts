@@ -1,28 +1,119 @@
-import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import { randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { parse as parseEnv } from 'dotenv';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Client } from 'pg';
 import { resolve } from 'node:path';
 
-type StartedPostgres = Awaited<ReturnType<PostgreSqlContainer['start']>>;
+/**
+ * E2E database setup against the Postgres that is already running for local
+ * development (see `packages/docker/docker-compose.yml`). Every spec file gets
+ * its own database, so parallel files cannot see each other's rows and a test
+ * run never truncates the development database.
+ *
+ * Set `TEST_DATABASE_ADMIN_URL` to point at another server. It must be a URL
+ * for a user allowed to create databases. Set `TEST_DATABASE_URL` instead to
+ * use an existing database as-is (CI with a provisioned database); it is
+ * migrated but never dropped.
+ */
 
-let container: StartedPostgres | undefined;
+const DEFAULT_ADMIN_URL = 'postgres://depose:depose@127.0.0.1:5432/postgres';
+const DATABASE_PREFIX = 'depose_e2e_';
+const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
+
+let databaseName: string | undefined;
 let connectionString: string | undefined;
+let adminUrl: string | undefined;
+let ownsDatabase = false;
+
+function withDatabase(url: string, database: string): string {
+  const parsed = new URL(url);
+  parsed.pathname = `/${database}`;
+  return parsed.toString();
+}
+
+/* The development credentials live in the server `.env`; read only the
+ * database URL so the rest of the test environment stays fully controlled. */
+function envFileDatabaseUrl(): string | undefined {
+  try {
+    return parseEnv(readFileSync(resolve(process.cwd(), '.env'))).DATABASE_URL;
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveAdminUrl(): string {
+  const configured =
+    process.env.TEST_DATABASE_ADMIN_URL ??
+    process.env.DATABASE_URL ??
+    envFileDatabaseUrl() ??
+    DEFAULT_ADMIN_URL;
+  const parsed = new URL(configured);
+  parsed.pathname = '/postgres';
+  return parsed.toString();
+}
+
+async function dropDatabase(admin: Client, name: string): Promise<void> {
+  try {
+    await admin.query(`DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
+  } catch {
+    /* A leftover database is inconvenient, not a failed test. */
+  }
+}
 
 /**
- * Starts a throwaway Postgres, points `DATABASE_URL` at it, and applies every
- * migration in `drizzle/`. Call this after `applyTestEnv()` and before the app
- * is imported: `database.client.ts` builds its pool from the env at import time.
+ * Databases from runs that were killed before teardown would otherwise pile up
+ * forever. The name starts with a timestamp, so old ones can be identified
+ * without asking Postgres for creation times.
  */
-export async function setupTestDatabase(): Promise<string> {
-  container = await new PostgreSqlContainer('postgres:16-alpine')
-    .withDatabase('depose_test')
-    .withUsername('postgres')
-    .withPassword('postgres')
-    .start();
+async function dropStaleDatabases(admin: Client): Promise<void> {
+  const { rows } = await admin.query<{ datname: string }>(
+    `select datname from pg_database where datname like $1`,
+    [`${DATABASE_PREFIX}%`],
+  );
+  for (const row of rows) {
+    const timestamp = Number(row.datname.slice(DATABASE_PREFIX.length).split('_')[0]);
+    if (Number.isFinite(timestamp) && Date.now() - timestamp > STALE_AFTER_MS) {
+      await dropDatabase(admin, row.datname);
+    }
+  }
+}
 
-  connectionString = container.getConnectionUri();
+export async function setupTestDatabase(): Promise<string> {
+  if (process.env.TEST_DATABASE_URL) {
+    connectionString = process.env.TEST_DATABASE_URL;
+    process.env.DATABASE_URL = connectionString;
+    ownsDatabase = false;
+    await migrateTestDatabase();
+    return connectionString;
+  }
+
+  adminUrl = resolveAdminUrl();
+  const admin = new Client({ connectionString: adminUrl });
+  try {
+    await admin.connect();
+  } catch (error) {
+    await admin.end().catch(() => undefined);
+    throw new Error(
+      `Cannot reach Postgres at ${new URL(adminUrl).host}. Start the development stack ` +
+        `(docker compose -f packages/docker/docker-compose.yml up -d db redis) or set ` +
+        `TEST_DATABASE_ADMIN_URL to a server that allows creating databases.`,
+      { cause: error },
+    );
+  }
+
+  try {
+    await dropStaleDatabases(admin);
+    databaseName = `${DATABASE_PREFIX}${Date.now()}_${randomBytes(4).toString('hex')}`;
+    await admin.query(`CREATE DATABASE "${databaseName}"`);
+  } finally {
+    await admin.end();
+  }
+
+  connectionString = withDatabase(adminUrl, databaseName);
   process.env.DATABASE_URL = connectionString;
+  ownsDatabase = true;
   await migrateTestDatabase();
   return connectionString;
 }
@@ -64,8 +155,19 @@ export async function resetTestDatabase(): Promise<void> {
 }
 
 export async function teardownTestDatabase(): Promise<void> {
-  if (!container) return;
-  await container.stop();
-  container = undefined;
+  const name = databaseName;
+  const admin = adminUrl;
+  databaseName = undefined;
   connectionString = undefined;
+  adminUrl = undefined;
+  if (!ownsDatabase || !name || !admin) return;
+  ownsDatabase = false;
+
+  const client = new Client({ connectionString: admin });
+  try {
+    await client.connect();
+    await dropDatabase(client, name);
+  } finally {
+    await client.end().catch(() => undefined);
+  }
 }

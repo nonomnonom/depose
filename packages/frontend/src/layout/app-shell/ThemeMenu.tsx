@@ -11,9 +11,9 @@ import { Check, Monitor, Moon, Sun } from '@coolicons/react';
 import { useTheme, type Theme } from '~/layout/ThemeProvider';
 
 const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
-  { value: 'light', label: 'Terang', icon: Sun },
-  { value: 'dark', label: 'Gelap', icon: Moon },
-  { value: 'system', label: 'Ikuti sistem', icon: Monitor },
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor },
 ];
 
 export function ThemeMenu() {
@@ -28,7 +28,7 @@ export function ThemeMenu() {
         <Current className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel>Tema</DropdownMenuLabel>
+        <DropdownMenuLabel>Theme</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {OPTIONS.map((option) => (
           <DropdownMenuItem key={option.value} onClick={() => setTheme(option.value)}>

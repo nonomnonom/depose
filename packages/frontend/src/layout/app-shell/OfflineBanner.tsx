@@ -23,7 +23,7 @@ export function OfflineBanner() {
       className="flex items-center gap-2 border-b border-border bg-muted px-4 py-2 text-xs text-muted-foreground"
     >
       <WifiOff className="size-3.5" aria-hidden="true" />
-      Koneksi terputus. Perubahan tidak akan tersimpan sampai koneksi kembali.
+      Connection lost. Changes are not saved until the connection returns.
     </div>
   );
 }

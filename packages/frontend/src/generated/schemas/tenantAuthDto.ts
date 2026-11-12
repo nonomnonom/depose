@@ -26,6 +26,8 @@ export interface TenantAuthDto {
   requireEmailVerification: boolean;
   /** True when SMTP is configured and mail can be delivered */
   mailConfigured: boolean;
+  /** True when a model provider is configured for this instance */
+  aiEnabled: boolean;
   /** True when the Depose MCP server token and firm are configured */
   mcpServerEnabled: boolean;
 }

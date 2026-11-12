@@ -28,7 +28,7 @@ export class EmbeddingService {
 
   get configured(): boolean {
     const c = appConfig.retrieval;
-    return Boolean(c.vectorEnabled && c.embeddingBaseUrl);
+    return Boolean(c.vectorEnabled && c.embeddingEnabled && c.embeddingBaseUrl);
   }
 
   async embed(texts: string[]): Promise<number[][] | null> {

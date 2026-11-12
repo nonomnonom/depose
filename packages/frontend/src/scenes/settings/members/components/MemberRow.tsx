@@ -82,9 +82,7 @@ export function MemberRow({ member, canManage, isSelf }: MemberRowProps) {
         )}
         {error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
       </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
-        {member.emailVerified ? 'Verified' : 'Pending'}
-      </TableCell>
+      <TableCell className="text-sm capitalize text-muted-foreground">{member.status}</TableCell>
       <TableCell className="text-right">
         {mayEdit ? (
           <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

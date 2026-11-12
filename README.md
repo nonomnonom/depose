@@ -64,8 +64,9 @@ Operational behaviour worth knowing:
   `Authorization: Bearer`, and are constrained by scopes (`matter.read`,
   `matter.update`, admin scopes for key management). Keys are read-only unless
   scopes are granted explicitly, and `lastUsedAt` is tracked.
-- Webhook signing secrets and firm BYOK provider keys are encrypted at rest with
-  AES-256-GCM; webhook deliveries are HMAC-signed.
+- Webhook signing secrets are encrypted at rest with AES-256-GCM; webhook
+  deliveries are HMAC-signed. AI provider credentials are operator-owned
+  environment configuration, not per-firm stored keys.
 - Global and auth-specific rate limits, security headers, request ids, and a
   1 MB JSON body limit (100 MB only for document upload) are enabled by default.
 
@@ -75,5 +76,5 @@ Operational behaviour worth knowing:
 cd packages/server
 pnpm check-types
 pnpm lint
-pnpm test          # E2E against disposable Postgres/Redis (Docker required)
+pnpm test          # E2E against the local Postgres/Redis (no containers)
 ```

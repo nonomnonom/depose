@@ -1,6 +1,6 @@
 import { Spinner } from '@depose/ui/components/spinner';
 
-export function BootScreen({ label = 'Memuat Depose...' }: { label?: string }) {
+export function BootScreen({ label = 'Loading Depose...' }: { label?: string }) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-background">
       <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">

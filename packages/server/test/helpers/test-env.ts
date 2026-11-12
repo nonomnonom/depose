@@ -1,6 +1,7 @@
-import { mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { parse as parseEnv } from 'dotenv';
 
 /**
  * Environment the E2E app boots with. It must be applied before `AppModule`
@@ -19,7 +20,19 @@ function tempDir(prefix: string): string {
   return mkdtempSync(join(tmpdir(), prefix));
 }
 
+/** Values already exported by the shell win over the test env file. */
+function loadTestEnvFile(): void {
+  for (const file of ['.env.test', '.env.test.local']) {
+    const path = resolve(process.cwd(), file);
+    if (!existsSync(path)) continue;
+    for (const [key, value] of Object.entries(parseEnv(readFileSync(path)))) {
+      if (process.env[key] === undefined) process.env[key] = value;
+    }
+  }
+}
+
 export function applyTestEnv(overrides: TestEnvOverrides = {}): void {
+  loadTestEnvFile();
   process.env.NODE_ENV = 'test';
   /* Validated by the config schema; the E2E app listens on port 0 anyway. */
   process.env.PORT = '3001';
@@ -45,8 +58,8 @@ export function applyTestEnv(overrides: TestEnvOverrides = {}): void {
 
   /* No Qdrant, no embedding provider: retrieval falls back to keyword search. */
   process.env.VECTOR_SEARCH_ENABLED = 'false';
-  process.env.QDRANT_URL = undefined;
-  process.env.EMBEDDING_BASE_URL = undefined;
+  delete process.env.QDRANT_URL;
+  delete process.env.EMBEDDING_BASE_URL;
 
   process.env.AI_SECRET_ENCRYPTION_KEY = TEST_SECRET_KEY;
   process.env.WORKER_CONCURRENCY = '1';

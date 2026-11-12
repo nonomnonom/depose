@@ -3790,7 +3790,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PublicInvitationResponseDto"
+                  "$ref": "#/components/schemas/InvitationListDto"
                 }
               }
             }
@@ -5961,6 +5961,50 @@
           }
         },
         "summary": "List outputs in a matter",
+        "tags": [
+          "Outputs"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/outputs/{id}": {
+      "get": {
+        "operationId": "OutputsController_get",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Output detail"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get an output and its current version",
         "tags": [
           "Outputs"
         ]
@@ -8712,14 +8756,10 @@
         "properties": {
           "name": {
             "type": "string"
-          },
-          "aiEnabled": {
-            "type": "boolean"
           }
         },
         "required": [
-          "name",
-          "aiEnabled"
+          "name"
         ]
       },
       "TenantAuthDto": {
@@ -8744,6 +8784,10 @@
             "type": "boolean",
             "description": "True when SMTP is configured and mail can be delivered"
           },
+          "aiEnabled": {
+            "type": "boolean",
+            "description": "True when a model provider is configured for this instance"
+          },
           "mcpServerEnabled": {
             "type": "boolean",
             "description": "True when the Depose MCP server token and firm are configured"
@@ -8756,6 +8800,7 @@
           "forceSso",
           "requireEmailVerification",
           "mailConfigured",
+          "aiEnabled",
           "mcpServerEnabled"
         ]
       },
@@ -8776,6 +8821,10 @@
                 "type": "null"
               }
             ]
+          },
+          "aiEnabled": {
+            "type": "boolean",
+            "description": "True when a model provider is configured for this instance"
           },
           "domainType": {
             "type": [
@@ -8805,6 +8854,7 @@
         "required": [
           "hostname",
           "firm",
+          "aiEnabled",
           "domainType",
           "isPrimary",
           "isBootstrapHost",
@@ -10014,6 +10064,71 @@
         },
         "required": [
           "member"
+        ]
+      },
+      "InvitationSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "lawyer",
+              "paralegal",
+              "viewer",
+              "guest"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "revoked",
+              "expired"
+            ]
+          },
+          "inviterName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "createdAt",
+          "expiresAt",
+          "status",
+          "inviterName"
+        ]
+      },
+      "InvitationListDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvitationSummaryDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       },
       "PublicInvitationDto": {

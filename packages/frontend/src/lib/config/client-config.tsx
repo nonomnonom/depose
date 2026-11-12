@@ -91,17 +91,17 @@ export function ClientConfigProvider({ children }: { children: ReactNode }) {
   });
 
   if (query.isPending) {
-    return <BootScreen label="Memuat konfigurasi instance..." />;
+    return <BootScreen label="Loading instance configuration..." />;
   }
 
   if (query.isError || !query.data) {
     const error = query.error;
     const message =
       error instanceof ApiError && error.isNetworkError
-        ? 'Server tidak dapat dihubungi. Periksa koneksi lalu coba lagi.'
+        ? 'Could not reach the server. Check your connection and try again.'
         : error instanceof ApiError
           ? error.message
-          : 'Konfigurasi instance tidak dapat dimuat.';
+          : 'Instance configuration could not be loaded.';
 
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background px-4">

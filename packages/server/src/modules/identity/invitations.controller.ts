@@ -20,6 +20,7 @@ import { ZodBodyPipe } from '../../common/zod.pipe.js';
 import { createInvitationSchema, type CreateInvitationInput } from './identity.dto.js';
 import {
   AcceptInvitationResponseDto,
+  InvitationListDto,
   PublicInvitationResponseDto,
 } from './identity.response.js';
 import { InvitationsService } from './invitations.service.js';
@@ -35,7 +36,7 @@ export class InvitationsController {
 
   @Get()
   @ApiOperation({ summary: 'List invitations sent by the current firm' })
-  @ApiOkResponse({ description: 'Invitations', type: PublicInvitationResponseDto })
+  @ApiOkResponse({ description: 'Invitations', type: InvitationListDto })
   async list() {
     const actor = this.context.requireFirmActor();
     return { items: await this.invitations.list(actor) };

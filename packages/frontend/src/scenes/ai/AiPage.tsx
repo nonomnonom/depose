@@ -13,7 +13,10 @@ import {
   Sparkle,
   Trash,
 } from '@coolicons/react';
-import type { AiCitationDto, AiMessageDto, AiThreadDto } from '~/generated/schemas';
+import type {
+  ConversationMessageDto,
+  ConversationThreadDto,
+} from '~/generated/schemas';
 import { useSession } from '~/lib/auth/session';
 import { useClientConfig } from '~/lib/config/client-config';
 import { formatRelativeDate } from '~/lib/format/date';
@@ -231,7 +234,7 @@ function ThreadItem({
   onSelect,
   onDelete,
 }: {
-  thread: AiThreadDto;
+  thread: ConversationThreadDto;
   active: boolean;
   onSelect: () => void;
   onDelete: () => void;
@@ -269,7 +272,7 @@ function ChatPane({
   creating,
 }: {
   matterId: string;
-  thread: AiThreadDto;
+  thread: ConversationThreadDto;
   subsetId?: string;
   onDeleted: () => void;
   onNew: () => void;
@@ -541,7 +544,7 @@ function Message({
   message,
   onCite,
 }: {
-  message: AiMessageDto;
+  message: ConversationMessageDto;
   onCite: (index: number) => void;
 }) {
   const isUser = message.role === 'user';

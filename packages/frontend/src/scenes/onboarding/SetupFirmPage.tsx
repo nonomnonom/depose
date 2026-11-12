@@ -23,7 +23,6 @@ const setupSchema = z.object({
   primaryLanguage: z.enum(['en']),
   jurisdiction: z.string().trim().max(8).optional(),
   timezone: z.string().trim().max(64).optional(),
-  slug: z.string().trim().max(40).optional(),
 });
 
 type SetupFormValues = z.infer<typeof setupSchema>;
@@ -45,7 +44,6 @@ export function SetupFirmPage() {
       primaryLanguage: 'en',
       jurisdiction: '',
       timezone: 'UTC',
-      slug: '',
     },
   });
 
@@ -58,7 +56,6 @@ export function SetupFirmPage() {
         primaryLanguage: values.primaryLanguage,
         jurisdiction: clean(values.jurisdiction),
         timezone: clean(values.timezone),
-        slug: clean(values.slug),
       });
       const me = unwrapData(await meControllerMe());
       queryClient.setQueryData(queryKeys.me, me);
@@ -135,16 +132,6 @@ export function SetupFirmPage() {
           {...form.register('timezone')}
           error={form.formState.errors.timezone?.message}
         />
-        <FormField
-          inputId="setup-slug"
-          label="Slug"
-          type="text"
-          placeholder="test-firm"
-          hint="Optional. Lowercase letters, numbers, and hyphens."
-          {...form.register('slug')}
-          error={form.formState.errors.slug?.message}
-        />
-
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? 'Creating firm...' : 'Create firm'}
         </Button>

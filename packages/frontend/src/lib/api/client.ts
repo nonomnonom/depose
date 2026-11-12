@@ -19,7 +19,7 @@ export function unwrapData<T extends { status: number; data: unknown }>(
     throw new ApiError(
       response.status,
       payload?.code ?? codeForStatus(response.status),
-      payload?.message ?? 'Permintaan gagal.',
+      payload?.message ?? 'Request failed.',
       Array.isArray(payload?.details) ? payload.details : [],
     );
   }
@@ -65,7 +65,7 @@ export const customFetch = async <T>(url: string, options: RequestInit): Promise
       credentials: 'include',
     });
   } catch {
-    throw new ApiError(0, 'NETWORK_ERROR', 'Tidak dapat menghubungi server.', [], requestId);
+    throw new ApiError(0, 'NETWORK_ERROR', 'Could not reach the server.', [], requestId);
   }
 
   const text = await response.text();
@@ -85,7 +85,7 @@ export const customFetch = async <T>(url: string, options: RequestInit): Promise
     throw new ApiError(
       response.status,
       envelope?.code ?? codeForStatus(response.status),
-      readMessage(payload, response.statusText || 'Permintaan gagal.'),
+      readMessage(payload, response.statusText || 'Request failed.'),
       Array.isArray(envelope?.details) ? envelope.details : [],
       response.headers.get('X-Request-Id') ?? requestId,
     );

@@ -59,6 +59,34 @@ export class PublicInvitationDto extends InvitationDto {
   inviterName!: string;
 }
 
+export class InvitationSummaryDto {
+  @ApiProperty()
+  id!: string;
+
+  @ApiProperty({ format: 'email' })
+  email!: string;
+
+  @ApiProperty({ enum: firmRoleValues })
+  role!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  createdAt!: string;
+
+  @ApiProperty({ format: 'date-time' })
+  expiresAt!: string;
+
+  @ApiProperty({ enum: ['pending', 'accepted', 'revoked', 'expired'] })
+  status!: string;
+
+  @ApiProperty()
+  inviterName!: string;
+}
+
+export class InvitationListDto {
+  @ApiProperty({ type: [InvitationSummaryDto] })
+  items!: InvitationSummaryDto[];
+}
+
 export class PublicInvitationResponseDto {
   @ApiProperty({ type: PublicInvitationDto })
   invitation!: PublicInvitationDto;

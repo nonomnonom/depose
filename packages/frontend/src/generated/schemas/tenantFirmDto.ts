@@ -20,5 +20,4 @@
 
 export interface TenantFirmDto {
   name: string;
-  aiEnabled: boolean;
 }

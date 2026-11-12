@@ -54,6 +54,7 @@ import type {
   FirmsControllerSetupBody,
   FirmsControllerUpdateBody,
   InconsistenciesControllerListParams,
+  InvitationListDto,
   InvitationsControllerCreateBody,
   InvitationsControllerRevoke200,
   JobsControllerListParams,
@@ -2842,7 +2843,7 @@ export const membersControllerRemove = async (id: string, options?: Parameters<t
 
 
 export type invitationsControllerListResponse200 = {
-  data: PublicInvitationResponseDto
+  data: InvitationListDto
   status: 200
 }
 
@@ -4576,6 +4577,51 @@ export const getOutputsControllerListUrl = (matterId: string,) => {
 export const outputsControllerList = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<outputsControllerListResponse> => {
 
   return customFetch<outputsControllerListResponse>(getOutputsControllerListUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type outputsControllerGetResponse200 = {
+  data: void
+  status: 200
+}
+
+export type outputsControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type outputsControllerGetResponseSuccess = (outputsControllerGetResponse200) & {
+  headers: Headers;
+};
+export type outputsControllerGetResponseError = (outputsControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type outputsControllerGetResponse = (outputsControllerGetResponseSuccess | outputsControllerGetResponseError)
+
+export const getOutputsControllerGetUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/outputs/${id}`
+}
+
+/**
+ * @summary Get an output and its current version
+ */
+export const outputsControllerGet = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<outputsControllerGetResponse> => {
+
+  return customFetch<outputsControllerGetResponse>(getOutputsControllerGetUrl(matterId,id),
   {
     ...options,
     method: 'GET'
