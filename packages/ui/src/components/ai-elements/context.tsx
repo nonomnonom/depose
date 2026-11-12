@@ -21,7 +21,7 @@ type ContextValue = {
   usedTokens: number;
   maxTokens: number;
   percent: number;
-  usage: ContextUsage;
+  usage: ContextUsageData;
   modelId?: string;
 };
 
@@ -47,7 +47,7 @@ function Context({
   children?: React.ReactNode;
   usedTokens: number;
   maxTokens: number;
-  usage?: ContextUsage;
+  usage?: ContextUsageData;
   modelId?: string;
 }) {
   const resolvedUsage = usage ?? {
@@ -66,7 +66,7 @@ function ContextTrigger({
   className,
   children,
   ...props
-}: React.ComponentProps<typeof HoverCardTrigger>) {
+}: Omit<React.ComponentProps<typeof HoverCardTrigger>, 'className'> & { className?: string }) {
   const { percent } = useContextWindow();
   return (
     <HoverCardTrigger

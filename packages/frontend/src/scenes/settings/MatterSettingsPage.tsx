@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Input } from '@depose/ui/components/input';
@@ -8,26 +8,23 @@ import { Label } from '@depose/ui/components/label';
 import { Skeleton } from '@depose/ui/components/skeleton';
 import { Check, CircleWarning } from '@coolicons/react';
 import type { MattersControllerUpdateBody } from '~/generated/schemas';
-import { mattersControllerGet, mattersControllerUpdate } from '~/generated/endpoints';
+import { mattersControllerUpdate } from '~/generated/endpoints';
 import { PageHeader } from '~/layout/PageHeader';
 import { unwrapData } from '~/lib/api/client';
 import { queryKeys } from '~/lib/query/keys';
 import { useSession } from '~/lib/auth/session';
+import { useMatter } from '~/lib/logic/matterLogic';
 
 export function MatterSettingsPage() {
   const { matterId = '' } = useParams();
   const queryClient = useQueryClient();
   const { can } = useSession();
-  const matterQuery = useQuery({
-    queryKey: queryKeys.matter(matterId),
-    queryFn: async () => unwrapData(await mattersControllerGet(matterId)).matter,
-    enabled: Boolean(matterId),
-  });
+  const matterQuery = useMatter(matterId);
   const update = useMutation({
     mutationFn: async (body: MattersControllerUpdateBody) =>
       unwrapData(await mattersControllerUpdate(matterId, body)).matter,
     onSuccess: (matter) => {
-      queryClient.setQueryData(queryKeys.matter(matterId), { matter });
+      queryClient.setQueryData(queryKeys.matter(matterId), matter);
       void queryClient.invalidateQueries({ queryKey: ['matter', matterId] });
     },
   });

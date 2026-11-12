@@ -8,7 +8,7 @@ import { queryKeys } from '~/lib/query/keys';
 export function useMatter(matterId: string) {
   return useQuery({
     queryKey: queryKeys.matter(matterId),
-    queryFn: async () => unwrapData(await mattersControllerGet(matterId)),
+    queryFn: async () => unwrapData(await mattersControllerGet(matterId)).matter,
     enabled: Boolean(matterId),
     retry: false,
   });

@@ -38,6 +38,9 @@ export const Scene = {
   MatterRealtime: 'MatterRealtime',
   MatterSettings: 'MatterSettings',
 
+  /** Component gallery for the shared AI Elements patterns. */
+  AiElements: 'AiElements',
+
   Error404: 'Error404',
   Error403: 'Error403',
 } as const;

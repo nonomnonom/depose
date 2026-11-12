@@ -33,7 +33,7 @@ function FileTree({
   selected,
   onSelect,
   ...props
-}: Omit<React.ComponentProps<'div'>, 'children'> & {
+}: Omit<React.ComponentProps<'div'>, 'children' | 'onSelect'> & {
   children?: React.ReactNode;
   defaultExpanded?: string[];
   expanded?: string[];

@@ -14,6 +14,7 @@ export const sceneConfigurations: Record<Scene, SceneConfig> = {
 
   [Scene.Matters]: { name: 'Matters', layout: 'app' },
   [Scene.Notifications]: { name: 'Notifications', layout: 'app' },
+  [Scene.AiElements]: { name: 'AI Elements', layout: 'app' },
   [Scene.SettingsFirm]: {
     name: 'Firm',
     layout: 'app',
@@ -177,6 +178,7 @@ export const routes: Record<string, [Scene, string]> = {
 
   [urls.matters()]: [Scene.Matters, 'matters'],
   [urls.notifications()]: [Scene.Notifications, 'notifications'],
+  [urls.aiElements()]: [Scene.AiElements, 'aiElements'],
   [urls.settingsFirm()]: [Scene.SettingsFirm, 'settingsFirm'],
   [urls.settingsMembers()]: [Scene.SettingsMembers, 'settingsMembers'],
   [urls.settingsDomains()]: [Scene.SettingsDomains, 'settingsDomains'],

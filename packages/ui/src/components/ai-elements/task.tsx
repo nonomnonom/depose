@@ -64,7 +64,7 @@ function TaskItem({
   icon,
   children,
   ...props
-}: Omit<React.ComponentProps<typeof TraceLine>, 'children'> & {
+}: Omit<React.ComponentProps<typeof TraceLine>, 'children' | 'status'> & {
   status?: AgentStatus;
   icon?: React.ReactNode;
   children?: React.ReactNode;

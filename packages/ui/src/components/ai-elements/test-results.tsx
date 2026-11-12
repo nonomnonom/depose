@@ -188,7 +188,7 @@ function Test({
   status = 'passed',
   duration,
   ...props
-}: Omit<React.ComponentProps<typeof TraceLine>, 'children'> & {
+}: Omit<React.ComponentProps<typeof TraceLine>, 'children' | 'status'> & {
   name?: string;
   status?: TestCase['status'];
   duration?: number;

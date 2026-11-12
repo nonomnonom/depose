@@ -14,6 +14,7 @@
     "components": "@depose/ui/components",
     "utils": "@depose/ui/lib/utils",
     "ui": "@depose/ui/components",
+    "ai-elements": "@depose/ui/ai-elements",
     "lib": "@depose/ui/lib",
     "hooks": "@depose/ui/hooks"
   }

@@ -4,6 +4,7 @@ import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { ScrollArea } from '@depose/ui/components/scroll-area';
 import { Skeleton } from '@depose/ui/components/skeleton';
+import { Tool, ToolContent, ToolHeader, ToolInput } from '@depose/ui/ai-elements';
 import {
   ArrowRight,
   ChevronLeft,
@@ -618,22 +619,25 @@ function Message({
       ) : null}
 
       {message.toolCalls.length > 0 ? (
-        <details className="ml-8">
-          <summary className="cursor-pointer text-[11px] text-muted-foreground">
+        <div className="ml-8 flex flex-col gap-1">
+          <p className="text-[11px] text-muted-foreground">
             {message.toolCalls.length} retrieval step
             {message.toolCalls.length === 1 ? '' : 's'}
-          </summary>
-          <div className="mt-1.5 flex flex-col gap-1">
-            {message.toolCalls.map((call, index) => (
-              <div key={`${call.name}-${index}`} className="flex items-start gap-1.5 text-[11px]">
-                <Badge variant="outline" className="font-mono text-[10px]">
-                  {call.name}
-                </Badge>
-                <span className="text-muted-foreground">{call.summary}</span>
-              </div>
-            ))}
-          </div>
-        </details>
+          </p>
+          {message.toolCalls.map((call, index) => (
+            <Tool
+              key={`${call.name}-${index}`}
+              name={call.name}
+              state="output-available"
+              defaultOpen={false}
+            >
+              <ToolHeader title={call.summary} />
+              <ToolContent>
+                <ToolInput input={call.arguments} />
+              </ToolContent>
+            </Tool>
+          ))}
+        </div>
       ) : null}
     </div>
   );

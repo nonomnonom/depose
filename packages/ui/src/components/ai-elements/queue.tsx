@@ -90,7 +90,7 @@ function QueueItem({
   className,
   status,
   ...props
-}: React.ComponentProps<typeof TraceLine> & { status?: AgentStatus }) {
+}: Omit<React.ComponentProps<typeof TraceLine>, 'status'> & { status?: AgentStatus }) {
   return <TraceLine status={toTraceStatus(status)} className={className} {...props} />;
 }
 

@@ -531,7 +531,7 @@ function PromptInputSelect({
 function PromptInputSelectTrigger({
   className,
   ...props
-}: React.ComponentProps<typeof PopoverTrigger>) {
+}: Omit<React.ComponentProps<typeof PopoverTrigger>, 'className'> & { className?: string }) {
   return (
     <PopoverTrigger
       render={<InputGroupButton size="sm" variant="ghost" className={className} />}

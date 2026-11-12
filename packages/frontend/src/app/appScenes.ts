@@ -23,6 +23,8 @@ export const appScenes: Record<Scene, () => Promise<SceneExport>> = {
     import('~/scenes/matters/MattersPage').then((m) => ({ component: m.MattersPage })),
   [Scene.Notifications]: () =>
     import('~/scenes/notifications/NotificationsPage').then((m) => ({ component: m.NotificationsPage })),
+  [Scene.AiElements]: () =>
+    import('~/scenes/ai/AiElementsPage').then((m) => ({ component: m.AiElementsPage })),
   [Scene.SettingsFirm]: () =>
     import('~/scenes/settings/firm/FirmSettingsResource').then((m) => ({
       component: m.FirmSettingsResourcePage,

@@ -69,7 +69,7 @@ function ChainOfThoughtStep({
   status,
   icon,
   ...props
-}: Omit<React.ComponentProps<typeof TraceLine>, 'children'> & {
+}: Omit<React.ComponentProps<typeof TraceLine>, 'children' | 'status'> & {
   label: React.ReactNode;
   description?: React.ReactNode;
   status?: 'active' | 'pending' | 'complete';

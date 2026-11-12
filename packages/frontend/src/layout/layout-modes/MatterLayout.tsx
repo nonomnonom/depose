@@ -33,7 +33,7 @@ export function MatterLayout({ children }: { children: ReactNode }): ReactNode {
   const matterQuery = useMatter(matterId);
   const raw = sceneConfig.layout === 'matter-raw';
 
-  const matter = matterQuery.data?.matter;
+  const matter = matterQuery.data;
   const readOnly = matter?.status === 'closed' || matter?.status === 'archived';
 
   let content: ReactNode = children;

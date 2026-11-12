@@ -27,6 +27,7 @@ export const urls = {
   // Workspace
   matters: (): string => '/matters',
   notifications: (): string => '/notifications',
+  aiElements: (): string => '/ai-elements',
   settings: (): string => '/settings',
   settingsFirm: (): string => '/settings/firm',
   settingsMembers: (): string => '/settings/firm/members',
