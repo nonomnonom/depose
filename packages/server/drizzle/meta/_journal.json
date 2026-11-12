@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1794379366603,
-      "tag": "0000_material_zarda",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1794404170749,
-      "tag": "0001_happy_warpath",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1794380000000,
-      "tag": "0002_preferences_and_settings_fixes",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1794490000000,
-      "tag": "0003_webhooks_and_api_key_hardening",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1794459373706,
-      "tag": "0004_workflow_subsets_and_archive",
+      "when": 1794476933669,
+      "tag": "0000_fearless_the_watchers",
       "breakpoints": true
     }
   ]

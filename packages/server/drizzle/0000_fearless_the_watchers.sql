@@ -1,5 +1,3 @@
-CREATE TYPE "public"."ai_provider_kind" AS ENUM('openai', 'anthropic', 'google', 'openrouter', 'openai-compatible');--> statement-breakpoint
-CREATE TYPE "public"."ai_provider_status" AS ENUM('active', 'invalid', 'disabled', 'untested');--> statement-breakpoint
 CREATE TYPE "public"."contradiction_status" AS ENUM('candidate', 'open', 'confirmed', 'dismissed', 'stale');--> statement-breakpoint
 CREATE TYPE "public"."document_processing_status" AS ENUM('queued', 'processing', 'done', 'needs_review', 'failed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."domain_ssl_status" AS ENUM('pending', 'issued', 'expired', 'failed', 'external');--> statement-breakpoint
@@ -147,16 +145,15 @@ CREATE TABLE "firms" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"organization_id" text NOT NULL,
 	"name" text NOT NULL,
-	"slug" text NOT NULL,
-	"primary_language" text DEFAULT 'id' NOT NULL,
-	"jurisdiction" text DEFAULT 'ID' NOT NULL,
+	"slug" text,
+	"primary_language" text DEFAULT 'en' NOT NULL,
+	"jurisdiction" text NOT NULL,
 	"default_timezone" text DEFAULT 'UTC' NOT NULL,
 	"owner_id" text NOT NULL,
 	"settings" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "firms_organization_id_unique" UNIQUE("organization_id"),
-	CONSTRAINT "firms_slug_unique" UNIQUE("slug")
+	CONSTRAINT "firms_organization_id_unique" UNIQUE("organization_id")
 );
 --> statement-breakpoint
 CREATE TABLE "matter_members" (
@@ -533,6 +530,8 @@ CREATE TABLE "facts" (
 	"manual_reason" text,
 	"merged_into_id" uuid,
 	"created_by" text,
+	"archived_at" timestamp with time zone,
+	"archived_by" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "facts_confidence_check" CHECK ("facts"."confidence" is null or ("facts"."confidence" >= 0 and "facts"."confidence" <= 1)),
@@ -578,6 +577,15 @@ CREATE TABLE "issues" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "subset_issues" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"firm_id" uuid NOT NULL,
+	"matter_id" uuid NOT NULL,
+	"subset_id" uuid NOT NULL,
+	"issue_id" uuid NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "summaries" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"firm_id" uuid NOT NULL,
@@ -618,25 +626,6 @@ CREATE TABLE "themes" (
 	"name" text NOT NULL,
 	"description" text,
 	"status" "theme_status" DEFAULT 'draft' NOT NULL,
-	"created_by" text NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "ai_provider_connections" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"firm_id" uuid NOT NULL,
-	"kind" "ai_provider_kind" NOT NULL,
-	"label" text NOT NULL,
-	"base_url" text,
-	"api_key_ciphertext" text NOT NULL,
-	"api_key_last4" char(4) NOT NULL,
-	"key_version" integer DEFAULT 1 NOT NULL,
-	"models" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"fallback_model_id" text,
-	"status" "ai_provider_status" DEFAULT 'untested' NOT NULL,
-	"last_tested_at" timestamp with time zone,
-	"last_error" text,
 	"created_by" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -787,9 +776,13 @@ CREATE TABLE "jobs" (
 	"queue_name" text NOT NULL,
 	"idempotency_key" text NOT NULL,
 	"payload" jsonb DEFAULT '{}'::jsonb NOT NULL,
+	"result" jsonb,
 	"status" "job_status" DEFAULT 'queued' NOT NULL,
+	"progress" integer DEFAULT 0 NOT NULL,
+	"stage" text,
 	"attempts" integer DEFAULT 0 NOT NULL,
 	"max_attempts" integer DEFAULT 3 NOT NULL,
+	"created_by" text DEFAULT 'system' NOT NULL,
 	"lease_owner" text,
 	"lease_expires_at" timestamp with time zone,
 	"error_code" text,
@@ -850,7 +843,6 @@ CREATE TABLE "model_calls" (
 	"firm_id" uuid NOT NULL,
 	"route_key" text NOT NULL,
 	"capability" "model_capability" NOT NULL,
-	"connection_id" uuid,
 	"provider" text NOT NULL,
 	"model" text NOT NULL,
 	"status" "model_call_status" NOT NULL,
@@ -972,6 +964,19 @@ CREATE TABLE "usage_counters" (
 	CONSTRAINT "usage_counters_firm_id_period_start_metric_pk" PRIMARY KEY("firm_id","period_start","metric")
 );
 --> statement-breakpoint
+CREATE TABLE "user_preferences" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" text NOT NULL,
+	"locale" text DEFAULT 'en' NOT NULL,
+	"timezone" text DEFAULT 'UTC' NOT NULL,
+	"theme" text DEFAULT 'system' NOT NULL,
+	"density" text DEFAULT 'comfortable' NOT NULL,
+	"notifications" jsonb DEFAULT '{"email":true,"inApp":true,"digest":false}'::jsonb NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "user_preferences_user_id_unique" UNIQUE("user_id")
+);
+--> statement-breakpoint
 CREATE TABLE "webhook_deliveries" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"firm_id" uuid NOT NULL,
@@ -990,7 +995,8 @@ CREATE TABLE "webhooks" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"firm_id" uuid NOT NULL,
 	"url" text NOT NULL,
-	"secret_hash" text NOT NULL,
+	"secret_hash" text DEFAULT '' NOT NULL,
+	"secret_ciphertext" text,
 	"events" text[] DEFAULT '{}'::text[] NOT NULL,
 	"enabled" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -1111,6 +1117,10 @@ ALTER TABLE "gaps" ADD CONSTRAINT "gaps_matter_id_matters_id_fk" FOREIGN KEY ("m
 ALTER TABLE "issues" ADD CONSTRAINT "issues_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "issues" ADD CONSTRAINT "issues_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "issues" ADD CONSTRAINT "issues_subset_id_subsets_id_fk" FOREIGN KEY ("subset_id") REFERENCES "public"."subsets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subset_issues" ADD CONSTRAINT "subset_issues_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subset_issues" ADD CONSTRAINT "subset_issues_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subset_issues" ADD CONSTRAINT "subset_issues_subset_id_subsets_id_fk" FOREIGN KEY ("subset_id") REFERENCES "public"."subsets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "subset_issues" ADD CONSTRAINT "subset_issues_issue_id_issues_id_fk" FOREIGN KEY ("issue_id") REFERENCES "public"."issues"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "summaries" ADD CONSTRAINT "summaries_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "summaries" ADD CONSTRAINT "summaries_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "summaries" ADD CONSTRAINT "summaries_subset_id_subsets_id_fk" FOREIGN KEY ("subset_id") REFERENCES "public"."subsets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -1125,7 +1135,6 @@ ALTER TABLE "theme_facts" ADD CONSTRAINT "theme_facts_fact_id_facts_id_fk" FOREI
 ALTER TABLE "themes" ADD CONSTRAINT "themes_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "themes" ADD CONSTRAINT "themes_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "themes" ADD CONSTRAINT "themes_subset_id_subsets_id_fk" FOREIGN KEY ("subset_id") REFERENCES "public"."subsets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ai_provider_connections" ADD CONSTRAINT "ai_provider_connections_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "message_sources" ADD CONSTRAINT "message_sources_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "message_sources" ADD CONSTRAINT "message_sources_message_id_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."messages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "message_sources" ADD CONSTRAINT "message_sources_fact_id_facts_id_fk" FOREIGN KEY ("fact_id") REFERENCES "public"."facts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -1162,7 +1171,6 @@ ALTER TABLE "mcp_tool_calls" ADD CONSTRAINT "mcp_tool_calls_firm_id_firms_id_fk"
 ALTER TABLE "mcp_tool_calls" ADD CONSTRAINT "mcp_tool_calls_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mcp_tool_calls" ADD CONSTRAINT "mcp_tool_calls_server_id_mcp_servers_id_fk" FOREIGN KEY ("server_id") REFERENCES "public"."mcp_servers"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "model_calls" ADD CONSTRAINT "model_calls_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "model_calls" ADD CONSTRAINT "model_calls_connection_id_ai_provider_connections_id_fk" FOREIGN KEY ("connection_id") REFERENCES "public"."ai_provider_connections"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "model_calls" ADD CONSTRAINT "model_calls_workflow_run_id_workflow_runs_id_fk" FOREIGN KEY ("workflow_run_id") REFERENCES "public"."workflow_runs"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "model_calls" ADD CONSTRAINT "model_calls_message_id_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."messages"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_firm_id_firms_id_fk" FOREIGN KEY ("firm_id") REFERENCES "public"."firms"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -1257,6 +1265,8 @@ CREATE INDEX "gaps_matter_status_date_idx" ON "gaps" USING btree ("matter_id","s
 CREATE INDEX "issues_matter_status_idx" ON "issues" USING btree ("matter_id","status");--> statement-breakpoint
 CREATE INDEX "issues_subset_status_idx" ON "issues" USING btree ("subset_id","status");--> statement-breakpoint
 CREATE INDEX "issues_firm_id_idx" ON "issues" USING btree ("firm_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "subset_issues_subset_issue_unique" ON "subset_issues" USING btree ("subset_id","issue_id");--> statement-breakpoint
+CREATE INDEX "subset_issues_subset_idx" ON "subset_issues" USING btree ("subset_id");--> statement-breakpoint
 CREATE INDEX "summaries_matter_subset_created_idx" ON "summaries" USING btree ("matter_id","subset_id","created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "summary_facts_summary_fact_role_unique" ON "summary_facts" USING btree ("summary_id","fact_id","role");--> statement-breakpoint
 CREATE INDEX "summary_facts_summary_idx" ON "summary_facts" USING btree ("summary_id");--> statement-breakpoint
@@ -1264,8 +1274,6 @@ CREATE INDEX "summary_facts_fact_idx" ON "summary_facts" USING btree ("fact_id")
 CREATE UNIQUE INDEX "theme_facts_theme_fact_unique" ON "theme_facts" USING btree ("theme_id","fact_id");--> statement-breakpoint
 CREATE INDEX "themes_matter_status_idx" ON "themes" USING btree ("matter_id","status");--> statement-breakpoint
 CREATE INDEX "themes_subset_status_idx" ON "themes" USING btree ("subset_id","status");--> statement-breakpoint
-CREATE UNIQUE INDEX "ai_provider_connections_firm_label_unique" ON "ai_provider_connections" USING btree ("firm_id","label");--> statement-breakpoint
-CREATE INDEX "ai_provider_connections_firm_status_idx" ON "ai_provider_connections" USING btree ("firm_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "message_sources_message_fact_unique" ON "message_sources" USING btree ("message_id","fact_id");--> statement-breakpoint
 CREATE INDEX "messages_thread_idx" ON "messages" USING btree ("thread_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "output_sources_version_fact_unique" ON "output_sources" USING btree ("output_version_id","fact_id");--> statement-breakpoint
@@ -1278,15 +1286,15 @@ CREATE INDEX "audit_events_firm_created_idx" ON "audit_events" USING btree ("fir
 CREATE INDEX "audit_events_resource_idx" ON "audit_events" USING btree ("resource_type","resource_id");--> statement-breakpoint
 CREATE INDEX "extraction_runs_document_idx" ON "extraction_runs" USING btree ("document_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "index_versions_firm_name_version_unique" ON "index_versions" USING btree ("firm_id","index_name","version");--> statement-breakpoint
-CREATE UNIQUE INDEX "jobs_firm_job_key_unique" ON "jobs" USING btree ("firm_id","job_key");--> statement-breakpoint
+CREATE UNIQUE INDEX "jobs_firm_type_idempotency_unique" ON "jobs" USING btree ("firm_id","job_key","idempotency_key");--> statement-breakpoint
 CREATE INDEX "jobs_firm_status_idx" ON "jobs" USING btree ("firm_id","status");--> statement-breakpoint
+CREATE INDEX "jobs_status_created_idx" ON "jobs" USING btree ("status","created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "mcp_connections_firm_server_unique" ON "mcp_connections" USING btree ("firm_id","server_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "mcp_server_matters_unique" ON "mcp_server_matters" USING btree ("server_id","matter_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "mcp_servers_firm_key_unique" ON "mcp_servers" USING btree ("firm_id","server_key");--> statement-breakpoint
 CREATE INDEX "mcp_tool_calls_firm_created_idx" ON "mcp_tool_calls" USING btree ("firm_id","created_at");--> statement-breakpoint
 CREATE INDEX "model_calls_firm_created_idx" ON "model_calls" USING btree ("firm_id","created_at");--> statement-breakpoint
 CREATE INDEX "model_calls_route_status_idx" ON "model_calls" USING btree ("route_key","status");--> statement-breakpoint
-CREATE INDEX "model_calls_connection_created_idx" ON "model_calls" USING btree ("connection_id","created_at");--> statement-breakpoint
 CREATE INDEX "notification_deliveries_notification_channel_idx" ON "notification_deliveries" USING btree ("notification_id","channel");--> statement-breakpoint
 CREATE UNIQUE INDEX "notification_preferences_firm_user_category_unique" ON "notification_preferences" USING btree ("firm_id","user_id","category");--> statement-breakpoint
 CREATE INDEX "notifications_user_read_created_idx" ON "notifications" USING btree ("user_id","read_at","created_at");--> statement-breakpoint
@@ -1295,6 +1303,7 @@ CREATE INDEX "realtime_alerts_session_status_idx" ON "realtime_alerts" USING btr
 CREATE UNIQUE INDEX "realtime_lines_session_sequence_unique" ON "realtime_lines" USING btree ("session_id","sequence");--> statement-breakpoint
 CREATE INDEX "realtime_sessions_matter_status_idx" ON "realtime_sessions" USING btree ("matter_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "saved_searches_user_matter_name_unique" ON "saved_searches" USING btree ("user_id","matter_id","name");--> statement-breakpoint
+CREATE UNIQUE INDEX "user_preferences_user_id_unique" ON "user_preferences" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "webhook_deliveries_webhook_status_next_idx" ON "webhook_deliveries" USING btree ("webhook_id","status","next_attempt_at");--> statement-breakpoint
 CREATE INDEX "webhooks_firm_id_idx" ON "webhooks" USING btree ("firm_id");--> statement-breakpoint
 CREATE INDEX "workflow_runs_firm_status_started_idx" ON "workflow_runs" USING btree ("firm_id","status","started_at");

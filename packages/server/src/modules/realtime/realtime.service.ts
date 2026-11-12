@@ -192,10 +192,8 @@ export class RealtimeService {
       })
       .returning();
 
-    let check;
     try {
       const result = await this.intelligence.realtimeCheck(actor, matterId, input.text);
-      check = result;
 
       const verdict: RealtimeVerdict = result.verdict ?? 'unclear';
       const [updated] = await this.db

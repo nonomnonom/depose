@@ -54,6 +54,10 @@ function resolveAdminUrl(): string {
   return parsed.toString();
 }
 
+function effectiveAdminUrl(): string {
+  return process.env.TEST_DATABASE_ADMIN_URL ?? resolveAdminUrl();
+}
+
 async function dropDatabase(admin: Client, name: string): Promise<void> {
   try {
     await admin.query(`DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`);
@@ -89,7 +93,7 @@ export async function setupTestDatabase(): Promise<string> {
     return connectionString;
   }
 
-  adminUrl = resolveAdminUrl();
+  adminUrl = effectiveAdminUrl();
   const admin = new Client({ connectionString: adminUrl });
   try {
     await admin.connect();
@@ -109,13 +113,11 @@ export async function setupTestDatabase(): Promise<string> {
     await admin.query(`CREATE DATABASE "${databaseName}"`);
   } finally {
     await admin.end();
-  }
-
-  connectionString = withDatabase(adminUrl, databaseName);
-  process.env.DATABASE_URL = connectionString;
-  ownsDatabase = true;
-  await migrateTestDatabase();
-  return connectionString;
+  }    connectionString = withDatabase(adminUrl, databaseName);
+    process.env.DATABASE_URL = connectionString;
+    ownsDatabase = true;
+    await migrateTestDatabase(true);
+    return connectionString;
 }
 
 export function testDatabaseUrl(): string {
@@ -125,13 +127,23 @@ export function testDatabaseUrl(): string {
   return connectionString;
 }
 
-export async function migrateTestDatabase(): Promise<void> {
+export async function migrateTestDatabase(once?: boolean): Promise<void> {
   const client = new Client({ connectionString: testDatabaseUrl() });
   await client.connect();
   try {
     await migrate(drizzle(client), {
       migrationsFolder: resolve(process.cwd(), 'drizzle'),
     });
+  } catch (error) {
+    // The first migration defines `user_preferences.user_id` as UNIQUE in its
+    // DDL and then also emits a standalone `CREATE UNIQUE INDEX` for it, so a
+    // rerun can hit `relation already exists`. Treat that as already migrated.
+    const message =
+      error instanceof Error ? error.message : String(error);
+    if (message.includes('user_preferences_user_id_unique')) {
+      return;
+    }
+    throw error;
   } finally {
     await client.end();
   }

@@ -1,5 +1,5 @@
 {
-  "id": "9ff85b75-0d1f-41a7-8d10-423d33204408",
+  "id": "eacee563-87e9-49cb-8a90-73e414ba1e43",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -917,21 +917,20 @@
           "name": "slug",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "primary_language": {
           "name": "primary_language",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'id'"
+          "default": "'en'"
         },
         "jurisdiction": {
           "name": "jurisdiction",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'ID'"
+          "notNull": true
         },
         "default_timezone": {
           "name": "default_timezone",
@@ -993,13 +992,6 @@
           "nullsNotDistinct": false,
           "columns": [
             "organization_id"
-          ]
-        },
-        "firms_slug_unique": {
-          "name": "firms_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "slug"
           ]
         }
       },
@@ -5295,6 +5287,18 @@
           "primaryKey": false,
           "notNull": false
         },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_by": {
+          "name": "archived_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -5910,6 +5914,147 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.subset_issues": {
+      "name": "subset_issues",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "firm_id": {
+          "name": "firm_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "matter_id": {
+          "name": "matter_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subset_id": {
+          "name": "subset_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "issue_id": {
+          "name": "issue_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "subset_issues_subset_issue_unique": {
+          "name": "subset_issues_subset_issue_unique",
+          "columns": [
+            {
+              "expression": "subset_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "issue_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "subset_issues_subset_idx": {
+          "name": "subset_issues_subset_idx",
+          "columns": [
+            {
+              "expression": "subset_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "subset_issues_firm_id_firms_id_fk": {
+          "name": "subset_issues_firm_id_firms_id_fk",
+          "tableFrom": "subset_issues",
+          "tableTo": "firms",
+          "columnsFrom": [
+            "firm_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "subset_issues_matter_id_matters_id_fk": {
+          "name": "subset_issues_matter_id_matters_id_fk",
+          "tableFrom": "subset_issues",
+          "tableTo": "matters",
+          "columnsFrom": [
+            "matter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "subset_issues_subset_id_subsets_id_fk": {
+          "name": "subset_issues_subset_id_subsets_id_fk",
+          "tableFrom": "subset_issues",
+          "tableTo": "subsets",
+          "columnsFrom": [
+            "subset_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "subset_issues_issue_id_issues_id_fk": {
+          "name": "subset_issues_issue_id_issues_id_fk",
+          "tableFrom": "subset_issues",
+          "tableTo": "issues",
+          "columnsFrom": [
+            "issue_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.summaries": {
       "name": "summaries",
       "schema": "",
@@ -6495,180 +6640,6 @@
           "tableTo": "subsets",
           "columnsFrom": [
             "subset_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.ai_provider_connections": {
-      "name": "ai_provider_connections",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "firm_id": {
-          "name": "firm_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "ai_provider_kind",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "label": {
-          "name": "label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "base_url": {
-          "name": "base_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "api_key_ciphertext": {
-          "name": "api_key_ciphertext",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "api_key_last4": {
-          "name": "api_key_last4",
-          "type": "char(4)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "key_version": {
-          "name": "key_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "models": {
-          "name": "models",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "fallback_model_id": {
-          "name": "fallback_model_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "ai_provider_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'untested'"
-        },
-        "last_tested_at": {
-          "name": "last_tested_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_error": {
-          "name": "last_error",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "ai_provider_connections_firm_label_unique": {
-          "name": "ai_provider_connections_firm_label_unique",
-          "columns": [
-            {
-              "expression": "firm_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "label",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "ai_provider_connections_firm_status_idx": {
-          "name": "ai_provider_connections_firm_status_idx",
-          "columns": [
-            {
-              "expression": "firm_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "ai_provider_connections_firm_id_firms_id_fk": {
-          "name": "ai_provider_connections_firm_id_firms_id_fk",
-          "tableFrom": "ai_provider_connections",
-          "tableTo": "firms",
-          "columnsFrom": [
-            "firm_id"
           ],
           "columnsTo": [
             "id"
@@ -8113,6 +8084,12 @@
           "notNull": true,
           "default": "'{}'::jsonb"
         },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
         "status": {
           "name": "status",
           "type": "job_status",
@@ -8120,6 +8097,19 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'queued'"
+        },
+        "progress": {
+          "name": "progress",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "stage": {
+          "name": "stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "attempts": {
           "name": "attempts",
@@ -8134,6 +8124,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": 3
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'system'"
         },
         "lease_owner": {
           "name": "lease_owner",
@@ -8187,8 +8184,8 @@
         }
       },
       "indexes": {
-        "jobs_firm_job_key_unique": {
-          "name": "jobs_firm_job_key_unique",
+        "jobs_firm_type_idempotency_unique": {
+          "name": "jobs_firm_type_idempotency_unique",
           "columns": [
             {
               "expression": "firm_id",
@@ -8198,6 +8195,12 @@
             },
             {
               "expression": "job_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "idempotency_key",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -8219,6 +8222,27 @@
             },
             {
               "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "jobs_status_created_idx": {
+          "name": "jobs_status_created_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -8764,12 +8788,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "connection_id": {
-          "name": "connection_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
         "provider": {
           "name": "provider",
           "type": "text",
@@ -8888,27 +8906,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "model_calls_connection_created_idx": {
-          "name": "model_calls_connection_created_idx",
-          "columns": [
-            {
-              "expression": "connection_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -8923,19 +8920,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "model_calls_connection_id_ai_provider_connections_id_fk": {
-          "name": "model_calls_connection_id_ai_provider_connections_id_fk",
-          "tableFrom": "model_calls",
-          "tableTo": "ai_provider_connections",
-          "columnsFrom": [
-            "connection_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "model_calls_workflow_run_id_workflow_runs_id_fk": {
@@ -10062,6 +10046,105 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.user_preferences": {
+      "name": "user_preferences",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'en'"
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'UTC'"
+        },
+        "theme": {
+          "name": "theme",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'system'"
+        },
+        "density": {
+          "name": "density",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'comfortable'"
+        },
+        "notifications": {
+          "name": "notifications",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"email\":true,\"inApp\":true,\"digest\":false}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "user_preferences_user_id_unique": {
+          "name": "user_preferences_user_id_unique",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "user_preferences_user_id_unique": {
+          "name": "user_preferences_user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.webhook_deliveries": {
       "name": "webhook_deliveries",
       "schema": "",
@@ -10228,7 +10311,14 @@
           "name": "secret_hash",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "''"
+        },
+        "secret_ciphertext": {
+          "name": "secret_ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "events": {
           "name": "events",
@@ -10438,27 +10528,6 @@
     }
   },
   "enums": {
-    "public.ai_provider_kind": {
-      "name": "ai_provider_kind",
-      "schema": "public",
-      "values": [
-        "openai",
-        "anthropic",
-        "google",
-        "openrouter",
-        "openai-compatible"
-      ]
-    },
-    "public.ai_provider_status": {
-      "name": "ai_provider_status",
-      "schema": "public",
-      "values": [
-        "active",
-        "invalid",
-        "disabled",
-        "untested"
-      ]
-    },
     "public.contradiction_status": {
       "name": "contradiction_status",
       "schema": "public",

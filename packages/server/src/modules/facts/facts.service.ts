@@ -405,7 +405,6 @@ export class FactsService {
       )
       .limit(1);
     if (!fact) {
-      const [bare] = await this.db.select().from(facts).where(eq(facts.id, factId)).limit(1);
       throw DomainError.notFound('Fact not found');
     }
     return fact;

@@ -128,7 +128,7 @@ export class EmbeddingProcessor extends TrackedProcessor {
           text: chunk.content,
         },
       })));
-    } catch (error) {
+    } catch {
       await this.embedding.markChunkFailed(chunkIds);
       throw new DomainError(
         'VECTOR_UNAVAILABLE',

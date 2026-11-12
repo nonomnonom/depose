@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, eq, desc, inArray, isNull } from 'drizzle-orm';
+import { and, eq, desc, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
