@@ -15,7 +15,7 @@ import {
 } from '@depose/ui/components/dialog';
 import { PageLoading } from '~/lib/components/PageLoading';
 import { Check, CircleWarning, Sparkle } from '@coolicons/react';
-import type { FactDto, FactDtoStatus } from '~/generated/schemas';
+import type { FactDtoStatus } from '~/generated/schemas';
 import { PageHeader } from '~/layout/PageHeader';
 import { FactRow } from '~/lib/components/facts/FactRow';
 import { ErrorState } from '~/layout/ErrorPage';

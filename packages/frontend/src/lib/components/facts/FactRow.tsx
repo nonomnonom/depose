@@ -6,10 +6,12 @@ import type { FactDto } from '~/generated/schemas';
  * and the summary key facts. Scenes stay dumb: they pass FactDto and slots.
  */
 
-export const FACT_STATUS_LABEL: Record<FactDto['status'], string> = {
+export const FACT_STATUS_LABEL: Record<string, string> = {
   confirmed: 'Confirmed',
   rejected: 'Rejected',
   proposed: 'Proposed',
+  merged: 'Merged',
+  unsupported: 'Unsupported',
 };
 
 /** Status dot: filled = confirmed, outline = proposed, muted = rejected. */
