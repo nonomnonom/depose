@@ -1,89 +1,104 @@
 # Testing
 
-The E2E suite uses the development Postgres and Redis. It does not start
-containers, which is why a focused run finishes in seconds instead of minutes.
+Depose tests only the critical legal and security paths. The suite runs on
+Jest, uses the development Postgres and Redis, and forces the process to exit
+when the run finishes.
 
 ```mermaid
 sequenceDiagram
   autonumber
-  participant R as test-e2e.mjs
-  participant T as Node test runner
+  participant Dev as pnpm test
+  participant Jest
   participant F as createE2EApp
-  participant P as Postgres
-  participant Redis
-  participant App as Nest AppModule
+  participant PG as Postgres
+  participant R as Redis
+  participant App as AppModule
 
-  R->>R: compile tsconfig.test.json
-  R->>T: node --test .test-dist/test/*.spec.js
-  T->>F: before() per spec file
-  F->>F: applyTestEnv() reads .env.test
-  F->>P: connect to admin URL
-  F->>P: CREATE DATABASE depose_e2e_<timestamp>
-  F->>P: apply migrations to the new database
-  F->>Redis: choose logical DB from process id, FLUSHDB
-  F->>App: boot with DATABASE_URL and REDIS_URL
-  App-->>T: tests run
-  T->>F: after()
-  F->>App: close
-  F->>Redis: FLUSHDB and disconnect
-  F->>P: DROP DATABASE ... WITH FORCE
+  Dev->>Jest: jest.config.mjs (critical specs only)
+  Jest->>F: beforeAll per spec
+  F->>F: applyTestEnv() loads .env.test
+  F->>PG: CREATE DATABASE depose_e2e_<timestamp>
+  F->>PG: apply migrations
+  F->>R: pick logical DB 1-15, FLUSHDB
+  F->>App: boot with test DATABASE_URL and REDIS_URL
+  App-->>Jest: tests run over real HTTP
+  Jest->>F: afterAll
+  F->>R: flush and disconnect
+  F->>PG: DROP DATABASE ... WITH FORCE
+  Jest-->>Dev: summary + --forceExit
 ```
 
-## Why no containers
+## What runs
 
-A container per spec pays image lookup, Postgres boot, and migration cost on
-every file. On Windows that dominates the run. A database on the existing
-server gives the same isolation for a fraction of the time: every spec file
-creates its own database, and parallel files never share rows.
+`jest.config.mjs` lists the only specs in the default suite:
 
-Redis is isolated by logical database. Database 0 stays available for local
-development; the suite uses a process-specific index between 1 and 15 and
-flushes only that index.
+| Spec | Critical path |
+| --- | --- |
+| `auth.e2e.spec.ts` | Signup, sign-in, session cookie, sign-out, forged cookie. |
+| `tenancy.e2e.spec.ts` | Host resolution, cross-firm isolation, IDOR regression. |
+| `ingest.e2e.spec.ts` | Upload, duplicate detection, jobs, extraction wiring. |
+| `ai.e2e.spec.ts` | Grounded answer, citation mapping, no provider leak. |
+| `inconsistencies.e2e.spec.ts` | Decision route, dedup, severity, consistent pairs. |
+| `jobs.e2e.spec.ts` | Idempotency, retry metadata, dead letters. |
+| `production-hardening.e2e.spec.ts` | SSRF policy, headers, readiness, webhook secrets. |
+
+Other test files are not part of the default suite. Add a file to `testMatch`
+only when it covers a critical path; do not grow the suite for every endpoint.
+
+## Why there are no containers
+
+A container per spec pays image lookup, boot, and migration cost on every file.
+On Windows that dominates the run and can leave the process without a clean
+exit. The suite uses the development stack instead:
+
+- Each spec file creates its own `depose_e2e_*` database and drops it after.
+- Each Jest process takes a Redis logical database between 1 and 15 and flushes
+  only that database. Development data in database 0 is untouched.
+- Stale test databases older than six hours are removed at the next setup.
 
 ## Configuration
 
-Copy `.env.test.example` to `.env.test` when the defaults do not match:
-
-```sh
-cp .env.test.example .env.test
-```
+Copy `.env.test.example` to `.env.test` if the defaults do not match:
 
 | Variable | Meaning |
 | --- | --- |
-| `TEST_DATABASE_ADMIN_URL` | Server plus a role allowed to create databases. The helper creates `depose_e2e_*` databases here. |
-| `TEST_DATABASE_URL` | Optional existing database. Used as-is, migrated, never dropped. |
-| `REDIS_URL` | Base Redis URL; the helper replaces the database index per process. |
-| `TEST_REDIS_URL` | Exact Redis URL. Used as-is and not flushed. |
+| `TEST_DATABASE_ADMIN_URL` | Server with a role allowed to create databases. |
+| `TEST_DATABASE_URL` | Optional existing database; used as-is and never dropped. |
+| `REDIS_URL` | Base Redis URL; the logical index is replaced per process. |
+| `TEST_REDIS_URL` | Exact Redis URL; used as-is and not flushed. |
 
-If `TEST_DATABASE_ADMIN_URL` is absent, the helper reads `DATABASE_URL` from
-the server `.env` and connects to its `postgres` database. Shell environment
-wins over `.env.test`.
+Shell environment wins over `.env.test`. If no admin URL is set, the helper
+reads `DATABASE_URL` from the server `.env` and connects to its `postgres`
+database.
 
 ## Running
 
 ```sh
-pnpm test                                   # whole suite
-pnpm test test/inconsistencies.e2e.spec.ts  # one file
-pnpm test --test-name-pattern="maps statement"  # filter by test name
+pnpm test                      # critical suite
+pnpm test auth                 # one spec by name
+pnpm test --testNamePattern="forged"  # one test by name
 ```
 
-The runner forwards flags, compiles tests once, and uses
-`--test-force-exit` so a stray provider or queue handle cannot keep the process
-alive after the suite finishes.
+`scripts/test-jest.mjs` runs Jest with `--experimental-vm-modules` (the Nest
+packages are ESM) and `--forceExit`. `--forceExit` is deliberate: BullMQ and
+provider clients can leave handles open after `app.close()`, and a test run
+must return without Ctrl+C.
 
 ## Rules for new tests
 
-- Use `createE2EApp()` and close it in `after()`.
-- Do not mock the database. Create rows through the real handlers or helpers.
-- Do not depend on another spec file's data.
+- Use `createE2EApp()` and close it in `afterAll()`.
+- Do not mock Postgres. Create rows through the real handlers or test helpers.
 - Keep model calls on the fake model server; never call a real provider.
-- A spec that needs a new queue processor still uses the same app bootstrap.
-- If a test leaves a database behind after a hard kill, the next run removes
-  `depose_e2e_*` databases older than six hours.
+- Run one spec file per critical path, not one per endpoint.
+- If a new spec needs a queue processor, use the same app bootstrap.
+- Import Jest APIs from `@jest/globals` (`describe`, `it`, `expect`,
+  `beforeAll`, `afterAll`); do not rely on unimported globals.
+- Use `jest-assert.ts` only for migrated assertions; new assertions should use
+  Jest's `expect` directly.
 
 ```mermaid
 flowchart LR
-  Spec["Spec file"] --> Factory["createE2EApp()"]
+  Spec["Critical spec"] --> Factory["createE2EApp()"]
   Factory --> DB["Unique database"]
   Factory --> R["Isolated Redis DB"]
   Factory --> Nest["AppModule"]

@@ -30,7 +30,6 @@ production the same reverse proxy must preserve the host.
 | `pnpm check-types` | `tsc --noEmit` |
 | `pnpm build` | Typecheck, bundle, and copy assets |
 | `pnpm generate:api` | Regenerate the Orval client from `../server/openapi.json` |
-| `pnpm test` | Vitest unit tests |
 
 ## Configuration
 

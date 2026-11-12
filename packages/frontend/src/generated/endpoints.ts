@@ -124,7 +124,7 @@ export const getAppControllerHealthUrl = () => {
 
 
 
-  return `/api/api/health`
+  return `/api/health`
 }
 
 /**
@@ -168,7 +168,7 @@ export const getAppControllerReadyUrl = () => {
 
 
 
-  return `/api/api/health/ready`
+  return `/api/health/ready`
 }
 
 /**

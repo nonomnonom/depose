@@ -73,7 +73,7 @@ export class WebhooksService {
       const encryptionKey = appConfig.webhooks.encryptionKey;
       if (!encryptionKey) {
         throw DomainError.internalServerError(
-          'AI_SECRET_ENCRYPTION_KEY is required before a webhook secret can be stored',
+          'WEBHOOK_ENCRYPTION_KEY is required before a webhook secret can be stored',
         );
       }
       secretCiphertext = encryptSecret(input.secret, encryptionKey);

@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "paths": {
-    "/api/api/health": {
+    "/api/health": {
       "get": {
         "description": "Public and unversioned. Returns ok while the process serves requests.",
         "operationId": "AppController_health",
@@ -43,7 +43,7 @@
         ]
       }
     },
-    "/api/api/health/ready": {
+    "/api/health/ready": {
       "get": {
         "description": "Checks Postgres and Redis. Returns 503 with per-dependency status while either is unavailable.",
         "operationId": "AppController_ready",

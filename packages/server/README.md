@@ -75,8 +75,8 @@ used when that path is active.
 
 ```sh
 pnpm check-types
-pnpm test                                  # full E2E suite
-pnpm test test/inconsistencies.e2e.spec.ts  # one spec file
+pnpm test                    # critical Jest E2E suite
+pnpm test inconsistencies    # filter by spec name
 ```
 
 Tests do not start containers. They use the local Postgres and Redis from

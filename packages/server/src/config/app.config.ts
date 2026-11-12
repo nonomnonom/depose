@@ -16,6 +16,7 @@ const envSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(3000),
+    HOST: z.string().default('127.0.0.1'),
     OPENAPI_ENABLED: booleanFlag('true'),
 
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required (see .env.example)'),
@@ -195,6 +196,7 @@ const envSchema = z
 export interface AppConfig {
   nodeEnv: 'development' | 'test' | 'production';
   isProduction: boolean;
+  host: string;
   port: number;
   openapi: {
     enabled: boolean;
@@ -325,6 +327,7 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
   return {
     nodeEnv: env.NODE_ENV,
     isProduction: env.NODE_ENV === 'production',
+    host: env.HOST,
     port: env.PORT,
     openapi: {
       enabled: env.OPENAPI_ENABLED,

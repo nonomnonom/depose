@@ -9,7 +9,7 @@ import { EMBEDDING_QUEUE } from '../../jobs/queue.constants.js';
 import { VectorService } from '../../vector/vector.service.js';
 import type { Database } from '../../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../../infrastructure/database/database.module.js';
-import { documents, documentChunks } from '../../../infrastructure/database/schema/index.js';
+import { matters, documentChunks } from '../../../infrastructure/database/schema/index.js';
 
 // VectorService is provided by VectorModule which imports this module via
 // forwardRef; inject it through forwardRef to break the cycle.
@@ -73,9 +73,9 @@ export class EmbeddingProcessor extends TrackedProcessor {
 
   private async processMatterEmbedding(matterId: string, jobId: string): Promise<Record<string, unknown>> {
     const [matter] = await this.db
-      .select({ firmId: documents.firmId })
-      .from(documents)
-      .where(eq(documents.id, matterId))
+      .select({ firmId: matters.firmId })
+      .from(matters)
+      .where(eq(matters.id, matterId))
       .limit(1);
     if (!matter) throw new DomainError('NOT_FOUND', 404, 'Matter not found');
 
@@ -129,7 +129,12 @@ export class EmbeddingProcessor extends TrackedProcessor {
         },
       })));
     } catch (error) {
-      this.logger.warn('Vector upsert failed after embedding success; marking chunks indexed anyway: ' + (error instanceof Error ? error.message : String(error)));
+      await this.embedding.markChunkFailed(chunkIds);
+      throw new DomainError(
+        'VECTOR_UNAVAILABLE',
+        503,
+        'The vector index did not accept the embedded chunks',
+      );
     }
 
     await this.embedding.markChunksIndexed(chunkIds);

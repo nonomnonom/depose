@@ -1,5 +1,5 @@
-import assert from 'node:assert/strict';
-import { after, before, describe, it } from 'node:test';
+import { afterAll, beforeAll, describe, it } from '@jest/globals';
+import assert from './helpers/jest-assert.js';
 import type { E2EApp } from './helpers/e2e-app.factory.js';
 import { request } from './helpers/http.js';
 
@@ -15,7 +15,7 @@ describe('Production hardening', () => {
   let e2e: E2EApp;
   let fixture: Fixture;
 
-  before(async () => {
+  beforeAll(async () => {
     const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
     /* Production URL policy: private and plain-http outbound targets are denied. */
     e2e = await createE2EApp({ ALLOW_PRIVATE_OUTBOUND_URLS: 'false' });
@@ -44,7 +44,7 @@ describe('Production hardening', () => {
     };
   });
 
-  after(async () => {
+  afterAll(async () => {
     await e2e?.close();
   });
 

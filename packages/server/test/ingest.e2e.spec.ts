@@ -1,5 +1,5 @@
-import assert from 'node:assert/strict';
-import { after, before, describe, it } from 'node:test';
+import { afterAll, beforeAll, describe, it } from '@jest/globals';
+import assert from './helpers/jest-assert.js';
 import type { E2EApp } from './helpers/e2e-app.factory.js';
 import type { FakeModelServer } from './helpers/fake-model-server.js';
 import { request } from './helpers/http.js';
@@ -29,7 +29,7 @@ describe('Document ingest and fact extraction', () => {
   let matterId: string;
   let documentId: string;
 
-  before(async () => {
+  beforeAll(async () => {
     const { startFakeModelServer } = await import('./helpers/fake-model-server.js');
     const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
 
@@ -51,7 +51,7 @@ describe('Document ingest and fact extraction', () => {
     matterId = matter.matterId;
   });
 
-  after(async () => {
+  afterAll(async () => {
     await e2e?.close();
     await fake?.close();
   });

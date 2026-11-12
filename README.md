@@ -76,5 +76,5 @@ Operational behaviour worth knowing:
 cd packages/server
 pnpm check-types
 pnpm lint
-pnpm test          # E2E against the local Postgres/Redis (no containers)
+pnpm test          # critical Jest E2E on local Postgres/Redis (no containers)
 ```

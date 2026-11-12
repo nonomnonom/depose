@@ -48,7 +48,7 @@ async function bootstrap(): Promise<void> {
   }
 
   app.enableShutdownHooks();
-  await app.listen(appConfig.port);
+  await app.listen(appConfig.port, appConfig.host);
 
   logger.log(
     JSON.stringify({

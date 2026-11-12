@@ -1,6 +1,6 @@
-import assert from 'node:assert/strict';
+import { afterAll, beforeAll, describe, it } from '@jest/globals';
+import assert from './helpers/jest-assert.js';
 import { randomUUID } from 'node:crypto';
-import { after, before, describe, it } from 'node:test';
 import type { Job } from 'bullmq';
 import type { E2EApp } from './helpers/e2e-app.factory.js';
 import { request } from './helpers/http.js';
@@ -24,7 +24,7 @@ describe('Job handlers', () => {
   let jobs: import('../src/modules/jobs/jobs.service.js').JobsService;
   let processor: import('../src/modules/documents/ingest.processor.js').IngestProcessor;
 
-  before(async () => {
+  beforeAll(async () => {
     const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
     e2e = await createE2EApp();
 
@@ -63,7 +63,7 @@ describe('Job handlers', () => {
     };
   });
 
-  after(async () => {
+  afterAll(async () => {
     await e2e?.close();
   });
 

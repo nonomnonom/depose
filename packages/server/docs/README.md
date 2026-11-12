@@ -15,7 +15,7 @@ Short, feature-focused notes on how the API actually behaves. Start with
 | [08-realtime](08-realtime.md) | Live sessions, transcript lines, alerts | State + sequence |
 | [09-background-jobs](09-background-jobs.md) | Queues, retries, progress, idempotency | State |
 | [10-deployment](10-deployment.md) | Processes, compose stack, readiness, outbound policy | Flowchart |
-| [11-testing](11-testing.md) | No-container E2E, env.test, focused runs | Sequence |
+| [11-testing](11-testing.md) | No-container E2E, env.test, focused runs | Sequence + flowchart |
 
 ## Conventions used in these docs
 

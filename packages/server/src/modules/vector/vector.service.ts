@@ -259,15 +259,22 @@ export class VectorService {
         headers: this.headers(),
       });
       if (!existing.ok) {
-        await this.request('PUT', `/collections/${collection}`, {
-          vectors: {
-            dense: {
-              size,
-              distance: 'Cosine',
-              hnsw_config: { m: 16, ef_construct: 64 },
+        try {
+          await this.request('PUT', `/collections/${collection}`, {
+            vectors: {
+              dense: {
+                size,
+                distance: 'Cosine',
+                hnsw_config: { m: 16, ef_construct: 64 },
+              },
             },
-          },
-        });
+          });
+        } catch (error) {
+          /* API and worker can create the same collection concurrently. */
+          if (!(error instanceof Error) || !error.message.includes('Qdrant 409')) {
+            throw error;
+          }
+        }
       }
       await this.request('PUT', '/aliases', {
         actions: [

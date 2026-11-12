@@ -3,15 +3,13 @@ services:
     image: postgres:15-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: depose
-      POSTGRES_PASSWORD: depose
-      POSTGRES_DB: depose
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-depose}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in packages/docker/.env}
+      POSTGRES_DB: ${POSTGRES_DB:-depose}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U depose"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-depose}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -19,8 +17,6 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -32,8 +28,6 @@ services:
   qdrant:
     image: qdrant/qdrant:v1.15.5
     restart: unless-stopped
-    ports:
-      - "6333:6333"
     volumes:
       - qdrant-data:/qdrant/storage
     healthcheck:
@@ -65,6 +59,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
+      HOST: 0.0.0.0
       PORT: ${SERVER_PORT:-3000}
       DATABASE_URL: postgres://${POSTGRES_USER:-depose}:${POSTGRES_PASSWORD:-depose}@db:5432/${POSTGRES_DB:-depose}
       REDIS_URL: redis://redis:6379

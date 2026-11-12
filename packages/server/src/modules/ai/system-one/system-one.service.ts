@@ -140,7 +140,13 @@ export class SystemOneService {
         );
       }
 
-      const rawAnswers = (await response.json()) as Record<string, unknown>;
+      const payload = (await response.json()) as Record<string, unknown>;
+      /* OpenRouter returns `{ answers }`; a flat map is also accepted for
+       * OpenAI-compatible decision servers. */
+      const rawAnswers =
+        payload.answers && typeof payload.answers === 'object'
+          ? (payload.answers as Record<string, unknown>)
+          : payload;
       if (!rawAnswers || typeof rawAnswers !== 'object') {
         await this.recordFailure(firmId, startedAt, 'AI_OUTPUT_INVALID');
         throw new DomainError(
@@ -156,7 +162,8 @@ export class SystemOneService {
         answers[key] = fromSdkAnswer(question, raw, config.threshold);
       }
 
-      const usage = (rawAnswers.usage as { inputTokens?: number; outputTokens?: number }) ?? {};
+      const usage =
+        (rawAnswers.usage ?? payload.usage) as { inputTokens?: number; outputTokens?: number } ?? {};
       await this.calls.record({
         firmId,
         routeKey: 'decision.primary',

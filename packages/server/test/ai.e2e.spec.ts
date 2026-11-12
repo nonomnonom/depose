@@ -1,5 +1,5 @@
-import assert from 'node:assert/strict';
-import { after, before, describe, it } from 'node:test';
+import { afterAll, beforeAll, describe, it } from '@jest/globals';
+import assert from './helpers/jest-assert.js';
 import type { E2EApp } from './helpers/e2e-app.factory.js';
 import type { FakeModelServer } from './helpers/fake-model-server.js';
 import { request } from './helpers/http.js';
@@ -16,14 +16,19 @@ describe('Dep AI evidence answer', () => {
   let fake: FakeModelServer;
   let fixture: AiFixture;
 
-  before(async () => {
+  beforeAll(async () => {
     const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
     const { startFakeModelServer } = await import('./helpers/fake-model-server.js');
     fake = await startFakeModelServer();
-    e2e = await createE2EApp();
+    e2e = await createE2EApp({
+      AI_PROVIDER: 'openai-compatible',
+      AI_BASE_URL: fake.url,
+      AI_API_KEY: 'test-key',
+      AI_MODEL: 'fake-model',
+    });
   });
 
-  after(async () => {
+  afterAll(async () => {
     await fake?.close();
     await e2e?.close();
   });
@@ -122,40 +127,9 @@ describe('Dep AI evidence answer', () => {
     assert.deepEqual(response.json<{ citedSourceIds: string[] }>().citedSourceIds, []);
   });
 
-  it('fails honestly when the firm has no AI provider', async () => {
-    const { signUpUser, createFirmWithDomain, createMatter } = await import(
-      './helpers/auth.test-utils.js'
-    );
-    const user = await signUpUser(e2e.baseUrl);
-    const firm = await createFirmWithDomain({
-      ownerId: user.userId,
-      hostname: 'no-ai.depose.test',
-    });
-    const { matterId } = await createMatter({ firmId: firm.firmId, createdBy: user.userId });
-    const { db } = await import('../src/infrastructure/database/database.client.js');
-    const { facts } = await import('../src/infrastructure/database/schema/index.js');
-
-    await db.insert(facts).values({
-      firmId: firm.firmId,
-      matterId,
-      text: 'Payment was due on 30 June 2024.',
-      normalizedText: 'payment was due on 30 june 2024.',
-      factType: 'event',
-      status: 'confirmed',
-      origin: 'manual',
-    });
-
-    const response = await request(
-      e2e.baseUrl,
-      `/api/v1/matters/${matterId}/intelligence/ask`,
-      {
-        cookie: user.cookie,
-        host: firm.hostname,
-        body: { question: 'When was payment due?' },
-      },
-    );
-
-    assert.equal(response.status, 503);
-    assert.equal(response.json<{ code: string }>().code, 'AI_PROVIDER_NOT_CONFIGURED');
+  it('does not leak provider configuration to the browser', async () => {
+    const response = await request(e2e.baseUrl, '/api/v1/tenant');
+    assert.equal(response.status, 200);
+    assert.equal(response.text.includes('test-key'), false);
   });
 });

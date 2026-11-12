@@ -8,7 +8,7 @@ import { DATABASE } from './infrastructure/database/database.module.js';
 import { RedisService } from './infrastructure/redis/redis.service.js';
 
 @ApiTags('Health')
-@Controller('api/health')
+@Controller('health')
 export class AppController {
   constructor(
     @Inject(DATABASE) private readonly db: Database,

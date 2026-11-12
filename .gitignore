@@ -12,6 +12,8 @@ node_modules
 .env.test
 .env.test.local
 .env.production.local
+.test-jest
+.run/
 
 # Testing
 coverage

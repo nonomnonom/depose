@@ -13,6 +13,10 @@ interface DecisionBody {
   questions?: Record<string, { type: string }>;
 }
 
+interface EmbeddingBody {
+  input?: string | string[];
+}
+
 export type ChatResponder = (body: ChatCompletionBody) => unknown;
 export type DecisionResponder = (body: DecisionBody) => Record<string, unknown>;
 
@@ -91,6 +95,22 @@ export async function startFakeModelServer(): Promise<FakeModelServer> {
             },
           ],
           usage: { prompt_tokens: 12, completion_tokens: 24, total_tokens: 36 },
+        });
+        return;
+      }
+
+      if (req.url?.endsWith('/embeddings')) {
+        const embeddingBody = body as EmbeddingBody;
+        const inputs = Array.isArray(embeddingBody.input)
+          ? embeddingBody.input
+          : [embeddingBody.input ?? ''];
+        sendJson(res, 200, {
+          data: inputs.map((_input, index) => ({
+            index,
+            embedding: Array.from({ length: 2048 }, (_value, position) =>
+              position === 0 ? 1 : 0,
+            ),
+          })),
         });
         return;
       }

@@ -62,6 +62,7 @@ export function applyTestEnv(overrides: TestEnvOverrides = {}): void {
   delete process.env.EMBEDDING_BASE_URL;
 
   process.env.AI_SECRET_ENCRYPTION_KEY = TEST_SECRET_KEY;
+  process.env.WEBHOOK_ENCRYPTION_KEY = TEST_SECRET_KEY;
   process.env.WORKER_CONCURRENCY = '1';
 
   for (const [key, value] of Object.entries(overrides)) {

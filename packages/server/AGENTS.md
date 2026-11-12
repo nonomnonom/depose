@@ -11,14 +11,16 @@ Run from `packages/server`:
 | Typecheck | `pnpm check-types` |
 | Lint (writes fixes) | `pnpm lint` |
 | Build | `pnpm build` |
-| Full E2E | `pnpm test` |
-| One E2E file | `pnpm test test/inconsistencies.e2e.spec.ts` |
+| Critical E2E (Jest) | `pnpm test` |
+| One E2E spec | `pnpm test inconsistencies` |
 | OpenAPI + client input | `node scripts/export-openapi.mjs` |
 | Migrations | `pnpm db:generate`, `pnpm db:migrate` |
 
-Tests reuse the development Postgres and Redis. Do not add Testcontainers or
-other per-spec container startup; each spec already gets its own throwaway
-database and Redis logical database. See `docs/11-testing.md`.
+Tests run on Jest and only cover the critical flows listed in `jest.config.mjs`:
+auth, tenancy, ingest, AI, inconsistencies, jobs, and security hardening. They
+reuse the development Postgres and Redis; do not add Testcontainers or other
+per-spec container startup. Each spec gets its own throwaway database and Redis
+logical database. See `docs/11-testing.md`.
 
 ## Code map
 

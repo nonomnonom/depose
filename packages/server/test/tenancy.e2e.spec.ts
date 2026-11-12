@@ -1,5 +1,5 @@
-import assert from 'node:assert/strict';
-import { after, before, describe, it } from 'node:test';
+import { afterAll, beforeAll, describe, it } from '@jest/globals';
+import assert from './helpers/jest-assert.js';
 import type { E2EApp } from './helpers/e2e-app.factory.js';
 import { request } from './helpers/http.js';
 
@@ -17,7 +17,7 @@ describe('Tenancy and access isolation', () => {
   let alpha: TenantFixture;
   let beta: TenantFixture;
 
-  before(async () => {
+  beforeAll(async () => {
     const { createE2EApp } = await import('./helpers/e2e-app.factory.js');
     e2e = await createE2EApp();
 
@@ -48,7 +48,7 @@ describe('Tenancy and access isolation', () => {
         cookie: user.cookie,
         userId: user.userId,
         firmId: firm.firmId,
-        memberId: membership.id,
+        memberId: membership!.id,
         hostname: firm.hostname,
         matterId,
       };
@@ -58,7 +58,7 @@ describe('Tenancy and access isolation', () => {
     beta = await build('beta');
   });
 
-  after(async () => {
+  afterAll(async () => {
     await e2e?.close();
   });
 
@@ -103,11 +103,7 @@ describe('Tenancy and access isolation', () => {
   });
 
   it('does not leak thread messages across firms (IDOR regression)', async () => {
-    const [{ createThreadWithMessage }, { default: assertNever }] = await Promise.all([
-      import('./helpers/auth.test-utils.js'),
-      import('node:assert/strict'),
-    ]);
-    void assertNever;
+    const { createThreadWithMessage } = await import('./helpers/auth.test-utils.js');
 
     const thread = await createThreadWithMessage({
       firmId: alpha.firmId,

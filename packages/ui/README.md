@@ -1,59 +1,64 @@
 # @depose/ui
 
-Library komponen UI berbasis [shadcn/ui](https://ui.shadcn.com/) yang dikelola sebagai paket internal di 모노레พ Depose.
+Internal [shadcn/ui](https://ui.shadcn.com/) component package for the Depose
+monorepo.
 
-## Instalasi
+## Install
 
-Di dalam paket/workspace lain di `packages/` atau `apps/`, tambahkan dependensi:
+Add the dependency to another workspace under `packages/` or `apps/`:
 
 ```bash
 pnpm add @depose/ui
 ```
 
-atau untuk workspace internal:
+or, for an internal workspace:
 
 ```json
 "@depose/ui": "workspace:*"
 ```
 
-## Cara penggunaan
+## Usage
 
-Import komponen dari `@depose/ui`:
+Import components from the package root:
 
 ```tsx
 import { Button, Card, Input } from '@depose/ui';
 import '@depose/ui/globals.css';
 ```
 
-atau import langsung dari path komponen:
+Or import a component directly:
 
 ```tsx
 import { Button } from '@depose/ui/components/button';
 import { Card } from '@depose/ui/components/card';
 ```
 
-## Konfigurasi
+## Configuration
 
-Paket ini menggunakan Tailwind CSS v4 dengan CSS variables untuk tema. Pastikan proyek Anda sudah mengkonfigurasi Tailwind CSS dan import `@depose/ui/globals.css` di entry point.
+The package uses Tailwind CSS v4 with CSS variables for theming. The consuming
+app must configure Tailwind CSS and import `@depose/ui/globals.css` in its
+entry point.
 
-## Pengembangan
+## Development
 
-Jalankan typecheck:
+Typecheck:
 
 ```bash
 pnpm check-types
 ```
 
-Jalankan build (opsional, untuk validasi bundling):
+Build (optional, to validate bundling):
 
 ```bash
 pnpm build
 ```
 
-## Catatan
+## Layout
 
-- Semua komponen berada di `src/components/ui/`.
-- Hooks berada di `src/hooks/`.
-- Utils berada di `src/lib/`.
-- Globals CSS berada di `src/styles/globals.css`.
-- Alias di `components.json` dikonfigurasi untuk `@depose/ui/...` agar konsisten dengan nama paket.
+- Components live in `src/components/ui/`.
+- Hooks live in `src/hooks/`.
+- Utilities live in `src/lib/`.
+- Global CSS lives in `src/styles/globals.css`.
+- `components.json` aliases use `@depose/ui/...`.
+
+All user-facing copy in the package is English; there is no localization layer.
