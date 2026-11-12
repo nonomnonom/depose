@@ -99,7 +99,7 @@ import type {
   UserPreferencesResponseDto
 } from './schemas';
 
-import { customFetch } from '../lib/api/client';
+import { customFetch } from '~/features/lib/api/client';
 export type appControllerHealthResponse200 = {
   data: AppControllerHealth200
   status: 200

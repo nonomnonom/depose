@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client';
 
-import { App } from '~/app/App';
+import { App } from '~/features/App';
 import logoUrl from '~/assets/mascot/logo-favicon.png';
 import '~/styles/globals.css';
 
