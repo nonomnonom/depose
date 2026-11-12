@@ -1,25 +1,22 @@
 import type { ComponentType } from 'react';
 import {
-  Bell,
-  Building1,
   CircleWarning,
   Clock,
   FileText,
   Folder,
-  Grid,
+  House,
   Layers,
-  Radio,
-  Scale,
-  Search,
   Settings,
-  Sparkle,
-  User,
   Users,
 } from '@coolicons/react';
 import type { IconProps } from '@coolicons/react/dynamic';
 
-import { Scene, type SceneConfig, type SceneParams } from '~/features/sceneTypes';
 import { urls } from '~/features/urls';
+import {
+  SETTINGS_SCOPES,
+  settingsHref,
+  settingsSections,
+} from '~/features/settings/settingsSections';
 
 /**
  * Navigation state is derived from the active scene + session, never from the
@@ -40,11 +37,6 @@ export interface NavGroup {
   entries: NavEntry[];
 }
 
-export interface Breadcrumb {
-  label: string;
-  href?: string;
-}
-
 type Can = (action: string) => boolean;
 
 function permitted(entries: NavEntry[], can: Can): NavEntry[] {
@@ -56,66 +48,82 @@ function permitted(entries: NavEntry[], can: Can): NavEntry[] {
     }));
 }
 
-/** Global rail: workspace-level modules only. Matter features never live here. */
-export function workspaceNav(): NavEntry[] {
+/**
+ * Rail top: only what is built so far (Today). New surfaces get a rail slot
+ * here as they ship — nothing else is exposed yet.
+ */
+export function railNav(matterId?: string): NavEntry[] {
   return [
-    { id: 'matters', label: 'Matters', href: urls.matters(), icon: Scale },
-    { id: 'notifications', label: 'Notifications', href: urls.notifications(), icon: Bell },
-    { id: 'settings', label: 'Settings', href: urls.settingsFirm(), icon: Settings },
+    {
+      id: 'home',
+      label: 'Home',
+      href: matterId ? urls.matterHome(matterId) : urls.matters(),
+      icon: House,
+    },
   ];
 }
 
-/** Contextual sidebar for workspace settings scenes. */
-export function settingsGroups(can: Can): NavGroup[] {
+/** Pinned to the bottom of the rail (PostHog: More + Settings + account). */
+export function railFooterNav(matterId?: string): NavEntry[] {
+  return [
+    {
+      id: 'settings',
+      label: 'Settings',
+      href: matterId ? settingsHref('matter-general') : settingsHref('firm-general'),
+      icon: Settings,
+    },
+  ];
+}
+
+/**
+ * Scoped settings entries for the command palette, derived from the unified
+ * settings registry (PostHog settingsNavTree: user / organisation / project).
+ */
+export function settingsGroups(can: Can, matterId?: string): NavGroup[] {
+  return SETTINGS_SCOPES.map(({ id: scope, label }) => ({
+    label,
+    entries: settingsSections
+      .filter((section) => section.scope === scope)
+      .filter((section) => !section.matterRequired || Boolean(matterId))
+      .filter((section) => !section.permission || can(section.permission))
+      .map((section) => ({ id: section.id, label: section.label, href: settingsHref(section.id) })),
+  })).filter((group) => group.entries.length > 0);
+}
+
+/**
+ * Contextual matter sidebar — the Wexler feature tree as scoped groups:
+ * Context, Documents, Facts, Analysis, Subsets. Shown for matter data scenes.
+ */
+export function dataGroups(matterId: string, can: Can): NavGroup[] {
   const groups: NavGroup[] = [
     {
-      label: 'Firm',
+      label: 'Context',
       entries: [
-        { id: 'firm', label: 'General', href: urls.settingsFirm(), permission: 'firm.read', icon: Building1 },
-        { id: 'members', label: 'Members', href: urls.settingsMembers(), permission: 'firm.member.manage', icon: Users },
-        { id: 'domains', label: 'Domains', href: urls.settingsDomains(), permission: 'firm.read', icon: Grid },
-        { id: 'ai', label: 'AI', href: urls.settingsAi(), permission: 'firm.update', icon: Sparkle },
+        { id: 'entities', label: 'Parties / Entities', href: urls.matterEntities(matterId), permission: 'fact.read', icon: Users },
+      ],
+    },
+    {
+      label: 'Documents',
+      entries: [
         {
-          id: 'integrations',
-          label: 'Integrations',
-          href: urls.settingsMcp(),
-          permission: 'firm.mcp.manage',
-          icon: Layers,
+          id: 'documents',
+          label: 'Uploads',
+          href: urls.matterDocuments(matterId),
+          permission: 'document.read',
+          icon: Folder,
         },
       ],
     },
     {
-      label: 'Account',
-      entries: [
-        { id: 'profile', label: 'Profile', href: urls.settingsProfile(), icon: User },
-        { id: 'notifications', label: 'Notifications', href: urls.settingsNotifications(), icon: Bell },
-        { id: 'appearance', label: 'Appearance', href: urls.settingsAppearance(), icon: Sparkle },
-      ],
-    },
-  ];
-
-  return groups
-    .map((group) => ({ ...group, entries: permitted(group.entries, can) }))
-    .filter((group) => group.entries.length > 0);
-}
-
-/** Persistent matter tabs (Wexler 2.0: Summary / Data / Kim / Realtime). */
-export function matterTabs(matterId: string): NavEntry[] {
-  return [
-    { id: 'summary', label: 'Summary', href: urls.matterSummary(matterId) },
-    { id: 'data', label: 'Data', href: urls.matterFacts(matterId) },
-    { id: 'kim', label: 'Dep AI', href: urls.matterKim(matterId), icon: Sparkle },
-    { id: 'realtime', label: 'Real-time', href: urls.matterRealtime(matterId), icon: Radio },
-  ];
-}
-
-/** Contextual Data sidebar, shown only for data scenes. */
-export function dataGroups(matterId: string, can: Can): NavGroup[] {
-  const groups: NavGroup[] = [
-    {
       label: 'Facts',
       entries: [
         { id: 'facts', label: 'Facts', href: urls.matterFacts(matterId), permission: 'fact.read', icon: FileText },
+      ],
+    },
+    {
+      label: 'Analysis',
+      entries: [
+        { id: 'summary', label: 'Summary', href: urls.matterSummary(matterId), permission: 'fact.read', icon: FileText },
         {
           id: 'chronologies',
           label: 'Chronologies',
@@ -131,26 +139,12 @@ export function dataGroups(matterId: string, can: Can): NavGroup[] {
           icon: CircleWarning,
         },
         { id: 'reports', label: 'Reports', href: urls.matterReports(matterId), permission: 'output.read', icon: FileText },
-        { id: 'entities', label: 'Entities', href: urls.matterEntities(matterId), permission: 'fact.read', icon: Users },
       ],
     },
     {
-      label: 'Documents',
-      entries: [
-        {
-          id: 'documents',
-          label: 'Documents',
-          href: urls.matterDocuments(matterId),
-          permission: 'document.read',
-          icon: Folder,
-        },
-      ],
-    },
-    {
-      label: 'Workspace',
+      label: 'Subsets',
       entries: [
         { id: 'subsets', label: 'Subsets', href: urls.matterSubsets(matterId), permission: 'subset.read', icon: Layers },
-        { id: 'search', label: 'Search', href: urls.matterSearch(matterId), icon: Search },
       ],
     },
   ];
@@ -158,40 +152,4 @@ export function dataGroups(matterId: string, can: Can): NavGroup[] {
   return groups
     .map((group) => ({ ...group, entries: permitted(group.entries, can) }))
     .filter((group) => group.entries.length > 0);
-}
-
-const DETAIL_PARENT: Partial<Record<Scene, { label: string; path: (matterId: string) => string }>> = {
-  [Scene.MatterDocument]: { label: 'Documents', path: urls.matterDocuments },
-  [Scene.MatterReport]: { label: 'Reports', path: urls.matterReports },
-  [Scene.MatterSubset]: { label: 'Subsets', path: urls.matterSubsets },
-};
-
-/** Breadcrumb encodes Matter and Subset hierarchy, as in Wexler's newer shell. */
-export function breadcrumbsFor(
-  sceneId: Scene,
-  sceneConfig: SceneConfig,
-  sceneParams: SceneParams,
-  firmName: string,
-  matterName?: string,
-): Breadcrumb[] {
-  const root: Breadcrumb = { label: firmName, href: urls.matters() };
-  const matterId = sceneParams.params.matterId;
-
-  if (sceneConfig.matterSection && matterId) {
-    const trail: Breadcrumb[] = [
-      { label: 'Matters', href: urls.matters() },
-      { label: matterName ?? 'Matter', href: urls.matterSummary(matterId) },
-    ];
-    const parent = DETAIL_PARENT[sceneId];
-    if (parent) trail.push({ label: parent.label, href: parent.path(matterId) });
-    trail.push({ label: sceneConfig.name });
-    return trail;
-  }
-
-  if (sceneConfig.sidebar === 'settings') {
-    return [{ label: 'Matters', href: urls.matters() }, { label: 'Settings', href: urls.settingsFirm() }, { label: sceneConfig.name }];
-  }
-
-  if (sceneId === Scene.Matters) return [root, { label: 'Matters' }];
-  return [root, { label: sceneConfig.name }];
 }

@@ -4,13 +4,14 @@ import { Button } from '@depose/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@depose/ui/components/dropdown-menu';
 import { LogOut, User } from '@coolicons/react';
-import { urls } from '~/features/urls';
+import { settingsHref } from '~/features/settings/settingsSections';
 import { useSession, useSignOut } from '~/features/lib/auth/session';
 import { initials } from '~/features/lib/format/date';
 
@@ -38,15 +39,16 @@ export function UserMenu() {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel className="flex flex-col gap-0.5">
-          <span className="truncate text-sm font-medium text-foreground">{me.user.name}</span>
-          <span className="truncate text-xs font-normal">{me.user.email}</span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate(urls.settingsProfile())}>
-          <User size={16} />
-          Profile and account
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex flex-col gap-0.5">
+            <span className="truncate text-sm font-medium text-foreground">{me.user.name}</span>
+            <span className="truncate text-xs font-normal">{me.user.email}</span>
+          </DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => navigate(settingsHref('user-profile'))}>
+            <User size={16} />
+            Profile and account
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

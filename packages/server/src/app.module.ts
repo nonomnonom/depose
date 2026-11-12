@@ -42,6 +42,7 @@ import { IssuesModule } from './modules/issues/issues.module.js';
 import { RealtimeModule } from './modules/realtime/realtime.module.js';
 import { RelevanceModule } from './modules/relevance/relevance.module.js';
 import { SummaryThemeModule } from './modules/summary-theme/summary-theme.module.js';
+import { TodayModule } from './modules/today/today.module.js';
 import { OnboardingModule } from './modules/onboarding/onboarding.module.js';
 import { OutputsModule } from './modules/outputs/outputs.module.js';
 import { SearchModule } from './modules/search/search.module.js';
@@ -99,6 +100,7 @@ import { RateLimitGuard } from './common/rate-limit.guard.js';
     RealtimeModule,
     RelevanceModule,
     SummaryThemeModule,
+    TodayModule,
     /* Consumers are opt-out so a single container still processes jobs by default. */
     ...(appConfig.worker.enabled ? [WorkerProcessorsModule] : []),
   ],

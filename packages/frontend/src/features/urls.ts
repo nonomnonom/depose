@@ -25,21 +25,17 @@ export const urls = {
   invitation: (token = ':token'): string => `/invitations/${token}`,
 
   // Workspace
+  home: (): string => '/home',
   matters: (): string => '/matters',
   notifications: (): string => '/notifications',
   aiElements: (): string => '/ai-elements',
   settings: (): string => '/settings',
-  settingsFirm: (): string => '/settings/firm',
-  settingsMembers: (): string => '/settings/firm/members',
-  settingsDomains: (): string => '/settings/firm/domains',
-  settingsAi: (): string => '/settings/firm/ai',
-  settingsMcp: (): string => '/settings/firm/integrations/mcp',
-  settingsProfile: (): string => '/settings/user/profile',
-  settingsNotifications: (): string => '/settings/user/notifications',
-  settingsAppearance: (): string => '/settings/user/appearance',
+  /** One unified settings scene; section ids are scope-prefixed (PostHog scheme). */
+  settingsSection: (section = ':section'): string => `/settings/${section}`,
 
-  // Matter
+  // Matter (matter = project, the primary context — PostHog /project/:id/...)
   matter,
+  matterHome: (matterId = ':matterId'): string => `${matter(matterId)}/home`,
   matterSummary: (matterId = ':matterId'): string => `${matter(matterId)}/summary`,
   matterData: data,
   matterFacts: (matterId = ':matterId'): string => `${data(matterId)}/facts`,
@@ -53,14 +49,13 @@ export const urls = {
   matterSubsets: (matterId = ':matterId'): string => `${data(matterId)}/subsets`,
   matterSubset: subset,
   matterSearch: (matterId = ':matterId'): string => `${data(matterId)}/search`,
-  matterKim: (matterId = ':matterId'): string => `${matter(matterId)}/kim`,
+  matterChats: (matterId = ':matterId'): string => `${matter(matterId)}/chats`,
   matterRealtime: (matterId = ':matterId'): string => `${matter(matterId)}/realtime`,
-  matterSettings: (matterId = ':matterId'): string => `${matter(matterId)}/settings`,
 
   // Errors
   error403: (): string => '/403',
   error404: (): string => '/404',
 
   /** Where a guest is sent after logging in. */
-  default: (): string => '/matters',
+  default: (): string => '/home',
 };

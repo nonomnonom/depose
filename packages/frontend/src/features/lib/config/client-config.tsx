@@ -28,7 +28,7 @@ export interface ClientFeatures {
     mailConfigured: boolean;
   };
   ai: {
-    /** A model provider is configured; otherwise Dep AI uses grounded retrieval only. */
+    /** A model provider is configured; otherwise Chats uses grounded retrieval only. */
     enabled: boolean;
   };
   mcpServer: {

@@ -24,8 +24,9 @@ import { formatRelativeDate } from '~/features/lib/format/date';
 import { useDocuments } from '~/features/documents/documents.queries';
 import { useCreateSubset, useSubsets } from './subsets.queries';
 
-export function SubsetsPage() {
-  const { matterId = '' } = useParams();
+export function SubsetsPage({ matterId: matterIdProp }: { matterId?: string }) {
+  const { matterId: routeMatterId = '' } = useParams();
+  const matterId = matterIdProp ?? routeMatterId;
   const { can } = useSession();
   const subsets = useSubsets(matterId);
   const [open, setOpen] = useState(false);

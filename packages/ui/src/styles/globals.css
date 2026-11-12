@@ -113,7 +113,7 @@
   --primary-foreground: hsl(0deg 0% 100%);
   --secondary: var(--depose-100);
   --secondary-foreground: var(--foreground);
-  --muted: var(--depose-50);
+  --muted: var(--depose-100);
   --muted-foreground: hsl(228deg 8% 30%);
   --accent: var(--depose-150);
   --accent-foreground: var(--foreground);
@@ -127,11 +127,13 @@
   --chart-3: #42827e;
   --chart-4: #ce0e74;
   --chart-5: #f14f58;
-  --sidebar: var(--depose-25);
+  /* PostHog Today scheme: chrome (rail + top bar) sits DARKER than the page;
+     the page is light paper and cards are pure white. */
+  --sidebar: var(--depose-150);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: hsl(0deg 0% 100%);
-  --sidebar-accent: var(--depose-150);
+  --sidebar-accent: var(--depose-200);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--depose-200);
   --sidebar-ring: var(--brand-accent);
@@ -177,7 +179,8 @@
   --chart-3: #3e7a76;
   --chart-4: #bf0d6c;
   --chart-5: #f0474f;
-  --sidebar: hsl(228deg 12% 11%);
+  /* Dark mirrors the light hierarchy: chrome slightly darker than the page. */
+  --sidebar: hsl(228deg 14% 6%);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: hsl(0deg 0% 100%);

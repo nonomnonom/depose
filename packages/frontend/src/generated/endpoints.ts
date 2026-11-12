@@ -94,12 +94,16 @@ import type {
   SubsetsControllerSetDocumentsBody,
   SubsetsControllerUpdateBody,
   TenantResponseDto,
+  TodayControllerOverview200,
+  TodayControllerOverviewParams,
+  TodayControllerRecordRecent200,
+  TodayControllerRecordRecentBody,
   UnreadCountDto,
   UserPreferencesControllerUpdateBody,
   UserPreferencesResponseDto
 } from './schemas';
 
-import { customFetch } from '~/features/lib/api/client';
+import { customFetch } from '../features/lib/api/client';
 export type appControllerHealthResponse200 = {
   data: AppControllerHealth200
   status: 200
@@ -7757,5 +7761,133 @@ export const realtimeControllerReviewAlert = async (matterId: string,
     method: 'PATCH'
 
 
+  }
+);}
+
+
+
+export type todayControllerOverviewResponse200 = {
+  data: TodayControllerOverview200
+  status: 200
+}
+
+export type todayControllerOverviewResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type todayControllerOverviewResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type todayControllerOverviewResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type todayControllerOverviewResponseSuccess = (todayControllerOverviewResponse200) & {
+  headers: Headers;
+};
+export type todayControllerOverviewResponseError = (todayControllerOverviewResponse401 | todayControllerOverviewResponse403 | todayControllerOverviewResponse500) & {
+  headers: Headers;
+};
+
+export type todayControllerOverviewResponse = (todayControllerOverviewResponseSuccess | todayControllerOverviewResponseError)
+
+export const getTodayControllerOverviewUrl = (params?: TodayControllerOverviewParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/today?${stringifiedParams}` : `/api/v1/today`
+}
+
+/**
+ * Pass ?matterId= for the matter-scoped feed (PostHog Today inside a project); omit it for a firm-level overview.
+ * @summary Home feed for the current scope
+ */
+export const todayControllerOverview = async (params?: TodayControllerOverviewParams, options?: Parameters<typeof customFetch>[1]): Promise<todayControllerOverviewResponse> => {
+
+  return customFetch<todayControllerOverviewResponse>(getTodayControllerOverviewUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type todayControllerRecordRecentResponse200 = {
+  data: TodayControllerRecordRecent200
+  status: 200
+}
+
+export type todayControllerRecordRecentResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type todayControllerRecordRecentResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type todayControllerRecordRecentResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type todayControllerRecordRecentResponseSuccess = (todayControllerRecordRecentResponse200) & {
+  headers: Headers;
+};
+export type todayControllerRecordRecentResponseError = (todayControllerRecordRecentResponse401 | todayControllerRecordRecentResponse403 | todayControllerRecordRecentResponse500) & {
+  headers: Headers;
+};
+
+export type todayControllerRecordRecentResponse = (todayControllerRecordRecentResponseSuccess | todayControllerRecordRecentResponseError)
+
+export const getTodayControllerRecordRecentUrl = () => {
+
+
+
+
+  return `/api/v1/today/recents`
+}
+
+/**
+ * @summary Record a recently viewed resource
+ */
+export const todayControllerRecordRecent = async (todayControllerRecordRecentBody: TodayControllerRecordRecentBody, options?: Parameters<typeof customFetch>[1]): Promise<todayControllerRecordRecentResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<todayControllerRecordRecentResponse>(getTodayControllerRecordRecentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(todayControllerRecordRecentBody)
   }
 );}

@@ -15,8 +15,9 @@ import { queryKeys } from '~/features/lib/query/keys';
 import { useSession } from '~/features/lib/auth/session';
 import { useMatter } from '~/features/lib/logic/matterLogic';
 
-export function MatterSettingsPage() {
-  const { matterId = '' } = useParams();
+export function MatterSettingsPage({ matterId: matterIdProp }: { matterId?: string }) {
+  const { matterId: routeMatterId = '' } = useParams();
+  const matterId = matterIdProp ?? routeMatterId;
   const queryClient = useQueryClient();
   const { can } = useSession();
   const matterQuery = useMatter(matterId);

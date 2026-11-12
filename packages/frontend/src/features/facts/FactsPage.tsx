@@ -323,7 +323,7 @@ function FactDetail({
           {data.sources.length === 0 ? (
             <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
               <CircleWarning size={13} className="mt-0.5 shrink-0" />
-              Manual fact without a document source. Dep AI can use it, but it carries no page
+              Manual fact without a document source. Chats can use it, but it carries no page
               citation.
             </p>
           ) : (

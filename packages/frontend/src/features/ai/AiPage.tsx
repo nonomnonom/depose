@@ -6,7 +6,6 @@ import { ScrollArea } from '@depose/ui/components/scroll-area';
 import { Skeleton } from '@depose/ui/components/skeleton';
 import { Tool, ToolContent, ToolHeader, ToolInput } from '@depose/ui/ai-elements';
 import {
-  AlertTriangleIcon,
   ArrowRight,
   ChevronLeft,
   CircleWarning,
@@ -55,6 +54,7 @@ export function AiPage() {
   const remove = useDeleteAiThread(matterId);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showThreads, setShowThreads] = useState(false);
+  const [activeNav, setActiveNav] = useState<'home' | 'chats' | 'analytics' | 'people' | 'products' | 'settings'>('chats');
 
   const items = useMemo(() => threads.data ?? [], [threads.data]);
   const active = items.find((thread) => thread.id === activeId) ?? null;
@@ -115,11 +115,9 @@ export function AiPage() {
         </Button>
       </div>
 
-      <div className="grid min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-card lg:grid-cols-[14rem_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 overflow-hidden lg:grid lg:grid-cols-[14rem_1fr] gap-0">
         <aside
-          className={`${
-            showThreads ? 'flex' : 'hidden lg:flex'
-          } min-h-0 flex-col border-r border-border bg-muted/20`}
+          className="lg:flex lg:h-screen border-r border-border bg-muted/20"
         >
           <MatterContextCard title="Conversations">
             <p className="text-sm font-medium">Training questions</p>

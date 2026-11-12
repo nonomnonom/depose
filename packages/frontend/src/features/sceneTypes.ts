@@ -10,19 +10,14 @@ export const Scene = {
   Signup: 'Signup',
   SetupFirm: 'SetupFirm',
   Invitation: 'Invitation',
+  Home: 'Home',
 
   Matters: 'Matters',
   Notifications: 'Notifications',
-  SettingsFirm: 'SettingsFirm',
-  SettingsMembers: 'SettingsMembers',
-  SettingsDomains: 'SettingsDomains',
-  SettingsAi: 'SettingsAi',
-  SettingsMcp: 'SettingsMcp',
-  SettingsProfile: 'SettingsProfile',
-  SettingsNotifications: 'SettingsNotifications',
-  SettingsAppearance: 'SettingsAppearance',
+  Settings: 'Settings',
 
   MatterSummary: 'MatterSummary',
+  MatterHome: 'MatterHome',
   MatterFacts: 'MatterFacts',
   MatterChronologies: 'MatterChronologies',
   MatterInconsistencies: 'MatterInconsistencies',
@@ -34,9 +29,8 @@ export const Scene = {
   MatterSubsets: 'MatterSubsets',
   MatterSubset: 'MatterSubset',
   MatterSearch: 'MatterSearch',
-  MatterKim: 'MatterKim',
+  MatterChats: 'MatterChats',
   MatterRealtime: 'MatterRealtime',
-  MatterSettings: 'MatterSettings',
 
   /** Component gallery for the shared AI Elements patterns. */
   AiElements: 'AiElements',
@@ -55,7 +49,7 @@ export type Scene = (typeof Scene)[keyof typeof Scene];
  */
 export type LayoutMode = 'plain' | 'app' | 'matter' | 'matter-raw';
 
-export type MatterSection = 'summary' | 'data' | 'kim' | 'realtime' | 'settings';
+export type MatterSection = 'home' | 'summary' | 'data' | 'chats' | 'realtime' | 'settings';
 
 export interface SceneConfig {
   name: string;

@@ -2,9 +2,9 @@ import { Button } from '@depose/ui/components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@depose/ui/components/dropdown-menu';
 import { Check, Monitor, Moon, Sun } from '@coolicons/react';
@@ -28,15 +28,16 @@ export function ThemeMenu() {
         <Current className="size-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel>Theme</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {OPTIONS.map((option) => (
-          <DropdownMenuItem key={option.value} onClick={() => setTheme(option.value)}>
-            <option.icon className="size-4" />
-            <span>{option.label}</span>
-            {theme === option.value ? <Check className="ml-auto size-4" /> : null}
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Theme</DropdownMenuLabel>
+          {OPTIONS.map((option) => (
+            <DropdownMenuItem key={option.value} onClick={() => setTheme(option.value)}>
+              <option.icon className="size-4" />
+              <span>{option.label}</span>
+              {theme === option.value ? <Check className="ml-auto size-4" /> : null}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );

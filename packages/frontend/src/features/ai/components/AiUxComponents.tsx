@@ -1,5 +1,3 @@
-import { FileText } from '@coolicons/react';
-
 export function EvidenceBlock({
   source,
   state,

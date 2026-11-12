@@ -1,42 +1,48 @@
-import type { ReactNode } from 'react';
-
-import { Badge } from '@depose/ui/components/badge';
+import { useEffect, type ReactNode } from 'react';
 
 import { useScene } from '~/features/sceneLogic';
 import { ErrorState, ForbiddenPage, NotFoundPage } from '~/features/layout/ErrorPage';
 import { PageLoading } from '~/features/lib/components/PageLoading';
 import { ApiError } from '~/features/lib/api/errors';
-import { useSession } from '~/features/lib/auth/session';
 import { useMatter } from '~/features/lib/logic/matterLogic';
+import { forgetCurrentMatter, rememberCurrentMatter } from '~/features/lib/logic/currentMatter';
 
-import { ContextSidebar } from '~/features/layout/navigation/ContextSidebar';
 import { GlobalRail } from '~/features/layout/navigation/GlobalRail';
-import { MatterTabs } from '~/features/layout/navigation/MatterTabs';
+import { MatterSidebar } from '~/features/layout/navigation/MatterSidebar';
+import { SettingsSidebar } from '~/features/layout/navigation/SettingsSidebar';
 import { TopBar } from '~/features/layout/navigation/TopBar';
-import { dataGroups } from '~/features/layout/navigation/navigationLogic';
-import { MatterContextCard, SidebarCaption } from '~/features/layout/components/AppShellUx';
-
-
-const STATUS_LABEL: Record<string, string> = {
-  active: 'Active',
-  closed: 'Closed',
-  archived: 'Archived',
-};
+import { useRecordRecentMatter } from '~/features/matter/home/today.queries';
 
 /**
- * Matter shell: global rail + breadcrumb bar + matter tabs + contextual Data
- * sidebar. `matter-raw` scenes drop the sidebar and default padding so their
- * split panes can own the full viewport (Wexler document viewer / Kim).
+ * Matter shell. Matter is the project: PostHog Today-style rail + top bar with
+ * the matter switcher. `matter-raw` scenes drop the padding so their split
+ * panes own the viewport.
  */
 export function MatterLayout({ children }: { children: ReactNode }): ReactNode {
   const { sceneConfig, sceneParams } = useScene();
-  const { can } = useSession();
   const matterId = sceneParams.params.matterId ?? '';
   const matterQuery = useMatter(matterId);
   const raw = sceneConfig.layout === 'matter-raw';
 
   const matter = matterQuery.data;
   const readOnly = matter?.status === 'closed' || matter?.status === 'archived';
+
+  const recordRecent = useRecordRecentMatter();
+  useEffect(() => {
+    if (matter?.id) recordRecent.mutate(matter.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matter?.id]);
+
+  // Last-opened matter decides where the app lands next time, so a stale or
+  // deleted id is dropped instead of bounced into on every visit.
+  useEffect(() => {
+    if (matter) rememberCurrentMatter(matter.id);
+  }, [matter]);
+
+  useEffect(() => {
+    const error = matterQuery.error;
+    if (error instanceof ApiError && error.isNotFound) forgetCurrentMatter();
+  }, [matterQuery.error]);
 
   let content: ReactNode = children;
   if (matterQuery.isPending) {
@@ -58,23 +64,14 @@ export function MatterLayout({ children }: { children: ReactNode }): ReactNode {
   return (
     <div className="flex min-w-0 flex-1">
       <GlobalRail />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col bg-background">
         <TopBar matterName={matter?.name} />
 
-        {matter ? (
-          <MatterContextCard title="Matter">
-            <p className="font-medium">{matter.name}</p>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {STATUS_LABEL[matter.status] ?? matter.status}
-              {matter.matterNumber ? ` · ${matter.matterNumber}` : ''}
-            </p>
-          </MatterContextCard>
-        ) : null}
-
-        <MatterTabs matterId={matterId} active={sceneConfig.matterSection} />
-
         {readOnly ? (
-          <div role="status" className="border-b border-border bg-muted/60 px-4 py-2 text-xs text-muted-foreground">
+          <div
+            role="status"
+            className="border-b border-border bg-muted/60 px-4 py-2 text-xs text-muted-foreground"
+          >
             {matter?.status === 'closed'
               ? 'This matter is closed. Data is read-only.'
               : 'This matter is archived. Only an admin can restore it.'}
@@ -82,18 +79,21 @@ export function MatterLayout({ children }: { children: ReactNode }): ReactNode {
         ) : null}
 
         <div className="flex min-h-0 flex-1">
-          {sceneConfig.sidebar === 'data' ? (
-            <ContextSidebar
-              groups={dataGroups(matterId, can)}
-              activeItem={sceneConfig.sidebarItem}
-              label="Matter data sections"
-            />
-          ) : null}
+          {sceneConfig.sidebar === 'data' ? <MatterSidebar /> : null}
+          {sceneConfig.sidebar === 'settings' ? <SettingsSidebar /> : null}
           <main
             id="main-content"
-            className={raw ? 'min-w-0 flex-1 overflow-y-auto' : 'min-w-0 flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8'}
+            className={
+              raw
+                ? 'min-h-0 flex-1 overflow-y-auto'
+                : 'min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-6 lg:px-8'
+            }
           >
-            {raw ? content : <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">{content}</div>}
+            {raw ? (
+              content
+            ) : (
+              <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">{content}</div>
+            )}
           </main>
         </div>
       </div>

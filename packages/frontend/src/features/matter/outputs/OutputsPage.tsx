@@ -46,7 +46,7 @@ export function OutputsPage() {
         actions={
           <Button variant="outline" render={<Link to={`/matters/${matterId}/kim`} />}>
             <Sparkle size={14} />
-            Draft with Dep AI
+            Draft with AI
           </Button>
         }
       />
@@ -66,11 +66,11 @@ export function OutputsPage() {
           </div>
           <p className="mt-4 text-sm font-medium">No outputs yet</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground text-pretty">
-            Drafts, chronologies, and reports created from the fact bank appear here. Ask Dep AI
+            Drafts, chronologies, and reports created from the fact bank appear here. Ask AI
             for a draft when the record is ready.
           </p>
           <Button className="mt-4" size="sm" render={<Link to={`/matters/${matterId}/kim`} />}>
-            Open Dep AI
+            Open Chats
           </Button>
         </div>
       ) : (

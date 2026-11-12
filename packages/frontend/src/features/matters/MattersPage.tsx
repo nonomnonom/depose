@@ -85,7 +85,9 @@ export function MattersPage() {
       <PageHeader
         title="Matters"
         description={
-          me?.firm ? `All matters in ${me.firm.name}.` : `All matters in ${config.firmName}.`
+          me?.firm
+            ? `Matters you have access to in ${me.firm.name}.`
+            : `Matters you have access to in ${config.firmName}.`
         }
         actions={
           canCreate ? <Button onClick={() => setCreateDialog(true)}>Create matter</Button> : undefined

@@ -16,13 +16,9 @@ import { useTheme } from '~/features/layout/ThemeProvider';
 import { useSession, useSignOut } from '~/features/lib/auth/session';
 import { useClientConfig } from '~/features/lib/config/client-config';
 
-import {
-  dataGroups,
-  matterTabs,
-  settingsGroups,
-  workspaceNav,
-  type NavEntry,
-} from './navigationLogic';
+import { railNav, settingsGroups } from './navigationLogic';
+import type { NavEntry } from './navigationLogic';
+import { readCurrentMatterId } from '~/features/lib/logic/currentMatter';
 
 interface CommandPaletteValue {
   open: boolean;
@@ -72,15 +68,11 @@ export function CommandPalette(): ReactNode {
   const groups = useMemo<PaletteGroup[]>(() => {
     const result: PaletteGroup[] = [];
 
-    if (matterId) {
-      const sections: NavEntry[] = [...matterTabs(matterId)];
-      for (const group of dataGroups(matterId, can)) sections.push(...group.entries);
-      result.push({ label: 'This matter', items: sections });
+    /* Only shipped surfaces participate: Today + Settings. */
+    result.push({ label: 'Workspace', items: railNav(readCurrentMatterId() ?? undefined) });
+    for (const group of settingsGroups(can, matterId || undefined)) {
+      result.push({ label: `Settings · ${group.label}`, items: group.entries });
     }
-
-    const settings: NavEntry[] = settingsGroups(can).flatMap((group) => group.entries);
-    result.push({ label: 'Workspace', items: workspaceNav() });
-    result.push({ label: 'Settings', items: settings });
     return result.filter((group) => group.items.length > 0);
   }, [can, matterId]);
 

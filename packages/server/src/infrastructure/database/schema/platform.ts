@@ -553,3 +553,28 @@ export const userPreferences = pgTable(
 );
 
 export type UserPreferences = typeof userPreferences.$inferSelect;
+
+/** Recently viewed resources per user (PostHog Today "Jump back in"). */
+export const recentViews = pgTable(
+  'recent_views',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    firmId: uuid('firm_id')
+      .notNull()
+      .references(() => firms.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull(),
+    resourceType: text('resource_type').notNull().default('matter'),
+    resourceId: uuid('resource_id').notNull(),
+    openedAt: timestamp('opened_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('recent_views_user_resource_unique').on(
+      table.userId,
+      table.resourceType,
+      table.resourceId,
+    ),
+    index('recent_views_user_opened_idx').on(table.userId, table.openedAt),
+  ],
+);
+
+export type RecentView = typeof recentViews.$inferSelect;
