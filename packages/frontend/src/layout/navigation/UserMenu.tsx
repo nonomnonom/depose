@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@depose/ui/components/dropdown-menu';
 import { LogOut, User } from '@coolicons/react';
+import { urls } from '~/app/urls';
 import { useSession, useSignOut } from '~/lib/auth/session';
 import { initials } from '~/lib/format/date';
 
@@ -42,7 +43,7 @@ export function UserMenu() {
           <span className="truncate text-xs font-normal">{me.user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate('/settings/profile')}>
+        <DropdownMenuItem onClick={() => navigate(urls.settingsProfile())}>
           <User size={16} />
           Profile and account
         </DropdownMenuItem>

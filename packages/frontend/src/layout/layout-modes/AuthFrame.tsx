@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import { Badge } from '@depose/ui/components/badge';
-import logoUrl from '~/assets/mascot/logo-favicon.png';
-import { useClientConfig } from '~/lib/config/client-config';
-import { ThemeMenu } from '~/layout/app-shell/ThemeMenu';
 
-interface AuthLayoutProps {
+import logoUrl from '~/assets/mascot/logo-favicon.png';
+import { ThemeMenu } from '~/layout/navigation/ThemeMenu';
+import { useClientConfig } from '~/lib/config/client-config';
+
+interface AuthFrameProps {
   title: string;
   description?: string;
   children: ReactNode;
@@ -12,11 +13,8 @@ interface AuthLayoutProps {
   switcher?: ReactNode;
 }
 
-/**
- * Auth shell that mirrors the app shell: a slim rail on the left and a single
- * top strip, with the form sitting directly on the app background.
- */
-export function AuthLayout({ title, description, children, footer, switcher }: AuthLayoutProps) {
+/** Branded frame for logged-out and bootstrap scenes. Scene controls the copy. */
+export function AuthFrame({ title, description, children, footer, switcher }: AuthFrameProps): ReactNode {
   const { firmName, hostname, features } = useClientConfig();
 
   return (
@@ -57,18 +55,14 @@ export function AuthLayout({ title, description, children, footer, switcher }: A
           <div className="w-full max-w-sm">
             <div className="mb-6 flex flex-col gap-1">
               <h1 className="font-heading text-2xl font-semibold tracking-tight">{title}</h1>
-              {description ? (
-                <p className="text-sm text-muted-foreground text-pretty">{description}</p>
-              ) : null}
+              {description ? <p className="text-sm text-muted-foreground text-pretty">{description}</p> : null}
             </div>
 
             {children}
 
             {footer ? <div className="mt-6">{footer}</div> : null}
             {switcher ? (
-              <div className="mt-6 border-t border-border pt-4 text-sm text-muted-foreground">
-                {switcher}
-              </div>
+              <div className="mt-6 border-t border-border pt-4 text-sm text-muted-foreground">{switcher}</div>
             ) : null}
           </div>
         </main>

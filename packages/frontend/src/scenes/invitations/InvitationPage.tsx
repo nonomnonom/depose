@@ -5,7 +5,7 @@ import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Skeleton } from '@depose/ui/components/skeleton';
 import { CircleWarning, Check } from '@coolicons/react';
-import { AuthLayout } from '~/layout/auth/AuthLayout';
+import { AuthFrame } from '~/layout/layout-modes/AuthFrame';
 import { useSession } from '~/lib/auth/session';
 import { signOut } from '~/lib/auth/api';
 import { queryKeys } from '~/lib/query/keys';
@@ -42,19 +42,19 @@ export function InvitationPage() {
 
   if (invitation.isPending || isLoading) {
     return (
-      <AuthLayout title="Invitation" description="Checking your invitation.">
+      <AuthFrame title="Invitation" description="Checking your invitation.">
         <div className="space-y-3">
           <Skeleton className="h-5 w-2/3" />
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-9 w-40" />
         </div>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
   if (invitation.isError) {
     return (
-      <AuthLayout
+      <AuthFrame
         title="Invitation not found"
         description="This link is invalid or has already been used."
         switcher={
@@ -71,25 +71,25 @@ export function InvitationPage() {
             seven days.
           </AlertDescription>
         </Alert>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
   if (!data) {
     return (
-      <AuthLayout title="Invitation" description="This invitation could not be loaded.">
+      <AuthFrame title="Invitation" description="This invitation could not be loaded.">
         <Alert variant="destructive">
           <CircleWarning size={16} />
           <AlertTitle>Try again</AlertTitle>
           <AlertDescription>Reload this page or ask your firm admin for a new link.</AlertDescription>
         </Alert>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
   if (data.status === 'accepted') {
     return (
-      <AuthLayout
+      <AuthFrame
         title="Invitation already accepted"
         description={`You already have access to ${data.firmName}.`}
         switcher={
@@ -103,13 +103,13 @@ export function InvitationPage() {
           <AlertTitle>Nothing left to do</AlertTitle>
           <AlertDescription>Sign in with {data.email} to open the firm.</AlertDescription>
         </Alert>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
   if (data.status === 'expired' || data.status === 'revoked') {
     return (
-      <AuthLayout
+      <AuthFrame
         title="Invitation no longer valid"
         description={`This invitation to ${data.firmName} is ${data.status}.`}
         switcher={
@@ -125,12 +125,12 @@ export function InvitationPage() {
             Invitations expire after seven days. Your firm admin can resend it from Members.
           </AlertDescription>
         </Alert>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
   return (
-    <AuthLayout
+    <AuthFrame
       title={`Join ${data.firmName}`}
       description={`${data.inviterName} invited you to collaborate on Depose.`}
       switcher={
@@ -215,6 +215,6 @@ export function InvitationPage() {
           </div>
         )}
       </div>
-    </AuthLayout>
+    </AuthFrame>
   );
 }

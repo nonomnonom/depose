@@ -10,11 +10,10 @@ import {
   FirmDomainDtoStatus,
 } from '~/generated/schemas';
 
-function FirmDomainsList({ firmId }: { firmId?: string }) {
+export function FirmDomainsList() {
   const { data } = useQuery({
     queryKey: queryKeys.firmDomains,
     queryFn: async () => unwrapData(await firmsControllerDomains()),
-    enabled: Boolean(firmId),
   });
 
   const list = data?.domains ?? [];
@@ -105,5 +104,3 @@ function StatusBadge({ status, ssl, type }: { status: FirmDomainDtoStatus; ssl: 
     </div>
   );
 }
-
-export { FirmDomainsList };

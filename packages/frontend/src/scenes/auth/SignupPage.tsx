@@ -13,7 +13,7 @@ import { queryClient } from '~/lib/query/client';
 import { meControllerMe } from '~/generated/endpoints';
 import { unwrapData } from '~/lib/api/client';
 import { signUpWithEmail } from '~/lib/auth/api';
-import { AuthLayout } from '~/layout/auth/AuthLayout';
+import { AuthFrame } from '~/layout/layout-modes/AuthFrame';
 import { signupSchema, type SignupFormValues } from '~/scenes/auth/schemas/auth';
 
 export function SignupPage() {
@@ -56,7 +56,7 @@ export function SignupPage() {
   if (!features.auth.selfSignup) {
     const ssoOnly = features.auth.ssoRequired;
     return (
-      <AuthLayout
+      <AuthFrame
         title={ssoOnly ? 'SSO required' : 'Sign-up closed'}
         description={
           ssoOnly
@@ -81,13 +81,13 @@ export function SignupPage() {
               : 'Contact your firm admin for an invitation or account creation.'}
           </AlertDescription>
         </Alert>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
   if (done) {
     return (
-      <AuthLayout
+      <AuthFrame
         title="Account created"
         description="Please log in with your email and password."
         switcher={
@@ -105,12 +105,12 @@ export function SignupPage() {
               : 'Your account is ready to use.'}
           </AlertDescription>
         </Alert>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
   return (
-    <AuthLayout
+    <AuthFrame
       title="Sign up"
       description={`Create a new account for ${firmName}.`}
       footer={
@@ -172,6 +172,6 @@ export function SignupPage() {
           {form.formState.isSubmitting ? 'Processing...' : 'Sign up'}
         </Button>
       </form>
-    </AuthLayout>
+    </AuthFrame>
   );
 }

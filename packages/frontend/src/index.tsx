@@ -1,17 +1,16 @@
-import { StrictMode } from 'react';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { createRoot } from 'react-dom/client';
 
-import { queryClient } from '~/lib/query/client';
-import { SceneApp } from '~/app/sceneRoutes';
+import { App } from '~/app/App';
+import logoUrl from '~/assets/mascot/logo-favicon.png';
+import '~/styles/globals.css';
 
-function App() {
-  return (
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <SceneApp />
-      </QueryClientProvider>
-    </StrictMode>
-  );
-}
+const container = document.getElementById('root');
+if (!container) throw new Error('Missing #root element');
 
-export default App;
+const favicon = document.createElement('link');
+favicon.rel = 'icon';
+favicon.type = 'image/png';
+favicon.href = logoUrl;
+document.head.appendChild(favicon);
+
+createRoot(container).render(<App />);

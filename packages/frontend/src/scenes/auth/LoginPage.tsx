@@ -13,7 +13,7 @@ import { queryClient } from '~/lib/query/client';
 import { meControllerMe } from '~/generated/endpoints';
 import { unwrapData } from '~/lib/api/client';
 import { signInWithEmail, signInWithSso } from '~/lib/auth/api';
-import { AuthLayout } from '~/layout/auth/AuthLayout';
+import { AuthFrame } from '~/layout/layout-modes/AuthFrame';
 import { loginSchema, type LoginFormValues } from '~/scenes/auth/schemas/auth';
 
 export function LoginPage() {
@@ -106,7 +106,7 @@ export function LoginPage() {
   // SSO is the only configured credential path.
   if (ssoRequired) {
     return (
-      <AuthLayout
+      <AuthFrame
         title="Log in"
         description={`Log in to ${firmName} with your work email.`}
         footer={errorAlert}
@@ -128,14 +128,14 @@ export function LoginPage() {
             {ssoPending ? 'Redirecting...' : 'Continue with SSO'}
           </Button>
         </form>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
   // No usable login method is configured (password disabled, SSO unavailable).
   if (!passwordLogin && !ssoLogin) {
     return (
-      <AuthLayout title="Log in" description={`Log in to ${firmName}.`} switcher={switcher}>
+      <AuthFrame title="Log in" description={`Log in to ${firmName}.`} switcher={switcher}>
         <Alert>
           <CircleWarning size={16} />
           <AlertTitle>No login method available</AlertTitle>
@@ -143,7 +143,7 @@ export function LoginPage() {
             Password and single sign-on are both disabled. Contact your firm admin.
           </AlertDescription>
         </Alert>
-      </AuthLayout>
+      </AuthFrame>
     );
   }
 
@@ -155,7 +155,7 @@ export function LoginPage() {
     }`;
 
   return (
-    <AuthLayout
+    <AuthFrame
       title="Log in"
       description={`Log in to ${firmName}.`}
       footer={errorAlert}
@@ -232,6 +232,6 @@ export function LoginPage() {
           </Button>
         </form>
       )}
-    </AuthLayout>
+    </AuthFrame>
   );
 }

@@ -1,59 +1,93 @@
+import type { ComponentType } from 'react';
+
+/**
+ * The scene registry. Mirrors PostHog's `scenes/sceneTypes.ts`:
+ * a scene is an id, a config, and a lazily loaded export.
+ * Adding a scene means touching sceneTypes.ts, urls.ts, scenes.ts and appScenes.ts.
+ */
 export const Scene = {
-  Matters: 'matters',
-  MatterData: 'matter-data',
-  MatterSummary: 'matter-summary',
-  MatterDataFacts: 'matter-data-facts',
-  MatterDataChronologies: 'matter-data-chronologies',
-  MatterDataInconsistencies: 'matter-data-inconsistencies',
-  MatterDataReports: 'matter-data-reports',
-  MatterDataEntities: 'matter-data-entities',
-  MatterDataDocuments: 'matter-data-documents',
-  MatterDataSubsets: 'matter-data-subsets',
-  MatterDataSubsetsWorkspace: 'matter-data-subsets-workspace',
-  MatterDataDocumentsViewer: 'matter-data-documents-viewer',
-  MatterKim: 'matter-kim',
-  MatterRealtime: 'matter-realtime',
-  MatterSettings: 'matter-settings',
-  MatterSearch: 'matter-search',
-  Help: 'help',
-  Settings: 'settings',
-  Notifications: 'notifications',
-  Login: 'login',
-  Signup: 'signup',
-  Onboarding: 'onboarding',
+  Login: 'Login',
+  Signup: 'Signup',
+  SetupFirm: 'SetupFirm',
+  Invitation: 'Invitation',
+
+  Matters: 'Matters',
+  Notifications: 'Notifications',
+  SettingsFirm: 'SettingsFirm',
+  SettingsMembers: 'SettingsMembers',
+  SettingsDomains: 'SettingsDomains',
+  SettingsAi: 'SettingsAi',
+  SettingsMcp: 'SettingsMcp',
+  SettingsProfile: 'SettingsProfile',
+  SettingsNotifications: 'SettingsNotifications',
+  SettingsAppearance: 'SettingsAppearance',
+
+  MatterSummary: 'MatterSummary',
+  MatterFacts: 'MatterFacts',
+  MatterChronologies: 'MatterChronologies',
+  MatterInconsistencies: 'MatterInconsistencies',
+  MatterReports: 'MatterReports',
+  MatterReport: 'MatterReport',
+  MatterEntities: 'MatterEntities',
+  MatterDocuments: 'MatterDocuments',
+  MatterDocument: 'MatterDocument',
+  MatterSubsets: 'MatterSubsets',
+  MatterSubset: 'MatterSubset',
+  MatterSearch: 'MatterSearch',
+  MatterKim: 'MatterKim',
+  MatterRealtime: 'MatterRealtime',
+  MatterSettings: 'MatterSettings',
+
+  Error404: 'Error404',
+  Error403: 'Error403',
 } as const;
 
 export type Scene = (typeof Scene)[keyof typeof Scene];
 
-export type LayoutMode = 'bare' | 'minimal' | 'app' | 'matter';
+/**
+ * `plain`     - no shell (auth, setup, invitations)
+ * `app`       - workspace shell: global rail + breadcrumb bar + padded content
+ * `matter`    - matter shell: global rail + breadcrumb bar + matter tabs + optional data sidebar
+ * `matter-raw`- matter shell without default padding, for full-bleed split panes
+ */
+export type LayoutMode = 'plain' | 'app' | 'matter' | 'matter-raw';
+
+export type MatterSection = 'summary' | 'data' | 'kim' | 'realtime' | 'settings';
 
 export interface SceneConfig {
-  scene: Scene;
-  layout: LayoutMode;
   name: string;
+  layout: LayoutMode;
+  /** Only reachable while logged out (PostHog: onlyUnauthenticated). */
+  onlyUnauthenticated?: boolean;
+  /** Reachable both logged in and logged out (PostHog: allowUnauthenticated). */
+  allowUnauthenticated?: boolean;
+  /** This scene is the firm bootstrap flow, so it bypasses the setup gate. */
+  setupOnly?: boolean;
+  /** Which matter tab is active. Drives navigation state, never the router. */
+  matterSection?: MatterSection;
+  /** Contextual sidebar supplied by the layout, derived from the active scene. */
+  sidebar?: 'data' | 'settings';
+  /** Active entry inside that contextual sidebar. */
+  sidebarItem?: string;
 }
 
-export const sceneConfigurations: Record<Scene, SceneConfig> = {
-  [Scene.Matters]: { scene: Scene.Matters, layout: 'app', name: 'Matters' },
-  [Scene.MatterData]: { scene: Scene.MatterData, layout: 'matter', name: 'Data' },
-  [Scene.MatterSummary]: { scene: Scene.MatterSummary, layout: 'matter', name: 'Summary' },
-  [Scene.MatterDataFacts]: { scene: Scene.MatterDataFacts, layout: 'matter', name: 'Facts' },
-  [Scene.MatterDataChronologies]: { scene: Scene.MatterDataChronologies, layout: 'matter', name: 'Chronologies' },
-  [Scene.MatterDataInconsistencies]: { scene: Scene.MatterDataInconsistencies, layout: 'matter', name: 'Inconsistencies' },
-  [Scene.MatterDataReports]: { scene: Scene.MatterDataReports, layout: 'matter', name: 'Reports' },
-  [Scene.MatterDataEntities]: { scene: Scene.MatterDataEntities, layout: 'matter', name: 'Entities' },
-  [Scene.MatterDataDocuments]: { scene: Scene.MatterDataDocuments, layout: 'matter', name: 'Documents' },
-  [Scene.MatterDataSubsets]: { scene: Scene.MatterDataSubsets, layout: 'matter', name: 'Subsets' },
-  [Scene.MatterDataSubsetsWorkspace]: { scene: Scene.MatterDataSubsetsWorkspace, layout: 'matter', name: 'Subset' },
-  [Scene.MatterDataDocumentsViewer]: { scene: Scene.MatterDataDocumentsViewer, layout: 'matter', name: 'Document' },
-  [Scene.MatterKim]: { scene: Scene.MatterKim, layout: 'matter', name: 'Dep AI' },
-  [Scene.MatterRealtime]: { scene: Scene.MatterRealtime, layout: 'matter', name: 'Real-time' },
-  [Scene.MatterSettings]: { scene: Scene.MatterSettings, layout: 'matter', name: 'Matter settings' },
-  [Scene.MatterSearch]: { scene: Scene.MatterSearch, layout: 'matter', name: 'Search' },
-  [Scene.Help]: { scene: Scene.Help, layout: 'app', name: 'Help Centre' },
-  [Scene.Settings]: { scene: Scene.Settings, layout: 'app', name: 'Settings' },
-  [Scene.Notifications]: { scene: Scene.Notifications, layout: 'app', name: 'Notifications' },
-  [Scene.Login]: { scene: Scene.Login, layout: 'bare', name: 'Log in' },
-  [Scene.Signup]: { scene: Scene.Signup, layout: 'bare', name: 'Sign up' },
-  [Scene.Onboarding]: { scene: Scene.Onboarding, layout: 'minimal', name: 'Setup' },
+export interface SceneParams {
+  params: Record<string, string | undefined>;
+  searchParams: Record<string, string>;
+  hashParams: Record<string, string>;
+}
+
+export const emptySceneParams: SceneParams = {
+  params: {},
+  searchParams: {},
+  hashParams: {},
 };
+
+/** Scene components are dumb: they receive URL params, never resolve routes themselves. */
+export type SceneComponentProps = Record<string, string | undefined>;
+
+export interface SceneExport {
+  component: ComponentType<SceneComponentProps>;
+  /** Convert URL params into component props (PostHog: paramsToProps). */
+  paramsToProps?: (params: SceneParams) => SceneComponentProps;
+}
