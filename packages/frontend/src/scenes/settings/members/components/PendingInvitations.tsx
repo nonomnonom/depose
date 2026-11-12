@@ -1,6 +1,6 @@
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageSkeleton } from '~/lib/components/PageSkeleton';
 import type { InvitationSummaryDto } from '~/generated/schemas';
 import { formatRelativeDate } from '~/lib/format/date';
 import { useFirmInvitations, useResendInvitation, useRevokeInvitation } from '../members.queries';
@@ -16,12 +16,7 @@ export function PendingInvitations() {
   );
 
   if (query.isPending) {
-    return (
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    );
+    return <PageSkeleton rows={2} title={false} />;
   }
 
   if (query.isError) {

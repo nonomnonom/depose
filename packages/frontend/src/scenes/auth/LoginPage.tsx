@@ -13,7 +13,6 @@ import { queryClient } from '~/lib/query/client';
 import { meControllerMe } from '~/generated/endpoints';
 import { unwrapData } from '~/lib/api/client';
 import { signInWithEmail, signInWithSso } from '~/lib/auth/api';
-import { AuthFrame } from '~/layout/layout-modes/AuthFrame';
 import { loginSchema, type LoginFormValues } from '~/scenes/auth/schemas/auth';
 
 export function LoginPage() {
@@ -103,15 +102,18 @@ export function LoginPage() {
     />
   );
 
+  const sharedHeader = (
+    <>
+      <h1 className="font-heading text-2xl font-semibold tracking-tight">Log in</h1>
+      <p className="text-sm text-muted-foreground text-pretty">Log in to {firmName}.</p>
+    </>
+  );
+
   // SSO is the only configured credential path.
   if (ssoRequired) {
     return (
-      <AuthFrame
-        title="Log in"
-        description={`Log in to ${firmName} with your work email.`}
-        footer={errorAlert}
-        switcher={switcher}
-      >
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+        <div>{sharedHeader}</div>
         <form
           className="flex flex-col gap-4"
           onSubmit={(event) => {
@@ -128,14 +130,19 @@ export function LoginPage() {
             {ssoPending ? 'Redirecting...' : 'Continue with SSO'}
           </Button>
         </form>
-      </AuthFrame>
+        {errorAlert ? <div className="">{errorAlert}</div> : null}
+        {switcher ? (
+          <div className="border-t border-border pt-4 text-sm text-muted-foreground">{switcher}</div>
+        ) : null}
+      </div>
     );
   }
 
   // No usable login method is configured (password disabled, SSO unavailable).
   if (!passwordLogin && !ssoLogin) {
     return (
-      <AuthFrame title="Log in" description={`Log in to ${firmName}.`} switcher={switcher}>
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+        <div>{sharedHeader}</div>
         <Alert>
           <CircleWarning size={16} />
           <AlertTitle>No login method available</AlertTitle>
@@ -143,7 +150,10 @@ export function LoginPage() {
             Password and single sign-on are both disabled. Contact your firm admin.
           </AlertDescription>
         </Alert>
-      </AuthFrame>
+        {switcher ? (
+          <div className="border-t border-border pt-4 text-sm text-muted-foreground">{switcher}</div>
+        ) : null}
+      </div>
     );
   }
 
@@ -155,17 +165,14 @@ export function LoginPage() {
     }`;
 
   return (
-    <AuthFrame
-      title="Log in"
-      description={`Log in to ${firmName}.`}
-      footer={errorAlert}
-      switcher={switcher}
-    >
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+      <div>{sharedHeader}</div>
+
       {bothMethods ? (
         <div
           role="tablist"
           aria-label="Login method"
-          className="mb-5 grid grid-cols-2 gap-1 rounded-lg border border-border bg-muted/50 p-1"
+          className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-muted/50 p-1"
         >
           <button
             type="button"
@@ -232,6 +239,11 @@ export function LoginPage() {
           </Button>
         </form>
       )}
-    </AuthFrame>
+
+      {errorAlert ? <div className="">{errorAlert}</div> : null}
+      {switcher ? (
+        <div className="border-t border-border pt-4 text-sm text-muted-foreground">{switcher}</div>
+      ) : null}
+    </div>
   );
 }

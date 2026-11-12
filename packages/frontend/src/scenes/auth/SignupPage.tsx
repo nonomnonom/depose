@@ -13,7 +13,6 @@ import { queryClient } from '~/lib/query/client';
 import { meControllerMe } from '~/generated/endpoints';
 import { unwrapData } from '~/lib/api/client';
 import { signUpWithEmail } from '~/lib/auth/api';
-import { AuthFrame } from '~/layout/layout-modes/AuthFrame';
 import { signupSchema, type SignupFormValues } from '~/scenes/auth/schemas/auth';
 
 export function SignupPage() {
@@ -53,25 +52,34 @@ export function SignupPage() {
     }
   });
 
+  const heading = (title: string, description: string) => (
+    <>
+      <h1 className="font-heading text-2xl font-semibold tracking-tight">{title}</h1>
+      <p className="text-sm text-muted-foreground text-pretty">{description}</p>
+    </>
+  );
+
+  const switcherLogin = (
+    <span>
+      Already have an account?{' '}
+      <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+        Log in
+      </Link>
+    </span>
+  );
+
   if (!features.auth.selfSignup) {
     const ssoOnly = features.auth.ssoRequired;
     return (
-      <AuthFrame
-        title={ssoOnly ? 'SSO required' : 'Sign-up closed'}
-        description={
-          ssoOnly
-            ? `${firmName} accounts are created through single sign-on.`
-            : 'Self-signup is disabled for this instance.'
-        }
-        switcher={
-          <span>
-            Already have an account?{' '}
-            <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
-              Log in
-            </Link>
-          </span>
-        }
-      >
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+        <div>
+          {heading(
+            ssoOnly ? 'SSO required' : 'Sign-up closed',
+            ssoOnly
+              ? `${firmName} accounts are created through single sign-on.`
+              : 'Self-signup is disabled for this instance.',
+          )}
+        </div>
         <Alert>
           <CircleWarning size={16} />
           <AlertTitle>Limited access</AlertTitle>
@@ -81,21 +89,17 @@ export function SignupPage() {
               : 'Contact your firm admin for an invitation or account creation.'}
           </AlertDescription>
         </Alert>
-      </AuthFrame>
+        {switcherLogin ? (
+          <div className="border-t border-border pt-4 text-sm text-muted-foreground">{switcherLogin}</div>
+        ) : null}
+      </div>
     );
   }
 
   if (done) {
     return (
-      <AuthFrame
-        title="Account created"
-        description="Please log in with your email and password."
-        switcher={
-          <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
-            Go to login page
-          </Link>
-        }
-      >
+      <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+        <div>{heading('Account created', 'Please log in with your email and password.')}</div>
         <Alert>
           <Check size={16} />
           <AlertTitle>Signup successful</AlertTitle>
@@ -105,32 +109,19 @@ export function SignupPage() {
               : 'Your account is ready to use.'}
           </AlertDescription>
         </Alert>
-      </AuthFrame>
+        <div className="border-t border-border pt-4 text-sm text-muted-foreground">
+          <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+            Go to login page
+          </Link>
+        </div>
+      </div>
     );
   }
 
   return (
-    <AuthFrame
-      title="Sign up"
-      description={`Create a new account for ${firmName}.`}
-      footer={
-        error ? (
-          <Alert variant="destructive">
-            <CircleWarning size={16} />
-            <AlertTitle>Signup failed</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null
-      }
-      switcher={
-        <span>
-          Already have an account?{' '}
-          <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
-            Log in
-          </Link>
-        </span>
-      }
-    >
+    <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+      <div>{heading('Sign up', `Create a new account for ${firmName}.`)}</div>
+
       <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         <FormField
           inputId="signup-name"
@@ -172,6 +163,16 @@ export function SignupPage() {
           {form.formState.isSubmitting ? 'Processing...' : 'Sign up'}
         </Button>
       </form>
-    </AuthFrame>
+
+      {error ? (
+        <Alert variant="destructive">
+          <CircleWarning size={16} />
+          <AlertTitle>Signup failed</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="border-t border-border pt-4 text-sm text-muted-foreground">{switcherLogin}</div>
+    </div>
   );
 }

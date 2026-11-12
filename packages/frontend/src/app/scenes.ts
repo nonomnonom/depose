@@ -7,8 +7,8 @@ import { urls } from './urls';
  * active scene (PostHog `scenes/scenes.ts` -> `sceneConfigurations`).
  */
 export const sceneConfigurations: Record<Scene, SceneConfig> = {
-  [Scene.Login]: { name: 'Log in', layout: 'plain', onlyUnauthenticated: true },
-  [Scene.Signup]: { name: 'Sign up', layout: 'plain', onlyUnauthenticated: true },
+  [Scene.Login]: { name: 'Log in', layout: 'app', onlyUnauthenticated: true },
+  [Scene.Signup]: { name: 'Sign up', layout: 'app', onlyUnauthenticated: true },
   [Scene.SetupFirm]: { name: 'Set up your firm', layout: 'plain', setupOnly: true },
   [Scene.Invitation]: { name: 'Invitation', layout: 'plain', allowUnauthenticated: true },
 

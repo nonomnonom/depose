@@ -112,6 +112,10 @@ import {
   ToolOutput,
 } from '@depose/ui/ai-elements';
 import { Badge } from '@depose/ui/components/badge';
+import { EmptyState } from '~/lib/components/EmptyState';
+import { PageLoading } from '~/lib/components/PageLoading';
+import { PageSkeleton } from '~/lib/components/PageSkeleton';
+import { ErrorState, ForbiddenPage, NotFoundPage } from '~/layout/ErrorPage';
 import { Button } from '@depose/ui/components/button';
 import { Copy, Reload, Sparkle, ThumbsUp } from '@coolicons/react';
 
@@ -706,6 +710,41 @@ export function AiElementsPage() {
               Sent: {sent.map((text) => `“${text}”`).join(', ')}
             </p>
           ) : null}
+        </div>
+      </Section>
+
+      <Section
+        title="Shell states"
+        description="Load, skeleton, empty, and error variants shared by every scene. Routes use the centered spinner; skeletons are reserved for content-shaped placeholders."
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">PageLoading — spinner</p>
+            <PageLoading label="Loading facts..." />
+          </Card>
+          <Card>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">PageSkeleton — skeleton</p>
+            <PageSkeleton rows={2} />
+          </Card>
+          <Card>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">EmptyState</p>
+            <EmptyState
+              title="No facts yet"
+              description="Facts appear here once documents have been processed."
+            />
+          </Card>
+          <Card>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">ErrorState</p>
+            <ErrorState title="Could not load facts" message="The request failed." />
+          </Card>
+          <Card>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">ForbiddenPage</p>
+            <ForbiddenPage />
+          </Card>
+          <Card>
+            <p className="mb-2 text-xs font-medium text-muted-foreground">NotFoundPage</p>
+            <NotFoundPage />
+          </Card>
         </div>
       </Section>
 
