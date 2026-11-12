@@ -6,6 +6,7 @@ import { ScrollArea } from '@depose/ui/components/scroll-area';
 import { Skeleton } from '@depose/ui/components/skeleton';
 import { Tool, ToolContent, ToolHeader, ToolInput } from '@depose/ui/ai-elements';
 import {
+  AlertTriangleIcon,
   ArrowRight,
   ChevronLeft,
   CircleWarning,
@@ -21,6 +22,12 @@ import type {
 import { useSession } from '~/features/lib/auth/session';
 import { useClientConfig } from '~/features/lib/config/client-config';
 import { formatRelativeDate } from '~/features/lib/format/date';
+import {
+  AccessBlock,
+  EmptyState,
+  MatterContextCard,
+  SidebarCaption,
+} from '~/features/layout/components/AppShellUx';
 import { SourceViewer } from '../facts/components/SourceViewer';
 import {
   useAiThread,
@@ -73,9 +80,9 @@ export function AiPage() {
 
   if (!can('ai.ask')) {
     return (
-      <div className="rounded-xl border border-border px-4 py-16 text-center text-sm text-muted-foreground">
-        Your role does not include Dep AI access for this matter.
-      </div>
+      <AccessBlock
+        message="Your role does not include Dep AI access for this matter. Ask an admin to update your permissions if this should change."
+      />
     );
   }
 
@@ -114,16 +121,14 @@ export function AiPage() {
             showThreads ? 'flex' : 'hidden lg:flex'
           } min-h-0 flex-col border-r border-border bg-muted/20`}
         >
-          <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Conversations
+          <MatterContextCard title="Conversations">
+            <p className="text-sm font-medium">Training questions</p>
+            <p className="mt-0.5 text-xs text-muted-foreground text-pretty">
+              Previous Dep AI conversations in this matter.
             </p>
-            <Button variant="ghost" size="icon" className="size-7" onClick={() => start()}>
-              <Plus size={14} />
-              <span className="sr-only">New conversation</span>
-            </Button>
-          </div>
-          <ScrollArea className="min-h-0 flex-1">
+          </MatterContextCard>
+
+          <ScrollArea className="min-h-0 flex-1 mt-3">
             <div className="flex flex-col gap-0.5 p-2">
               {threads.isPending ? (
                 <div className="space-y-2 p-1">
@@ -154,9 +159,9 @@ export function AiPage() {
             </div>
           </ScrollArea>
           {subsetId ? (
-            <div className="border-t border-border p-3 text-xs text-muted-foreground">
+            <SidebarCaption className="mt-3 border-t border-border px-3 py-2">
               Scoped to a Subset. Documents outside it are never searched.
-            </div>
+            </SidebarCaption>
           ) : null}
         </aside>
 
@@ -175,6 +180,7 @@ export function AiPage() {
             onStart={start}
             creating={create.isPending}
             subsetScoped={Boolean(subsetId)}
+            matterId={matterId}
           />
         )}
       </div>
@@ -186,46 +192,23 @@ function EmptyConversation({
   onStart,
   creating,
   subsetScoped,
+  matterId,
 }: {
   onStart: (prompt?: string) => void;
   creating: boolean;
   subsetScoped: boolean;
+  matterId: string;
 }) {
   return (
-    <div className="flex min-h-0 flex-col items-center justify-center gap-5 px-6 py-12 text-center">
-      <div className="flex size-12 items-center justify-center rounded-2xl border border-primary/25 bg-primary/5">
-        <Sparkle size={20} className="text-primary" />
-      </div>
-      <div>
-        <p className="font-heading text-xl font-semibold tracking-tight">Ask the record</p>
-        <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground text-pretty">
-          Dep AI searches confirmed facts, checks the quote on the page, and answers only from what
-          the evidence supports. It will say so when the record cannot answer.
-        </p>
-        {subsetScoped ? (
-          <p className="mt-2 text-xs font-medium text-primary">
-            Scope: this Subset only
-          </p>
-        ) : null}
-      </div>
-      <div className="grid w-full max-w-lg gap-2 sm:grid-cols-2">
-        {SUGGESTIONS.map((suggestion) => (
-          <button
-            key={suggestion}
-            type="button"
-            onClick={() => onStart(suggestion)}
-            disabled={creating}
-            className="group flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2.5 text-left text-sm transition-colors hover:border-primary/40 hover:bg-primary/5"
-          >
-            <span>{suggestion}</span>
-            <ArrowRight
-              size={13}
-              className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-            />
-          </button>
-        ))}
-      </div>
-    </div>
+    <EmptyState
+      title="Ask the record"
+      description="Dep AI searches confirmed facts, checks the quote on the page, and answers only from what the evidence supports. It will say so when the record cannot answer."
+      action={{
+        label: subsetScoped ? 'Ask inside this Subset' : 'Start a conversation',
+        onClick: () => onStart(),
+        disabled: creating,
+      }}
+    />
   );
 }
 
@@ -318,27 +301,39 @@ function ChatPane({
   return (
     <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section className="flex min-h-0 flex-col">
-        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{thread.title ?? 'New conversation'}</p>
-            <p className="text-xs text-muted-foreground">
-              {sources.length > 0
-                ? `${sources.length} source${sources.length === 1 ? '' : 's'} in the last answer`
-                : 'No answer yet'}
-            </p>
+        <MatterContextCard title="Conversation">
+          <p className="truncate text-sm font-medium">{thread.title ?? 'New conversation'}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {sources.length > 0
+              ? `${sources.length} source${sources.length === 1 ? '' : 's'} in the last answer`
+              : 'No answer yet'}
+          </p>
+        </MatterContextCard>
+
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex rounded-md border border-border p-0.5">
+            {(['ask', 'agent'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setMode(value)}
+                aria-pressed={mode === value}
+                className={`rounded px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
+                  mode === value
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {value}
+              </button>
+            ))}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-destructive"
-            disabled={remove.isPending}
-            onClick={() => remove.mutate(thread.id, { onSuccess: onDeleted })}
-          >
-            Delete
-          </Button>
+          <SidebarCaption>
+            {mode === 'ask' ? 'One grounded answer' : 'May search and read pages across steps'}
+          </SidebarCaption>
         </div>
 
-        <ScrollArea className="min-h-0 flex-1">
+        <ScrollArea className="min-h-0 flex-1 mt-3">
           <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-5">
             {detail.isPending ? (
               <div className="space-y-3">
@@ -346,18 +341,21 @@ function ChatPane({
                 <Skeleton className="ml-auto h-12 w-1/2" />
               </div>
             ) : detail.isError ? (
-              <p className="text-sm text-muted-foreground">
-                This conversation could not be loaded.{' '}
+              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm">
+                <p className="flex items-center gap-2">
+                  <CircleWarning size={14} className="shrink-0" />
+                  This conversation could not be loaded.
+                </p>
                 <button
                   type="button"
-                  className="underline underline-offset-4"
+                  className="mt-2 underline underline-offset-4"
                   onClick={() => void detail.refetch()}
                 >
                   Retry
                 </button>
-              </p>
+              </div>
             ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
                 <p className="text-sm font-medium">Start with a question</p>
                 <p className="max-w-sm text-sm text-muted-foreground text-pretty">
                   Ask about dates, people, payments, or what the documents do not say.
@@ -418,32 +416,8 @@ function ChatPane({
           </div>
         </ScrollArea>
 
-        <div className="border-t border-border p-3">
+        <div className="mt-3 border-t border-border p-3">
           <div className="mx-auto max-w-2xl">
-            <div className="mb-2 flex items-center gap-1">
-              <div className="flex rounded-md border border-border p-0.5">
-                {(['ask', 'agent'] as const).map((value) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setMode(value)}
-                    aria-pressed={mode === value}
-                    className={`rounded px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
-                      mode === value
-                        ? 'bg-foreground text-background'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                {mode === 'ask'
-                  ? 'One grounded answer'
-                  : 'May search and read pages across steps'}
-              </p>
-            </div>
             <div className="flex items-end gap-2 rounded-xl border border-input bg-background p-2 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/20">
               <textarea
                 value={draft}
@@ -475,17 +449,15 @@ function ChatPane({
       </section>
 
       <aside className="hidden min-h-0 flex-col border-l border-border bg-muted/15 lg:flex">
-        <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Sources
-          </p>
+        <MatterContextCard title="Sources">
           {latestAssistant?.evidenceScore !== null && latestAssistant?.evidenceScore !== undefined ? (
-            <span className="text-[11px] tabular-nums text-muted-foreground">
+            <p className="text-[11px] tabular-nums text-muted-foreground">
               evidence {Math.round(latestAssistant.evidenceScore * 100)}%
-            </span>
+            </p>
           ) : null}
-        </div>
-        <ScrollArea className="min-h-0 flex-1">
+        </MatterContextCard>
+
+        <ScrollArea className="min-h-0 flex-1 mt-3">
           <div className="flex flex-col gap-4 p-3">
             {sources.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-10 text-center">
@@ -496,35 +468,12 @@ function ChatPane({
               </div>
             ) : (
               sources.map((source, index) => (
-                <div
+                <SourceCard
                   key={source.sourceId}
-                  className={`rounded-lg border p-2.5 ${
-                    activeSource === index
-                      ? 'border-primary/40 bg-primary/5'
-                      : 'border-border bg-card'
-                  }`}
-                  onClick={() => setActiveSource(index)}
-                >
-                  <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
-                    [{index + 1}] {source.factStatus}
-                  </p>
-                  <p className="mb-2 line-clamp-3 text-xs text-pretty">{source.factText}</p>
-                  {source.documentId && source.documentName ? (
-                    <SourceViewer
-                      matterId={matterId}
-                      source={{
-                        id: source.sourceId,
-                        documentId: source.documentId,
-                        documentName: source.documentName,
-                        pageNumber: source.pageNumber,
-                        quote: source.quote ?? '',
-                        verification: source.sourceKind,
-                      }}
-                    />
-                  ) : (
-                    <p className="text-[11px] text-muted-foreground">Manual fact · no document</p>
-                  )}
-                </div>
+                  source={source}
+                  isActive={activeSource === index}
+                  onActivate={() => setActiveSource(index)}
+                />
               ))
             )}
             {latestAssistant?.warnings.length ? (
@@ -537,6 +486,55 @@ function ChatPane({
           </div>
         </ScrollArea>
       </aside>
+    </div>
+  );
+}
+
+function SourceCard({
+  source,
+  isActive,
+  onActivate,
+}: {
+  source: {
+    sourceId: string;
+    factStatus: string;
+    factText: string;
+    documentId: string | null;
+    documentName: string | null;
+    pageNumber: number | null;
+    quote: string | null;
+    sourceKind: string;
+  };
+  isActive: boolean;
+  onActivate: () => void;
+}) {
+  return (
+    <div
+      className={`rounded-lg border p-2.5 ${
+        isActive
+          ? 'border-primary/40 bg-primary/5'
+          : 'border-border bg-card hover:border-primary/40'
+      }`}
+    >
+      <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">
+        [{source.sourceId}] {source.factStatus}
+      </p>
+      <p className="mb-2 line-clamp-3 text-xs text-pretty">{source.factText}</p>
+      {source.documentId && source.documentName ? (
+        <SourceViewer
+          matterId={source.documentId}
+          source={{
+            id: source.sourceId,
+            documentId: source.documentId,
+            documentName: source.documentName,
+            pageNumber: source.pageNumber,
+            quote: source.quote ?? '',
+            verification: source.sourceKind,
+          }}
+        />
+      ) : (
+        <p className="text-[11px] text-muted-foreground">Manual fact · no document</p>
+      )}
     </div>
   );
 }
@@ -560,10 +558,8 @@ function Message({
   }
 
   const sources = message.sources?.length ? message.sources : message.citations;
-  const paragraphs = message.answer.split(/\n{2,}/);
-
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
         <span className="flex size-6 items-center justify-center rounded-md bg-primary/10">
           <Sparkle size={13} className="text-primary" />
@@ -579,8 +575,8 @@ function Message({
         ) : null}
       </div>
 
-      <div className="space-y-2.5 pl-8 text-sm leading-relaxed">
-        {paragraphs.map((paragraph, index) => (
+      <div className="space-y-2.5 pl-2 text-sm leading-relaxed">
+        {message.answer.split(/\n{2,}/).map((paragraph, index) => (
           <p key={index} className="text-pretty">
             {renderCitations(paragraph, sources.length, onCite)}
           </p>
@@ -588,7 +584,7 @@ function Message({
       </div>
 
       {message.insufficientEvidence ? (
-        <div className="ml-8 flex items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+        <div className="flex items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
           <CircleWarning size={13} className="mt-0.5 shrink-0" />
           No confirmed evidence answered this question. Nothing was invented.
           {sources.length ? null : ' Try running extraction or confirming more facts.'}
@@ -596,30 +592,27 @@ function Message({
       ) : null}
 
       {message.unverifiedCitations.length > 0 ? (
-        <p className="ml-8 text-xs text-destructive">
+        <p className="text-xs text-destructive">
           The answer cited {message.unverifiedCitations.join(', ')} which are not in the evidence
           pack. Treat those claims as unsupported.
         </p>
       ) : null}
 
       {sources.length > 0 ? (
-        <div className="ml-8 flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {sources.map((source, index) => (
-            <button
+            <CitationChip
               key={source.sourceId}
-              type="button"
-              onClick={() => onCite(index)}
-              className="max-w-full truncate rounded-full border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-            >
-              [{index + 1}] {source.documentName ?? 'Manual fact'}
-              {source.pageNumber ? `, p. ${source.pageNumber}` : ''}
-            </button>
+              source={source}
+              isActive={false}
+              onActivate={() => onCite(index)}
+            />
           ))}
         </div>
       ) : null}
 
       {message.toolCalls.length > 0 ? (
-        <div className="ml-8 flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <p className="text-[11px] text-muted-foreground">
             {message.toolCalls.length} retrieval step
             {message.toolCalls.length === 1 ? '' : 's'}
@@ -640,6 +633,40 @@ function Message({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function CitationChip({
+  source,
+  isActive,
+  onActivate,
+}: {
+  source: {
+    sourceId: string;
+    documentName: string | null;
+    pageNumber: number | null;
+    factStatus: string;
+  };
+  isActive: boolean;
+  onActivate: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onActivate}
+      className={`rounded-lg border px-2 py-1 text-left transition-colors ${
+        isActive
+          ? 'border-primary/40 bg-primary/5'
+          : 'border-border bg-background hover:border-primary/40'
+      }`}
+    >
+      <span className="block truncate text-[11px] font-medium text-muted-foreground">
+        [{source.documentName ?? 'Manual fact'}]
+      </span>
+      <span className="block text-[11px] text-muted-foreground">
+        {source.pageNumber ? `p. ${source.pageNumber}` : ''}
+      </span>
+    </button>
   );
 }
 
@@ -671,5 +698,3 @@ function renderCitations(
     );
   });
 }
-
-

@@ -7,7 +7,7 @@ import { PageLoading } from '~/features/lib/components/PageLoading';
 import { ArrowRight, Sparkle } from '@coolicons/react';
 import { PageHeader } from '~/features/layout/PageHeader';
 import { ErrorState } from '~/features/layout/ErrorPage';
-import { useFacts } from '../facts/facts.queries';
+import { useFacts } from '../../facts/facts.queries';
 
 export function ChronologyPage() {
   const { matterId = '' } = useParams();

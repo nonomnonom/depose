@@ -19,6 +19,7 @@
     "@orval/fetch": "^8.47.0",
     "@orval/zod": "^8.47.0",
     "@tanstack/react-query": "^5.107.1",
+    "lucide-react": "^0.460.0",
     "orval": "^8.47.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

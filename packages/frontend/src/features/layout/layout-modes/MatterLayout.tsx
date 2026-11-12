@@ -14,6 +14,8 @@ import { GlobalRail } from '~/features/layout/navigation/GlobalRail';
 import { MatterTabs } from '~/features/layout/navigation/MatterTabs';
 import { TopBar } from '~/features/layout/navigation/TopBar';
 import { dataGroups } from '~/features/layout/navigation/navigationLogic';
+import { MatterContextCard, SidebarCaption } from '~/features/layout/components/AppShellUx';
+
 
 const STATUS_LABEL: Record<string, string> = {
   active: 'Active',
@@ -60,15 +62,13 @@ export function MatterLayout({ children }: { children: ReactNode }): ReactNode {
         <TopBar matterName={matter?.name} />
 
         {matter ? (
-          <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border px-4">
-            <span className="truncate text-sm font-medium">{matter.name}</span>
-            <Badge variant="outline" className="text-xs">
+          <MatterContextCard title="Matter">
+            <p className="font-medium">{matter.name}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {STATUS_LABEL[matter.status] ?? matter.status}
-            </Badge>
-            {matter.matterNumber ? (
-              <span className="truncate text-xs text-muted-foreground">· {matter.matterNumber}</span>
-            ) : null}
-          </div>
+              {matter.matterNumber ? ` · ${matter.matterNumber}` : ''}
+            </p>
+          </MatterContextCard>
         ) : null}
 
         <MatterTabs matterId={matterId} active={sceneConfig.matterSection} />

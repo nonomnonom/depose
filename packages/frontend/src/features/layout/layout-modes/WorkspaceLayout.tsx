@@ -7,6 +7,8 @@ import { ContextSidebar } from '~/features/layout/navigation/ContextSidebar';
 import { GlobalRail } from '~/features/layout/navigation/GlobalRail';
 import { TopBar } from '~/features/layout/navigation/TopBar';
 import { settingsGroups } from '~/features/layout/navigation/navigationLogic';
+import { EmptyState, SidebarCaption } from '~/features/layout/components/AppShellUx';
+
 
 /** Workspace shell: global rail + breadcrumb bar + padded content. */
 export function WorkspaceLayout({ children }: { children: ReactNode }): ReactNode {

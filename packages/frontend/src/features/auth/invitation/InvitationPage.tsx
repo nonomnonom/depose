@@ -10,7 +10,7 @@ import { useSession } from '~/features/lib/auth/session';
 import { signOut } from '~/features/lib/auth/api';
 import { queryKeys } from '~/features/lib/query/keys';
 import { formatRelativeDate } from '~/features/lib/format/date';
-import { useAcceptInvitation, useInvitation } from './invitations.queries';
+import { useAcceptInvitation, useInvitation } from '../../invitations/invitations.queries';
 
 export function InvitationPage() {
   const { token = '' } = useParams();

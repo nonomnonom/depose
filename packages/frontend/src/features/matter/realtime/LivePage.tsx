@@ -8,10 +8,13 @@ import { Skeleton } from '@depose/ui/components/skeleton';
 import { CircleWarning, Play, Sparkle, Stop } from '@coolicons/react';
 import { PageHeader } from '~/features/layout/PageHeader';
 import { ErrorState } from '~/features/layout/ErrorPage';
+import { MatterContextCard } from '~/features/layout/components/AppShellUx';
 import { api } from '~/features/lib/api/client';
 import { useSession } from '~/features/lib/auth/session';
 import { queryKeys } from '~/features/lib/query/keys';
 import { formatDateTime } from '~/features/lib/format/date';
+
+
 
 interface SessionRow {
   id: string;
@@ -342,6 +345,13 @@ export function LivePage() {
         </div>
 
         <aside className="flex flex-col gap-3">
+          <MatterContextCard title="Live check">
+            <p className="text-sm font-medium">Compare a statement against the fact bank</p>
+            <p className="mt-0.5 text-xs text-muted-foreground text-pretty">
+              Checking is advisory; a lawyer decides what to do with it.
+            </p>
+          </MatterContextCard>
+
           <section className="overflow-hidden rounded-xl border border-border bg-card">
             <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
               <h2 className="text-sm font-medium">Sessions</h2>
@@ -370,9 +380,19 @@ export function LivePage() {
                 secondaryLabel="Back to overview"
               />
             ) : items.length === 0 ? (
-              <p className="px-3 py-6 text-xs text-muted-foreground">
-                No live sessions yet. Start one to keep checked lines and alerts together.
-              </p>
+              <div className="px-3 py-6">
+                <p className="text-xs text-muted-foreground">No live sessions yet.</p>
+                {can('realtime.start') ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => createSession.mutate()}
+                  >
+                    Start session
+                  </Button>
+                ) : null}
+              </div>
             ) : (
               <ul className="divide-y divide-border">
                 {items.map((session) => (
@@ -396,7 +416,7 @@ export function LivePage() {
               </ul>
             )}
           </section>
-          <p className="px-1 text-[11px] text-muted-foreground text-pretty">
+          <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs leading-relaxed text-muted-foreground">
             Lines are stored before checking, so a provider outage never loses testimony. Every
             alert keeps the facts it was raised against.
           </p>

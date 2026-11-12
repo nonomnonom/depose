@@ -9,7 +9,7 @@ import { Label } from '@depose/ui/components/label';
 import { ApiError } from '~/features/lib/api/errors';
 import { Alert, AlertDescription, AlertTitle } from '@depose/ui/components/alert';
 import { CircleWarning } from '@coolicons/react';
-import { queryClient } from '~/features/lib/query/query/client';
+import { queryClient } from '~/features/lib/query/client';
 import { queryKeys } from '~/features/lib/query/keys';
 import { meControllerMe } from '~/generated/endpoints';
 import { unwrapData } from '~/features/lib/api/client';
