@@ -12,7 +12,7 @@ import {
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Input } from '@depose/ui/components/input';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { File as FileIcon, Folder, Reload, Sparkle, Trash, Upload } from '@coolicons/react';
 import type { DocumentDto, DocumentDtoStatus } from '~/generated/schemas';
 import { PageHeader } from '~/layout/PageHeader';
@@ -177,11 +177,7 @@ export function DocumentsPage() {
       </div>
 
       {documents.isPending ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-16 w-full" />
-          ))}
-        </div>
+        <PageLoading />
       ) : documents.isError ? (
         <ErrorState
           title="Documents could not be loaded"

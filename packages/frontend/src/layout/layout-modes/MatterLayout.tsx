@@ -4,7 +4,7 @@ import { Badge } from '@depose/ui/components/badge';
 
 import { useScene } from '~/app/sceneLogic';
 import { ErrorState, ForbiddenPage, NotFoundPage } from '~/layout/ErrorPage';
-import { PageSkeleton } from '~/lib/components/PageSkeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { ApiError } from '~/lib/api/errors';
 import { useSession } from '~/lib/auth/session';
 import { useMatter } from '~/lib/logic/matterLogic';
@@ -38,7 +38,7 @@ export function MatterLayout({ children }: { children: ReactNode }): ReactNode {
 
   let content: ReactNode = children;
   if (matterQuery.isPending) {
-    content = <PageSkeleton rows={4} />;
+    content = <PageLoading />;
   } else if (matterQuery.isError) {
     const error = matterQuery.error;
     if (error instanceof ApiError && error.isNotFound) content = <NotFoundPage />;

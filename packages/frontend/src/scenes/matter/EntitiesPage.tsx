@@ -13,7 +13,7 @@ import {
 } from '@depose/ui/components/dialog';
 import { Input } from '@depose/ui/components/input';
 import { Label } from '@depose/ui/components/label';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { Plus } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { ErrorState } from '~/layout/ErrorPage';
@@ -110,14 +110,7 @@ export function EntitiesPage() {
       </div>
 
       {entities.isPending ? (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="space-y-2">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-20 w-full" />
-            ))}
-          </div>
-          <Skeleton className="h-72 w-full" />
-        </div>
+        <PageLoading />
       ) : entities.isError ? (
         <ErrorState
           title="Entities could not be loaded"
@@ -237,7 +230,7 @@ function EntityDetail({
       </div>
     );
   }
-  if (detail.isPending) return <Skeleton className="h-96 w-full rounded-xl" />;
+  if (detail.isPending) return <PageLoading />;
   if (detail.isError) {
     return (
       <div className="rounded-xl border border-border p-5 text-sm">

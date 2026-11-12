@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { ChevronLeft, ChevronRight, CircleWarning, Download } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { ErrorState } from '~/layout/ErrorPage';
@@ -97,7 +98,7 @@ export function DocumentViewerPage() {
       />
 
       {document.isPending ? (
-        <Skeleton className="h-[32rem] w-full rounded-xl" />
+        <PageLoading />
       ) : document.isError ? (
         <ErrorState
           title="Document could not be loaded"

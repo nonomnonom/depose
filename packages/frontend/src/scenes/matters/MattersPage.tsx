@@ -11,7 +11,7 @@ import {
 } from '@depose/ui/components/dialog';
 import { Input } from '@depose/ui/components/input';
 import { Label } from '@depose/ui/components/label';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import type { MattersControllerListStatus } from '~/generated/schemas';
 import { useClientConfig } from '~/lib/config/client-config';
 import { useSession } from '~/lib/auth/session';
@@ -116,11 +116,7 @@ export function MattersPage() {
       </div>
 
       {matters.isPending ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="h-14 w-full" />
-          ))}
-        </div>
+        <PageLoading />
       ) : matters.isError ? (
         <ErrorState
           title="Matters could not be loaded"

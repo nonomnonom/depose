@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from '@depose/ui/components/alert';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { CircleWarning, Check } from '@coolicons/react';
 import { AuthFrame } from '~/layout/layout-modes/AuthFrame';
 import { useSession } from '~/lib/auth/session';
@@ -43,11 +43,7 @@ export function InvitationPage() {
   if (invitation.isPending || isLoading) {
     return (
       <AuthFrame title="Invitation" description="Checking your invitation.">
-        <div className="space-y-3">
-          <Skeleton className="h-5 w-2/3" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-9 w-40" />
-        </div>
+        <PageLoading />
       </AuthFrame>
     );
   }

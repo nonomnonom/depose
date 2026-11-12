@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@depose/ui/components/button';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { PageHeader } from '~/layout/PageHeader';
 import { useUpdateUserPreferences, useUserPreferences } from './preferences.queries';
 
@@ -39,7 +39,7 @@ export function NotificationSettingsPage() {
     setValues(preferences.data.preferences.notifications);
   }, [preferences.data]);
 
-  if (preferences.isPending) return <Skeleton className="h-64 w-full max-w-xl" />;
+  if (preferences.isPending) return <PageLoading />;
   if (preferences.isError) {
     return (
       <p className="text-sm text-destructive">

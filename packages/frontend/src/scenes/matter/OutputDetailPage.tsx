@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { ArrowLeft, CircleWarning } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { ErrorState } from '~/layout/ErrorPage';
@@ -58,7 +58,7 @@ export function OutputDetailPage() {
       />
 
       {detail.isPending ? (
-        <Skeleton className="h-[28rem] w-full rounded-xl" />
+        <PageLoading />
       ) : detail.isError ? (
         <ErrorState
           title="Output could not be loaded"

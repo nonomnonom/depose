@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@depose/ui/components/dialog';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { Check, CircleWarning, Sparkle } from '@coolicons/react';
 import type { FactDto, FactDtoStatus } from '~/generated/schemas';
 import { PageHeader } from '~/layout/PageHeader';
@@ -163,14 +163,7 @@ export function FactsPage() {
       </div>
 
       {facts.isPending ? (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={index} className="h-24 w-full" />
-            ))}
-          </div>
-          <Skeleton className="h-80 w-full" />
-        </div>
+        <PageLoading />
       ) : facts.isError ? (
         <ErrorState
           title="Facts could not be loaded"
@@ -314,7 +307,7 @@ function FactDetail({
     );
   }
 
-  if (fact.isPending) return <Skeleton className="h-96 w-full rounded-xl" />;
+  if (fact.isPending) return <PageLoading />;
   if (fact.isError) {
     return (
       <div className="rounded-xl border border-border p-5 text-sm">

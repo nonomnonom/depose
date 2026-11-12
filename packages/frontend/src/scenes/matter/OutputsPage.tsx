@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { FileText, Sparkle } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { ErrorState } from '~/layout/ErrorPage';
@@ -52,10 +52,7 @@ export function OutputsPage() {
       />
 
       {outputs.isPending ? (
-        <div className="space-y-2">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-        </div>
+        <PageLoading />
       ) : outputs.isError ? (
         <ErrorState
           title="Outputs could not be loaded"

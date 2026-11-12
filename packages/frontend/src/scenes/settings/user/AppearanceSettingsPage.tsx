@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@depose/ui/components/button';
 import { Label } from '@depose/ui/components/label';
 import { PageHeader } from '~/layout/PageHeader';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { useTheme, type Theme } from '~/layout/ThemeProvider';
 import { useUpdateUserPreferences, useUserPreferences, type UserPreferences } from './preferences.queries';
 
@@ -34,7 +34,7 @@ export function AppearanceSettingsPage() {
     setTimezone(preferences.data.preferences.timezone);
   }, [preferences.data]);
 
-  if (preferences.isPending) return <Skeleton className="h-72 w-full max-w-xl" />;
+  if (preferences.isPending) return <PageLoading />;
   if (preferences.isError) {
     return (
       <p className="text-sm text-destructive">

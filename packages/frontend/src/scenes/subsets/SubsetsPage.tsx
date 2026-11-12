@@ -13,7 +13,7 @@ import {
 } from '@depose/ui/components/dialog';
 import { Input } from '@depose/ui/components/input';
 import { Label } from '@depose/ui/components/label';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { Switch } from '@depose/ui/components/switch';
 import { ArrowRight, Folder, Layers, Plus } from '@coolicons/react';
 import type { SubsetDto } from '~/generated/schemas';
@@ -46,11 +46,7 @@ export function SubsetsPage() {
       />
 
       {subsets.isPending ? (
-        <div className="space-y-2">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-24 w-full" />
-          ))}
-        </div>
+        <PageLoading />
       ) : subsets.isError ? (
         <ErrorState
           title="Subsets could not be loaded"
@@ -261,10 +257,7 @@ function CreateSubsetDialog({
             </div>
             <div className="max-h-56 flex-1 overflow-y-auto p-1.5">
               {documents.isPending ? (
-                <div className="space-y-1 p-1">
-                  <Skeleton className="h-8 w-full" />
-                  <Skeleton className="h-8 w-full" />
-                </div>
+                <PageLoading className="min-h-0 py-6" />
               ) : visible.length === 0 ? (
                 <div className="flex flex-col items-center gap-1 py-8 text-center">
                   <Folder size={18} className="text-muted-foreground/50" />

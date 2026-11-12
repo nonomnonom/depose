@@ -5,7 +5,7 @@ import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Input } from '@depose/ui/components/input';
 import { Label } from '@depose/ui/components/label';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { Check, CircleWarning } from '@coolicons/react';
 import type { MattersControllerUpdateBody } from '~/generated/schemas';
 import { mattersControllerUpdate } from '~/generated/endpoints';
@@ -49,7 +49,7 @@ export function MatterSettingsPage() {
     });
   }, [matterQuery.data]);
 
-  if (matterQuery.isPending) return <Skeleton className="h-96 w-full" />;
+  if (matterQuery.isPending) return <PageLoading />;
   if (matterQuery.isError) {
     return <p className="text-sm text-destructive">Matter settings could not be loaded.</p>;
   }

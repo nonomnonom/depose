@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Input } from '@depose/ui/components/input';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { CircleWarning, Search } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { api } from '~/lib/api/client';
@@ -107,10 +107,7 @@ export function SearchPage() {
           </p>
         </div>
       ) : results.isPending ? (
-        <div className="space-y-2">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
+        <PageLoading />
       ) : results.isError ? (
         <div className="rounded-lg border border-border p-4 text-sm">
           <p className="font-medium">Search failed</p>

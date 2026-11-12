@@ -11,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@depose/ui/components/alert-dialog';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { ArrowLeft, ArrowRight, FileText, Sparkle, Trash } from '@coolicons/react';
 import { ErrorState } from '~/layout/ErrorPage';
 import { useSession } from '~/lib/auth/session';
@@ -30,12 +30,7 @@ export function SubsetWorkspacePage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (subset.isPending) {
-    return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-28 w-full" />
-        <Skeleton className="h-64 w-full" />
-      </div>
-    );
+    return <PageLoading />;
   }
   if (subset.isError) {
     return (
@@ -133,10 +128,7 @@ export function SubsetWorkspacePage() {
 
       {tab === 'facts' ? (
         facts.isPending ? (
-          <div className="space-y-2">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-          </div>
+          <PageLoading />
         ) : facts.data?.length === 0 ? (
           <EmptyScope
             text="No facts cite a document in this subset yet. Upload more evidence or run extraction on the scoped files."

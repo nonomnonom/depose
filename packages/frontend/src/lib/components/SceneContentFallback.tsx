@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 
-import { PageSkeleton } from './PageSkeleton';
+import { PageLoading } from './PageLoading';
 
-/** PostHog-style delayed fallback: no flash of skeleton while a cached chunk resolves. */
+/** PostHog-style delayed fallback: no flash of a spinner while a cached chunk resolves. */
 export function SceneContentFallback(): React.ReactNode {
   const [show, setShow] = useState(false);
 
@@ -11,5 +11,5 @@ export function SceneContentFallback(): React.ReactNode {
     return () => window.clearTimeout(timeout);
   }, []);
 
-  return show ? <PageSkeleton rows={4} /> : <div className="min-h-40" aria-hidden="true" />;
+  return show ? <PageLoading /> : <div className="min-h-40" aria-hidden="true" />;
 }

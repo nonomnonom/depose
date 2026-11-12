@@ -21,7 +21,7 @@ import {
 import { Input } from '@depose/ui/components/input';
 import { Label } from '@depose/ui/components/label';
 import { NativeSelect, NativeSelectOption } from '@depose/ui/components/native-select';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import type { McpServerDto, McpToolDto } from '~/generated/schemas';
 import { PageHeader } from '~/layout/PageHeader';
 import { useSession } from '~/lib/auth/session';
@@ -53,10 +53,7 @@ export function McpSettingsPage() {
       />
 
       {servers.isPending ? (
-        <div className="space-y-2">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-        </div>
+        <PageLoading />
       ) : servers.isError ? (
         <p className="text-sm text-muted-foreground">
           MCP servers could not be loaded.{' '}

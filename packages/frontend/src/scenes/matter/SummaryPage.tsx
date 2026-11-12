@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { ArrowRight, ChevronDown, ChevronRight, Sparkle } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { ErrorState } from '~/layout/ErrorPage';
@@ -133,14 +133,7 @@ export function SummaryPage() {
       />
 
       {loading ? (
-        <div className="flex flex-col gap-4">
-          <Skeleton className="h-24 w-full" />
-          <div className="flex flex-col gap-3">
-            {[0, 1, 2].map((index) => (
-              <Skeleton key={index} className="h-16 w-full" />
-            ))}
-          </div>
-        </div>
+        <PageLoading />
       ) : (
         <>
           <section className="overflow-hidden rounded-xl border border-border bg-card">
@@ -189,7 +182,7 @@ export function SummaryPage() {
                           {themeSummaries.map((summary) => (
                             <div key={summary.id} className="flex flex-col gap-1">
                               <p className="text-xs font-medium text-muted-foreground">
-                                Summary v{summary.version} · {summary.status}
+                                Summary v{summary.version} ï¿½ {summary.status}
                               </p>
                               <p className="text-sm text-pretty whitespace-pre-line">{summary.content}</p>
                             </div>

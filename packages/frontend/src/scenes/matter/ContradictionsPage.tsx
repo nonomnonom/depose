@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@depose/ui/components/dialog';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { Check, CircleWarning, Sparkle, Trash } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { ErrorState } from '~/layout/ErrorPage';
@@ -215,10 +215,7 @@ export function ContradictionsPage() {
       </div>
 
       {list.isPending ? (
-        <div className="space-y-2">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </div>
+        <PageLoading />
       ) : list.isError ? (
         <ErrorState
           title="Contradictions could not be loaded"
@@ -347,7 +344,7 @@ function CompareEvidenceDialog({
           <DialogTitle>Compare evidence</DialogTitle>
         </DialogHeader>
         {detail.isPending ? (
-          <Skeleton className="h-64 w-full" />
+          <PageLoading />
         ) : detail.isError ? (
           <p className="text-sm text-destructive">
             {detail.error instanceof Error ? detail.error.message : 'Evidence could not be loaded.'}

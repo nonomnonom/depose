@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { Input } from '@depose/ui/components/input';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { ArrowRight, Sparkle } from '@coolicons/react';
 import { PageHeader } from '~/layout/PageHeader';
 import { ErrorState } from '~/layout/ErrorPage';
@@ -70,10 +70,7 @@ export function ChronologyPage() {
       </div>
 
       {facts.isPending ? (
-        <div className="space-y-2">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-        </div>
+        <PageLoading />
       ) : facts.isError ? (
         <ErrorState
           title="The chronology could not be loaded"

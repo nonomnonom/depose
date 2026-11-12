@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import { PageHeader } from '~/layout/PageHeader';
 import { formatRelativeDate } from '~/lib/format/date';
 import {
@@ -58,11 +58,7 @@ export function NotificationsPage() {
       </div>
 
       {list.isPending ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-16 w-full" />
-          ))}
-        </div>
+        <PageLoading />
       ) : list.isError ? (
         <div className="rounded-lg border border-border px-4 py-10 text-center text-sm text-muted-foreground">
           Notifications could not be loaded.{' '}

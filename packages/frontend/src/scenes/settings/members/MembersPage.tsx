@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@depose/ui/components/button';
-import { Skeleton } from '@depose/ui/components/skeleton';
+import { PageLoading } from '~/lib/components/PageLoading';
 import {
   Table,
   TableBody,
@@ -36,11 +36,7 @@ export function MembersPage() {
 
       <section className="flex flex-col gap-3">
         {members.isPending ? (
-          <div className="space-y-2">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <PageLoading />
         ) : members.isError ? (
           <ErrorState
             title="Members could not be loaded"
