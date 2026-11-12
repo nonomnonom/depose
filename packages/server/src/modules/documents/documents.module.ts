@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../access-control/access-control.module.js';
 import { JobsModule } from '../jobs/jobs.module.js';
+import { OcrModule } from '../ai/ocr/ocr.module.js';
 import { SearchModule } from '../search/search.module.js';
 import { VectorModule } from '../vector/vector.module.js';
 import { WebhooksModule } from '../webhooks/webhooks.module.js';
@@ -10,7 +11,7 @@ import { DocumentsController } from './documents.controller.js';
 import { DocumentsService } from './documents.service.js';
 
 @Module({
-  imports: [AccessControlModule, JobsModule, SearchModule, VectorModule, WebhooksModule],
+  imports: [AccessControlModule, JobsModule, OcrModule, SearchModule, VectorModule, WebhooksModule],
   controllers: [DocumentsController],
   providers: [DocumentsService, DocumentTextService, DocumentChunkService],
   exports: [DocumentsService, DocumentTextService, DocumentChunkService],

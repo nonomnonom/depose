@@ -1,6 +1,6 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { Public } from '../../common/decorators/public.decorator.js';
 import { RequestContextService } from '../../common/request-context.service.js';
 import { appConfig } from '../../config/app.config.js';

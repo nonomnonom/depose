@@ -8,7 +8,7 @@ import { DATABASE } from './infrastructure/database/database.module.js';
 import { RedisService } from './infrastructure/redis/redis.service.js';
 
 @ApiTags('Health')
-@Controller()
+@Controller('api/health')
 export class AppController {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
@@ -16,7 +16,7 @@ export class AppController {
   ) {}
 
   @Public()
-  @Get('health')
+  @Get()
   @ApiOperation({
     summary: 'Liveness probe',
     description: 'Public and unversioned. Returns ok while the process serves requests.',
@@ -34,7 +34,7 @@ export class AppController {
   }
 
   @Public()
-  @Get('health/ready')
+  @Get('ready')
   @ApiOperation({
     summary: 'Readiness probe',
     description:

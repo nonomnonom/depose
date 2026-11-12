@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AiService } from '@nestjs/ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import type { z } from 'zod';

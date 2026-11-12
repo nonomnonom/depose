@@ -9,6 +9,9 @@ import { VectorService } from './vector.service.js';
  *  - VectorService: Qdrant collection management, document/chunk/fact
  *    embedding indexing, semantic search with filtering.
  *
+ * Embedding HTTP calls are owned by AiEmbedingModule.embedding (single owner);
+ * VectorService delegates to it via forwardRef (no module-level cycle).
+ *
  * This is platform infrastructure: it does not depend on any tenant module.
  * Tenant modules (SearchModule, ExtractionModule, FactsModule, DocumentsModule)
  * import VectorModule to index and search vectors.

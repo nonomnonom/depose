@@ -35,7 +35,7 @@ export class OutputsService {
     return { items: rows.map((r) => this.outputDto(r)) };
   }
 
-  async listProviderConnections(_actor: FirmActor) {
+  async listProviderConnections() {
     /* BYOK has been removed: AI is operated through the instance config. */
     return { items: [] };
   }

@@ -5,6 +5,7 @@ import { DomainError } from '../../common/domain-error.js';
 import { DocumentChunkService } from './document-chunk.service.js';
 import { DocumentTextService } from './document-text.service.js';
 import { JobsService } from '../jobs/jobs.service.js';
+import { OcrService } from '../ai/ocr/ocr.service.js';
 import { VectorService } from '../vector/vector.service.js';
 import { WebhooksService } from '../webhooks/webhooks.service.js';
 import { INGEST_QUEUE } from '../jobs/queue.constants.js';
@@ -61,6 +62,7 @@ export class IngestProcessor extends TrackedProcessor {
     private readonly documentText: DocumentTextService,
     private readonly chunks: DocumentChunkService,
     private readonly vector: VectorService,
+    private readonly ocr: OcrService,
     private readonly webhooks: WebhooksService,
   ) {
     super(jobs);
@@ -70,15 +72,53 @@ export class IngestProcessor extends TrackedProcessor {
     const { jobId, documentId } = await this.start(job);
     try {
       const result = await this.documentText.ingest(documentId);
+
+      if (result.status === 'needs_review' && result.ocrRequired) {
+        if (this.ocr.configured) {
+          await this.jobs.progress(jobId, 50, 'enqueueing-ocr');
+          await this.jobs.enqueueOcrJob(documentId);
+          await this.webhooks.dispatch(result.firmId, 'document.processed', {
+            documentId,
+            matterId: result.matterId,
+            pageCount: result.pageCount,
+            status: result.status,
+            reason: result.reason,
+            ocrQueued: true,
+          });
+          return await this.finish(jobId, {
+            documentId,
+            pageCount: result.pageCount,
+            status: result.status,
+            reason: result.reason,
+            ocrQueued: true,
+          });
+        }
+        await this.webhooks.dispatch(result.firmId, 'document.processed', {
+          documentId,
+          matterId: result.matterId,
+          pageCount: result.pageCount,
+          status: result.status,
+          reason: result.reason,
+          ocrQueued: false,
+        });
+        return await this.finish(jobId, {
+          documentId,
+          pageCount: result.pageCount,
+          status: result.status,
+          reason: result.reason,
+          ocrQueued: false,
+        });
+      }
+
       let chunkCount = 0;
-      let indexed = 0;
+      let embeddingEnqueued = false;
       if (result.status === 'done') {
         await this.jobs.progress(jobId, 60, 'chunking');
         chunkCount = await this.chunks.rebuild(documentId);
-        await this.jobs.progress(jobId, 80, 'embedding');
-        indexed = (await this.vector.indexDocument(documentId)).indexed;
-      }
-      await this.webhooks.dispatch(result.firmId, 'document.processed', {
+        await this.jobs.progress(jobId, 80, 'enqueueing-embedding');
+        await this.jobs.enqueueEmbeddingJob(result.matterId, result.firmId);
+        embeddingEnqueued = true;
+      }      await this.webhooks.dispatch(result.firmId, 'document.processed', {
         documentId,
         matterId: result.matterId,
         pageCount: result.pageCount,
@@ -91,7 +131,7 @@ export class IngestProcessor extends TrackedProcessor {
         pageCount: result.pageCount,
         status: result.status,
         chunks: chunkCount,
-        indexedChunks: indexed,
+        embeddingEnqueued,
       });
     } catch (error) {
       await this.recordFailure(jobId, error);
@@ -99,4 +139,6 @@ export class IngestProcessor extends TrackedProcessor {
     }
   }
 }
+
+
 

@@ -27,7 +27,6 @@ export class SystemOneService {
     questions: Record<string, DecisionQuestion>,
   ): Promise<DecisionResult> {
     const config = appConfig.decision;
-    const startedAt = Date.now();
 
     return config.provider === 'typesafe'
       ? this.decideTypeSafe(firmId, state, questions)

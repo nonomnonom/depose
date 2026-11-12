@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ExtractionsModule } from '../ai/extractions/extractions.module.js';
 import { ExtractionProcessor } from '../ai/extractions/extraction.processor.js';
+import { OcrModule } from '../ai/ocr/ocr.module.js';
+import { OcrProcessor } from '../ai/ocr/ocr.processor.js';
+import { AiEmbedingModule } from '../ai/embeding/embedding.module.js';
+import { EmbeddingProcessor } from '../ai/embeding/embedding.processor.js';
 import { DocumentsModule } from '../documents/documents.module.js';
 import { IngestProcessor } from '../documents/ingest.processor.js';
 import { WebhookDeliveryProcessor } from '../webhooks/webhook-delivery.processor.js';
@@ -15,7 +19,7 @@ import { JobsModule } from './jobs.module.js';
  * processors from the codebase.
  */
 @Module({
-  imports: [JobsModule, DocumentsModule, ExtractionsModule, WebhooksModule, VectorModule],
-  providers: [IngestProcessor, ExtractionProcessor, WebhookDeliveryProcessor],
+  imports: [JobsModule, DocumentsModule, OcrModule, AiEmbedingModule, ExtractionsModule, WebhooksModule, VectorModule],
+  providers: [IngestProcessor, ExtractionProcessor, OcrProcessor, EmbeddingProcessor, WebhookDeliveryProcessor],
 })
 export class WorkerProcessorsModule {}

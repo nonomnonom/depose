@@ -33,7 +33,7 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
   const instance = app.getHttpAdapter().getInstance();
   instance.disable('x-powered-by');
 
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api/v1');
 
   if (appConfig.tenancy.trustProxy) {
     instance.set('trust proxy', 1);
@@ -90,6 +90,11 @@ export async function configureApp(app: NestExpressApplication): Promise<void> {
   );
   instance.use(json({ limit: '1mb' }));
   instance.use(urlencoded({ extended: true, limit: '1mb' }));
+
+  const httpServer = app.getHttpAdapter().getInstance() as unknown as import('http').Server;
+  httpServer.setTimeout(0);
+  httpServer.headersTimeout = 60_000;
+  httpServer.requestTimeout = 30_000;
 }
 
 export interface HttpAppOptions {

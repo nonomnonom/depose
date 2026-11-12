@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { appConfig } from '../../config/app.config.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
@@ -9,6 +9,7 @@ import {
   factSources,
   facts,
 } from '../../infrastructure/database/schema/index.js';
+import { EmbeddingService } from '../ai/embeding/embedding.service.js';
 
 export interface VectorHit {
   id: string;
@@ -31,7 +32,10 @@ export class VectorService {
   private ready = false;
   private degradedUntil = 0;
 
-  constructor(@Inject(DATABASE) private readonly db: Database) {}
+  constructor(
+    @Inject(DATABASE) private readonly db: Database,
+    @Inject(forwardRef(() => EmbeddingService)) private readonly embedding: EmbeddingService,
+  ) {}
 
   get configured(): boolean {
     const config = appConfig.retrieval;
@@ -317,39 +321,31 @@ export class VectorService {
     }
   }
 
-  private async embed(texts: string[]): Promise<number[][] | null> {
-    const config = appConfig.retrieval;
-    if (!config.embeddingBaseUrl) return null;
-    const results: number[][] = [];
-    for (let offset = 0; offset < texts.length; offset += 32) {
-      const batch = texts.slice(offset, offset + 32).map((text) => text.slice(0, 8_000));
-      const response = await fetch(
-        `${config.embeddingBaseUrl.replace(/\/$/, '')}/embeddings`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(config.embeddingApiKey
-              ? { Authorization: `Bearer ${config.embeddingApiKey}` }
-              : {}),
-          },
-          body: JSON.stringify({ model: config.embeddingModel, input: batch }),
-          signal: AbortSignal.timeout(45_000),
-        },
-      );
-      if (!response.ok) {
-        this.logger.warn(`Embedding route returned ${response.status}`);
-        return null;
+  async embed(texts: string[]): Promise<number[][] | null> {
+    return this.embedding.embed(texts);
+  }
+
+  async upsertPoints(
+    kind: 'facts' | 'chunks',
+    points: Array<{
+      id: string;
+      vector: { dense: number[] };
+      payload: Record<string, unknown>;
+    }>,
+  ): Promise<void> {
+    if (!this.available) return;
+    try {
+      await this.ensureCollections();
+      for (let offset = 0; offset < points.length; offset += 64) {
+        await this.request(
+          'PUT',
+          `/collections/${this.collection(kind)}/points?wait=false`,
+          { points: points.slice(offset, offset + 64) },
+        );
       }
-      const payload = (await response.json()) as {
-        data?: { embedding?: number[] }[];
-      };
-      for (const item of payload.data ?? []) {
-        if (!item.embedding) return null;
-        results.push(item.embedding);
-      }
+    } catch (error) {
+      this.markDegraded(error);
     }
-    return results.length === texts.length ? results : null;
   }
 
   private markDegraded(error: unknown) {

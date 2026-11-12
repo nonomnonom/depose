@@ -6,18 +6,20 @@ import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
-import { jobs } from '../../infrastructure/database/schema/index.js';
-import { AuditService } from '../audit/audit.service.js';
-import {
+import { documents, jobs } from '../../infrastructure/database/schema/index.js';
+import { AuditService } from '../audit/audit.service.js';import {
+  EMBEDDING_QUEUE,
   EXTRACTION_QUEUE,
   INGEST_QUEUE,
-  type SupportedJobType,
+  OCR_QUEUE,
 } from './queue.constants.js';
+
+
 
 export interface EnqueueJobInput {
   firmId: string;
   matterId?: string | null;
-  type: SupportedJobType;
+  type: typeof INGEST_QUEUE | typeof EXTRACTION_QUEUE | typeof OCR_QUEUE | typeof EMBEDDING_QUEUE;
   idempotencyKey: string;
   payload: Record<string, unknown>;
   maxAttempts?: number;
@@ -32,6 +34,8 @@ export class JobsService {
     @Inject(DATABASE) private readonly db: Database,
     @InjectQueue(INGEST_QUEUE) private readonly ingestQueue: Queue,
     @InjectQueue(EXTRACTION_QUEUE) private readonly extractionQueue: Queue,
+    @InjectQueue(OCR_QUEUE) private readonly ocrQueue: Queue,
+    @InjectQueue(EMBEDDING_QUEUE) private readonly embeddingQueue: Queue,
     private readonly audit: AuditService,
   ) {}
 
@@ -93,7 +97,14 @@ export class JobsService {
       return this.toDto(winner);
     }
 
-    const queue = input.type === INGEST_QUEUE ? this.ingestQueue : this.extractionQueue;
+    const queue =
+      input.type === INGEST_QUEUE
+        ? this.ingestQueue
+        : input.type === EXTRACTION_QUEUE
+          ? this.extractionQueue
+          : input.type === OCR_QUEUE
+            ? this.ocrQueue
+            : this.embeddingQueue;
     try {
       await queue.add(input.type, { jobId: created.id, ...input.payload }, {
         jobId: created.id,
@@ -127,6 +138,35 @@ export class JobsService {
       }),
     );
     return this.toDto(created);
+  }
+
+  async enqueueOcrJob(documentId: string): Promise<void> {
+    const [doc] = await this.db
+      .select({ firmId: documents.firmId, matterId: documents.matterId })
+      .from(documents)
+      .where(eq(documents.id, documentId))
+      .limit(1);
+    await this.enqueue({
+      firmId: doc?.firmId ?? '00000000-0000-0000-0000-000000000000',
+      matterId: doc?.matterId ?? null,
+      type: OCR_QUEUE,
+      idempotencyKey: `ocr:${documentId}`,
+      payload: { documentId },
+      maxAttempts: 3,
+      createdBy: 'system',
+    });
+  }
+
+  async enqueueEmbeddingJob(matterId: string, firmId: string): Promise<void> {
+    await this.enqueue({
+      firmId,
+      matterId,
+      type: EMBEDDING_QUEUE,
+      idempotencyKey: `embedding:${matterId}`,
+      payload: { matterId },
+      maxAttempts: 3,
+      createdBy: 'system',
+    });
   }
 
   async get(actor: FirmActor, jobId: string) {
@@ -182,7 +222,14 @@ export class JobsService {
       .set({ status: 'cancelled', finishedAt: new Date(), updatedAt: new Date() })
       .where(eq(jobs.id, row.id))
       .returning();
-    const queue = row.queueName === INGEST_QUEUE ? this.ingestQueue : this.extractionQueue;
+    const queue =
+      row.queueName === INGEST_QUEUE
+        ? this.ingestQueue
+        : row.queueName === EXTRACTION_QUEUE
+          ? this.extractionQueue
+          : row.queueName === OCR_QUEUE
+            ? this.ocrQueue
+            : this.embeddingQueue;
     await queue.remove(jobId).catch(() => undefined);
     await this.audit.log({
       firmId: actor.firmId,

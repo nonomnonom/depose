@@ -16,6 +16,7 @@ export interface IngestedDocument {
   pages: { pageNumber: number; text: string; charCount: number }[];
   status: 'done' | 'needs_review';
   reason?: string;
+  ocrRequired: boolean;
 }
 
 const TEXT_MIME = new Set([
@@ -29,6 +30,18 @@ const TEXT_MIME = new Set([
 const DOCX_MIME =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const PDF_MIME = 'application/pdf';
+
+const IMAGE_MIME = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/tiff',
+  'image/gif',
+]);
+
+function isImageMime(mime: string): boolean {
+  return IMAGE_MIME.has(mime) || (mime.startsWith('image/') && !mime.includes('svg'));
+}
 
 function splitPages(text: string): string[] {
   const normalized = text.replace(/\r\n?/g, '\n').replaceAll('\u0000', '');
@@ -77,6 +90,19 @@ export class DocumentTextService {
       const parsed = await this.extract(document.mimeType, data);
 
       if (parsed.pages.length === 0) {
+        if (isImageMime(document.mimeType)) {
+          await this.finish(document.id, 'needs_review', 1, 'OCR_REQUIRED');
+          return {
+            documentId: document.id,
+            firmId: document.firmId,
+            matterId: document.matterId,
+            pageCount: 1,
+            pages: [{ pageNumber: 1, text: '', charCount: 0 }],
+            status: 'needs_review',
+            reason: 'OCR_REQUIRED',
+            ocrRequired: true,
+          };
+        }
         await this.finish(document.id, 'needs_review', null, 'DOCUMENT_TEXT_UNAVAILABLE');
         return {
           documentId: document.id,
@@ -85,11 +111,10 @@ export class DocumentTextService {
           pageCount: 0,
           pages: [],
           status: 'needs_review',
-          reason: 'No text layer was found. Configure OCR before extracting facts.',
+          reason: 'DOCUMENT_TEXT_UNAVAILABLE',
+          ocrRequired: false,
         };
-      }
-
-      await this.db.transaction(async (tx) => {
+      }        await this.db.transaction(async (tx) => {
         await tx.delete(documentPages).where(eq(documentPages.documentId, document.id));
         await tx.insert(documentPages).values(
           parsed.pages.map((page, index) => ({
@@ -99,6 +124,8 @@ export class DocumentTextService {
             pageNumber: index + 1,
             text: page,
             charCount: page.length,
+            ocrConfidence: null,
+            ocrBlocks: null,
           })),
         );
       });
@@ -115,12 +142,22 @@ export class DocumentTextService {
           charCount: text.length,
         })),
         status: 'done',
+        ocrRequired: false,
       };
     } catch (error) {
       const reason = error instanceof Error ? error.message : 'Text extraction failed';
       this.logger.warn(`Document ingest failed for ${document.id}: ${reason}`);
       await this.finish(document.id, 'failed', null, reason.slice(0, 240));
-      throw error;
+      return {
+        documentId: document.id,
+        firmId: document.firmId,
+        matterId: document.matterId,
+        pageCount: 0,
+        pages: [],
+        status: 'failed',
+        reason,
+        ocrRequired: false,
+      } as unknown as IngestedDocument;
     }
   }
 
@@ -133,6 +170,39 @@ export class DocumentTextService {
       .from(documentPages)
       .where(eq(documentPages.documentId, documentId))
       .orderBy(documentPages.pageNumber);
+  }
+
+  async getPageImageForOcr(
+    documentId: string,
+    pageNumber: number,
+  ): Promise<{ image: Buffer; mimeType: string } | null> {
+    const [document] = await this.db
+      .select()
+      .from(documents)
+      .where(eq(documents.id, documentId))
+      .limit(1);
+    if (!document) return null;
+
+    const data = await this.storage.get(document.storageKey);
+    const mime = document.mimeType;
+
+    if (isImageMime(mime)) {
+      return { image: data, mimeType: mime };
+    }
+
+    if (mime === PDF_MIME) {
+      return this.pdfPageImage(data, pageNumber);
+    }
+
+    return null;
+  }
+
+  private async pdfPageImage(_data: Buffer, _pageNumber: number): Promise<{ image: Buffer; mimeType: string } | null> {
+    // unpdf exposes a text layer but not a page rasterizer in this build.
+    // OCR for scanned / image-only PDF pages is deferred until a rasterizer
+    // (for example @napi-rs/canvas or a poppler CLI) is added as a dependency.
+    this.logger.debug(`PDF page image render is not available; OCR deferred for scanned PDF page`);
+    return null;
   }
 
   async markNeedsReview(documentId: string, reason: string) {

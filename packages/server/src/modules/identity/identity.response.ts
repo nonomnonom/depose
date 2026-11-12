@@ -1,6 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { z } from 'zod';
-import { zodToOpenApiSchema } from '../../common/openapi/zod-schema.js';
 import { firmRoleValues } from './identity.dto.js';
 
 export class MemberDto {

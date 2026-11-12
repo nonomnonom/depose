@@ -118,6 +118,16 @@ const envSchema = z
     EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
     EMBEDDING_DIMENSION: z.coerce.number().int().positive().default(1536),
 
+    /* OCR — page-level text extraction from scanned / image / TIF / handwritten pages. */
+    OCR_PROVIDER: z
+      .enum(['azure-read', 'google-document-ai', 'openrouter-clairic', 'offline'])
+      .default('offline'),
+    OCR_BASE_URL: optionalString,
+    OCR_API_KEY: optionalString,
+    OCR_MODEL: z.string().default('read-3'),
+    OCR_TIMEOUT_MS: z.coerce.number().int().positive().default(90_000),
+    OCR_MIN_TEXT_CHARS: z.coerce.number().int().positive().default(40),
+
     /* Mail (spec 29) */
     MAIL_TRANSPORT: z.enum(['file', 'smtp']).default('file'),
     MAIL_FROM: z.string().default('Depose <no-reply@localhost>'),
@@ -274,6 +284,14 @@ export interface AppConfig {
     pipelineVersion: string;
     nullThreshold: number;
   };
+  ocr: {
+    provider: 'azure-read' | 'google-document-ai' | 'openrouter-clairic' | 'offline';
+    baseUrl?: string;
+    apiKey?: string;
+    model: string;
+    timeoutMs: number;
+    minTextChars: number;
+  };
   mcp: {
     token?: string;
     firmId?: string;
@@ -384,6 +402,14 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
       embeddingApiKey: env.EMBEDDING_API_KEY,
       embeddingModel: env.EMBEDDING_MODEL,
       embeddingDimension: env.EMBEDDING_DIMENSION,
+    },
+    ocr: {
+      provider: env.OCR_PROVIDER,
+      baseUrl: env.OCR_BASE_URL,
+      apiKey: env.OCR_API_KEY,
+      model: env.OCR_MODEL,
+      timeoutMs: env.OCR_TIMEOUT_MS,
+      minTextChars: env.OCR_MIN_TEXT_CHARS,
     },
     decision: {
       provider: env.DECISION_PROVIDER,
