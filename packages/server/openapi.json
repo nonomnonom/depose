@@ -2252,6 +2252,325 @@
         ]
       }
     },
+    "/api/v1/matters/{matterId}/facts/cluster": {
+      "post": {
+        "operationId": "FactsController_cluster",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Merge near-duplicate facts in this matter",
+        "tags": [
+          "Facts"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/facts/bulk/archive": {
+      "post": {
+        "operationId": "FactsController_bulkArchive",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Archive several facts at once",
+        "tags": [
+          "Facts"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/facts/{id}/merge": {
+      "post": {
+        "operationId": "FactsController_merge",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Merge a fact into another fact",
+        "tags": [
+          "Facts"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/facts/{id}/archive": {
+      "post": {
+        "operationId": "FactsController_archive",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Archive a fact without deleting it",
+        "tags": [
+          "Facts"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/facts/{id}/unarchive": {
+      "post": {
+        "operationId": "FactsController_unarchive",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permission or firm setup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Restore an archived fact",
+        "tags": [
+          "Facts"
+        ]
+      }
+    },
     "/api/v1/matters/{matterId}/facts/extract": {
       "post": {
         "description": "Queues the fact extraction pipeline for one document or every document in the matter. Returns job ids; poll GET /v1/jobs/:jobId for progress.",
@@ -5964,6 +6283,171 @@
         "tags": [
           "Outputs"
         ]
+      },
+      "post": {
+        "operationId": "OutputsController_create",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create a draft output",
+        "tags": [
+          "Outputs"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/outputs/{id}/generate": {
+      "post": {
+        "operationId": "OutputsController_generate",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Generate the next cited version of an output",
+        "tags": [
+          "Outputs"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/outputs/{id}/finalize": {
+      "post": {
+        "operationId": "OutputsController_finalize",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Finalize the current output version",
+        "tags": [
+          "Outputs"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/outputs/{id}/export": {
+      "get": {
+        "operationId": "OutputsController_export",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Export the current output as Markdown",
+        "tags": [
+          "Outputs"
+        ]
       }
     },
     "/api/v1/matters/{matterId}/outputs/{id}": {
@@ -6429,6 +6913,14 @@
                   },
                   "applyMatterIssues": {
                     "type": "boolean"
+                  },
+                  "issueIds": {
+                    "maxItems": 500,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
                   }
                 },
                 "additionalProperties": false
@@ -6962,6 +7454,41 @@
         ]
       }
     },
+    "/api/v1/matters/{matterId}/intelligence/analysis/run": {
+      "post": {
+        "operationId": "IntelligenceController_analyze",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Run clustering, relevance, inconsistencies, and summary generation",
+        "tags": [
+          "Intelligence"
+        ]
+      }
+    },
     "/api/v1/matters/{matterId}/intelligence/contradictions": {
       "post": {
         "operationId": "IntelligenceController_contradictions",
@@ -7362,6 +7889,352 @@
         "summary": "List inconsistencies by kind",
         "tags": [
           "Inconsistencies"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/relevance": {
+      "get": {
+        "operationId": "RelevanceController_list",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "scopeType",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scopeId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relevance assignments"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List relevance assignments in a matter",
+        "tags": [
+          "Relevance"
+        ]
+      },
+      "post": {
+        "operationId": "RelevanceController_assign",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relevance assigned"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Assign relevance to a fact",
+        "tags": [
+          "Relevance"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/relevance/fact/{factId}": {
+      "get": {
+        "operationId": "RelevanceController_getForFact",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "factId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relevance assignments"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get relevance for a fact",
+        "tags": [
+          "Relevance"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/relevance/classify": {
+      "post": {
+        "operationId": "RelevanceController_classify",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Classify facts against open matter issues",
+        "tags": [
+          "Relevance"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/relevance/bulk": {
+      "post": {
+        "operationId": "RelevanceController_bulkAssign",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relevance assigned"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Bulk assign relevance to facts",
+        "tags": [
+          "Relevance"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/relevance/by-labels": {
+      "get": {
+        "operationId": "RelevanceController_getByLabels",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "labels",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Relevance assignments"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get relevance by labels",
+        "tags": [
+          "Relevance"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/summary-theme/generate": {
+      "post": {
+        "operationId": "SummaryThemeController_generate",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Generate themes and a summary from confirmed facts",
+        "tags": [
+          "Summary & Theme"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/summary-theme/themes": {
+      "get": {
+        "operationId": "SummaryThemeController_listThemes",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Themes list"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List themes in a matter",
+        "tags": [
+          "Summary & Theme"
+        ]
+      }
+    },
+    "/api/v1/matters/{matterId}/summary-theme/summaries": {
+      "get": {
+        "operationId": "SummaryThemeController_listSummaries",
+        "parameters": [
+          {
+            "name": "matterId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Summaries list"
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List summaries in a matter",
+        "tags": [
+          "Summary & Theme"
         ]
       }
     },
@@ -8359,282 +9232,6 @@
         "summary": "Review a live alert",
         "tags": [
           "Realtime"
-        ]
-      }
-    },
-    "/api/v1/matters/{matterId}/relevance": {
-      "get": {
-        "operationId": "RelevanceController_list",
-        "parameters": [
-          {
-            "name": "matterId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "scopeType",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "scopeId",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Relevance assignments"
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "List relevance assignments in a matter",
-        "tags": [
-          "Relevance"
-        ]
-      },
-      "post": {
-        "operationId": "RelevanceController_assign",
-        "parameters": [
-          {
-            "name": "matterId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Relevance assigned"
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Assign relevance to a fact",
-        "tags": [
-          "Relevance"
-        ]
-      }
-    },
-    "/api/v1/matters/{matterId}/relevance/fact/{factId}": {
-      "get": {
-        "operationId": "RelevanceController_getForFact",
-        "parameters": [
-          {
-            "name": "matterId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "factId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Relevance assignments"
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get relevance for a fact",
-        "tags": [
-          "Relevance"
-        ]
-      }
-    },
-    "/api/v1/matters/{matterId}/relevance/bulk": {
-      "post": {
-        "operationId": "RelevanceController_bulkAssign",
-        "parameters": [
-          {
-            "name": "matterId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Relevance assigned"
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Bulk assign relevance to facts",
-        "tags": [
-          "Relevance"
-        ]
-      }
-    },
-    "/api/v1/matters/{matterId}/relevance/by-labels": {
-      "get": {
-        "operationId": "RelevanceController_getByLabels",
-        "parameters": [
-          {
-            "name": "matterId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "labels",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Relevance assignments"
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get relevance by labels",
-        "tags": [
-          "Relevance"
-        ]
-      }
-    },
-    "/api/v1/matters/{matterId}/summary-theme/themes": {
-      "get": {
-        "operationId": "SummaryThemeController_listThemes",
-        "parameters": [
-          {
-            "name": "matterId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Themes list"
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "List themes in a matter",
-        "tags": [
-          "Summary & Theme"
-        ]
-      }
-    },
-    "/api/v1/matters/{matterId}/summary-theme/summaries": {
-      "get": {
-        "operationId": "SummaryThemeController_listSummaries",
-        "parameters": [
-          {
-            "name": "matterId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Summaries list"
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelopeDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "List summaries in a matter",
-        "tags": [
-          "Summary & Theme"
         ]
       }
     }

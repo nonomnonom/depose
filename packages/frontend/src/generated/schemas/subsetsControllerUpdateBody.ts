@@ -26,4 +26,6 @@ export type SubsetsControllerUpdateBody = {
   name?: string;
   description?: string | null;
   applyMatterIssues?: boolean;
+  /** @maxItems 500 */
+  issueIds?: string[];
 };
