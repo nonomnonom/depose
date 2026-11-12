@@ -1,0 +1,6 @@
+
+# tsc emits next to source when a build is interrupted; never commit these
+test/**/*.js
+test/**/*.js.map
+test/**/*.d.ts
+test/**/*.d.ts.map
