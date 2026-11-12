@@ -38,10 +38,4 @@ export type FirmsControllerSetupBody = {
      * @maxLength 64
      */
   timezone?: string;
-  /**
-     * @minLength 3
-     * @maxLength 40
-     * @pattern ^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$
-     */
-  slug?: string;
 };

@@ -5,12 +5,14 @@ import { RequestContextService } from '../../common/request-context.service.js';
 import { ZodBodyPipe } from '../../common/zod.pipe.js';
 import { z } from 'zod';
 
-const createEntitySchema = z.object({
-  canonicalName: z.string().trim().min(1).max(200),
-  normalizedName: z.string().trim().min(1).max(200),
-  type: z.string().trim().min(1).max(100),
-  description: z.string().trim().max(2000).optional(),
-});
+const createEntitySchema = z
+  .object({
+    canonicalName: z.string().trim().min(1).max(200),
+    normalizedName: z.string().trim().min(1).max(200).optional(),
+    type: z.string().trim().min(1).max(100),
+    description: z.string().trim().max(2000).optional(),
+  })
+  .strict();
 
 const addAliasSchema = z.object({
   alias: z.string().trim().min(1).max(200),

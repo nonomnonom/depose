@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AccessControlModule } from '../access-control/access-control.module.js';
 import { JobsModule } from '../jobs/jobs.module.js';
 import { OcrModule } from '../ai/ocr/ocr.module.js';
@@ -11,7 +11,14 @@ import { DocumentsController } from './documents.controller.js';
 import { DocumentsService } from './documents.service.js';
 
 @Module({
-  imports: [AccessControlModule, JobsModule, OcrModule, SearchModule, VectorModule, WebhooksModule],
+  imports: [
+    AccessControlModule,
+    JobsModule,
+    forwardRef(() => OcrModule),
+    SearchModule,
+    VectorModule,
+    WebhooksModule,
+  ],
   controllers: [DocumentsController],
   providers: [DocumentsService, DocumentTextService, DocumentChunkService],
   exports: [DocumentsService, DocumentTextService, DocumentChunkService],

@@ -23,10 +23,10 @@ import type { PublicInvitationDtoStatus } from './publicInvitationDtoStatus';
 export interface PublicInvitationDto {
   id: string;
   email: string;
-  firmName: string;
-  firmSlug: string;
-  inviterName: string;
   role: PublicInvitationDtoRole;
-  status: PublicInvitationDtoStatus;
+  createdInvitation: string;
   expiresAt: string;
+  status: PublicInvitationDtoStatus;
+  firmName: string;
+  inviterName: string;
 }

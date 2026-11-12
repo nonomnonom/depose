@@ -9,6 +9,8 @@ import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
   contradictionFacts,
   contradictions,
+  documents,
+  factSources,
   facts,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
@@ -103,6 +105,7 @@ export type ContradictionDto = {
   confidence: number | null;
   status: 'candidate' | 'open' | 'confirmed' | 'dismissed' | 'stale';
   summary: string;
+  factCount: number;
   reviewedBy: string | null;
   reviewedAt: string | null;
   detectedBy: string;
@@ -131,7 +134,22 @@ export class InconsistenciesService {
       .from(contradictions)
       .where(and(...conditions))
       .orderBy(desc(contradictions.createdAt));
-    return { items: rows.map(this.toDto) };
+    const counts = await this.evidenceCounts(actor.firmId, matterId);
+    return { items: rows.map((row) => this.toDto(row, counts.get(row.id) ?? 0)) };
+  }
+
+  private async evidenceCounts(firmId: string, matterId: string): Promise<Map<string, number>> {
+    const rows = await this.db
+      .select({
+        contradictionId: contradictionFacts.contradictionId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(contradictionFacts)
+      .where(
+        and(eq(contradictionFacts.firmId, firmId), eq(contradictionFacts.matterId, matterId)),
+      )
+      .groupBy(contradictionFacts.contradictionId);
+    return new Map(rows.map((row) => [row.contradictionId, row.count]));
   }
 
   async get(actor: FirmActor, matterId: string, contradictionId: string) {
@@ -148,7 +166,57 @@ export class InconsistenciesService {
       )
       .limit(1);
     if (!row) throw DomainError.notFound('Contradiction not found');
-    return { contradiction: this.toDto(row) };
+
+    const links = await this.db
+      .select({
+        role: contradictionFacts.role,
+        factId: facts.id,
+        text: facts.text,
+        factType: facts.factType,
+        dateStart: facts.dateStart,
+        dateEnd: facts.dateEnd,
+        status: facts.status,
+      })
+      .from(contradictionFacts)
+      .innerJoin(facts, eq(facts.id, contradictionFacts.factId))
+      .where(
+        and(
+          eq(contradictionFacts.contradictionId, row.id),
+          eq(contradictionFacts.firmId, actor.firmId),
+        ),
+      );
+
+    const factIds = links.map((link) => link.factId);
+    const sources = factIds.length
+      ? await this.db
+          .select({
+            factId: factSources.factId,
+            documentId: factSources.documentId,
+            documentName: documents.fileName,
+            pageNumber: factSources.pageNumber,
+            quote: factSources.quote,
+            verification: factSources.verification,
+          })
+          .from(factSources)
+          .innerJoin(documents, eq(documents.id, factSources.documentId))
+          .where(
+            and(
+              eq(factSources.firmId, actor.firmId),
+              inArray(factSources.factId, factIds),
+            ),
+          )
+      : [];
+
+    return {
+      contradiction: this.toDto(row, links.length),
+      facts: links.map(({ factId, ...link }) => ({
+        ...link,
+        id: factId,
+        sources: sources
+          .filter((source) => source.factId === factId)
+          .map(({ factId: _factId, ...source }) => source),
+      })),
+    };
   }
 
   async review(actor: FirmActor, matterId: string, contradictionId: string, input: z.infer<typeof reviewContradictionSchema>) {
@@ -491,7 +559,7 @@ export class InconsistenciesService {
     };
   }
 
-  private toDto(row: typeof contradictions.$inferSelect): ContradictionDto {
+  private toDto(row: typeof contradictions.$inferSelect, factCount = 0): ContradictionDto {
     return {
       id: row.id,
       matterId: row.matterId,
@@ -500,6 +568,7 @@ export class InconsistenciesService {
       confidence: row.confidence,
       status: row.status,
       summary: row.summary,
+      factCount,
       reviewedBy: row.reviewedBy,
       reviewedAt: row.reviewedAt?.toISOString() ?? null,
       detectedBy: row.detectedBy,

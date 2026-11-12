@@ -50,6 +50,7 @@ export type UpdateFactInput = z.infer<typeof updateFactSchema>;
 export const listFactsQuerySchema = z.object({
   status: z.enum(factStatusValues).optional(),
   q: z.string().trim().max(200).optional(),
+  documentId: z.uuid().optional(),
   cursor: z.iso.datetime({ offset: true }).optional(),
   limit: z.coerce.number().int().positive().max(100).optional(),
 });

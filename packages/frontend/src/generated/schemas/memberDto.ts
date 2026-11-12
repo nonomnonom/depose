@@ -18,15 +18,13 @@
  * OpenAPI spec version: 1.0.0
  */
 import type { MemberDtoRole } from './memberDtoRole';
+import type { MemberDtoStatus } from './memberDtoStatus';
 
 export interface MemberDto {
-  /** Member row id */
   id: string;
-  /** User id */
-  userId: string;
-  name: string;
   email: string;
+  name: string;
   role: MemberDtoRole;
-  emailVerified: boolean;
   joinedAt: string;
+  status: MemberDtoStatus;
 }

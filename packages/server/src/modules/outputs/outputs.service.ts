@@ -5,6 +5,8 @@ import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
+  outputSources,
+  outputVersions,
   outputs,
   threads,
   messages,
@@ -33,6 +35,60 @@ export class OutputsService {
       )
       .orderBy(desc(outputs.createdAt));
     return { items: rows.map((r) => this.outputDto(r)) };
+  }
+
+  async getOutput(actor: FirmActor, matterId: string, outputId: string) {
+    await this.policy.assertMatter(actor, 'output.read', matterId);
+    const [output] = await this.db
+      .select()
+      .from(outputs)
+      .where(
+        and(
+          eq(outputs.id, outputId),
+          eq(outputs.firmId, actor.firmId),
+          eq(outputs.matterId, matterId),
+        ),
+      )
+      .limit(1);
+    if (!output) throw DomainError.notFound('Output not found');
+
+    const [version] = await this.db
+      .select()
+      .from(outputVersions)
+      .where(
+        and(
+          eq(outputVersions.outputId, output.id),
+          eq(outputVersions.version, output.currentVersion),
+        ),
+      )
+      .limit(1);
+
+    const sources = version
+      ? await this.db
+          .select()
+          .from(outputSources)
+          .where(eq(outputSources.outputVersionId, version.id))
+      : [];
+
+    return {
+      output: this.outputDto(output),
+      version: version
+        ? {
+            id: version.id,
+            version: version.version,
+            content: version.content,
+            contentMarkdown: version.contentMarkdown,
+            finalizedBy: version.finalizedBy,
+            finalizedAt: version.finalizedAt?.toISOString() ?? null,
+            createdAt: version.createdAt.toISOString(),
+          }
+        : null,
+      sources: sources.map((source) => ({
+        id: source.id,
+        factId: source.factId,
+        citation: source.citationSnapshot,
+      })),
+    };
   }
 
   async listProviderConnections() {

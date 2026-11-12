@@ -23,6 +23,7 @@ export type FactsControllerListParams = {
   /** @maximum 100 */
   limit?: number;
   cursor?: string;
+  documentId?: string;
   q?: string;
   status?: FactsControllerListStatus;
 };

@@ -61,6 +61,7 @@ export class FactsController {
   @ApiParam({ name: 'matterId', format: 'uuid' })
   @ApiQuery({ name: 'status', required: false, enum: factStatusValues })
   @ApiQuery({ name: 'q', required: false, schema: { type: 'string' } })
+  @ApiQuery({ name: 'documentId', required: false, schema: { type: 'string', format: 'uuid' } })
   @ApiQuery({ name: 'cursor', required: false, schema: { type: 'string' } })
   @ApiQuery({ name: 'limit', required: false, schema: { type: 'integer', maximum: 100 } })
   @ApiOkResponse({ description: 'Facts', type: FactListDto })

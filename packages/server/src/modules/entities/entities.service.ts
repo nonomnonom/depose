@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
@@ -9,6 +9,7 @@ import {
   entityAliases,
   entityMentions,
   entityRelations,
+  facts,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -33,7 +34,38 @@ export class EntitiesService {
         ),
       )
       .orderBy(desc(entities.createdAt));
-    return { items: rows.map((r) => this.entityDto(r)) };
+
+    const ids = rows.map((row) => row.id);
+    const aliases = ids.length
+      ? await this.db
+          .select()
+          .from(entityAliases)
+          .where(and(eq(entityAliases.firmId, actor.firmId), inArray(entityAliases.entityId, ids)))
+      : [];
+    const mentions = ids.length
+      ? await this.db
+          .select({ entityId: entityMentions.entityId, count: sql<number>`count(*)::int` })
+          .from(entityMentions)
+          .where(
+            and(eq(entityMentions.firmId, actor.firmId), inArray(entityMentions.entityId, ids)),
+          )
+          .groupBy(entityMentions.entityId)
+      : [];
+    const aliasesByEntity = new Map<string, typeof aliases>();
+    for (const alias of aliases) {
+      const bucket = aliasesByEntity.get(alias.entityId) ?? [];
+      bucket.push(alias);
+      aliasesByEntity.set(alias.entityId, bucket);
+    }
+    const mentionCounts = new Map(mentions.map((row) => [row.entityId, row.count]));
+
+    return {
+      items: rows.map((row) => ({
+        ...this.entityDto(row),
+        aliases: (aliasesByEntity.get(row.id) ?? []).map((alias) => alias.alias),
+        mentionCount: mentionCounts.get(row.id) ?? 0,
+      })),
+    };
   }
 
   async get(actor: FirmActor, matterId: string, entityId: string) {
@@ -50,12 +82,51 @@ export class EntitiesService {
       )
       .limit(1);
     if (!row.length) throw DomainError.notFound('Entity not found');
-    return { entity: this.entityDto(row[0]) };
+
+    const aliases = await this.db
+      .select()
+      .from(entityAliases)
+      .where(
+        and(
+          eq(entityAliases.firmId, actor.firmId),
+          eq(entityAliases.entityId, row[0].id),
+        ),
+      );
+    const relatedFacts = await this.db
+      .select({
+        id: entityMentions.factId,
+        text: entityMentions.surfaceForm,
+        factText: facts.text,
+        dateStart: facts.dateStart,
+        documentId: entityMentions.documentId,
+        pageNumber: entityMentions.pageNumber,
+      })
+      .from(entityMentions)
+      .innerJoin(facts, eq(facts.id, entityMentions.factId))
+      .where(
+        and(
+          eq(entityMentions.firmId, actor.firmId),
+          eq(entityMentions.entityId, row[0].id),
+        ),
+      )
+      .limit(100);
+
+    return {
+      entity: this.entityDto(row[0]),
+      aliases: aliases.map((alias) => this.aliasDto(alias)),
+      facts: relatedFacts.map((fact) => ({
+        id: fact.id,
+        text: fact.factText,
+        dateStart: fact.dateStart,
+        documentId: fact.documentId,
+        pageNumber: fact.pageNumber,
+      })),
+    };
   }
 
   async create(actor: FirmActor, matterId: string, input: {
     canonicalName: string;
-    normalizedName: string;
+    normalizedName?: string;
     type: string;
     description?: string;
     metadata?: Record<string, unknown>;
@@ -67,7 +138,7 @@ export class EntitiesService {
         firmId: actor.firmId,
         matterId,
         canonicalName: input.canonicalName.trim(),
-        normalizedName: input.normalizedName.trim(),
+        normalizedName: (input.normalizedName ?? input.canonicalName).trim().toLowerCase(),
         type: input.type.trim(),
         description: input.description?.trim() ?? null,
         metadata: input.metadata ?? {},

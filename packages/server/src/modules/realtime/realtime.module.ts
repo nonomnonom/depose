@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../access-control/access-control.module.js';
 import { AuditModule } from '../audit/audit.module.js';
+import { IntelligenceModule } from '../intelligence/intelligence.module.js';
 import { RealtimeController } from './realtime.controller.js';
 import { RealtimeService } from './realtime.service.js';
 
@@ -13,12 +14,13 @@ import { RealtimeService } from './realtime.service.js';
  * Dependencies:
  *  - AccessControlModule (policy assertions)
  *  - AuditModule (change logging)
+ *  - IntelligenceModule (statement checks against the fact bank)
  *
  * This module does NOT own the transcription pipeline — that belongs to
  * the documents module. It only owns session lifecycle and alert review.
  */
 @Module({
-  imports: [AccessControlModule, AuditModule],
+  imports: [AccessControlModule, AuditModule, IntelligenceModule],
   controllers: [RealtimeController],
   providers: [RealtimeService],
   exports: [RealtimeService],

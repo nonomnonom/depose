@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { DatabaseModule } from '../../infrastructure/database/database.module.js';
+import { AiEmbedingModule } from '../ai/embeding/embedding.module.js';
 import { VectorService } from './vector.service.js';
 
 /**
@@ -20,7 +21,7 @@ import { VectorService } from './vector.service.js';
  * embeddingBaseUrl, embeddingModel, embeddingDimension, collectionPrefix).
  */
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, forwardRef(() => AiEmbedingModule)],
   providers: [VectorService],
   exports: [VectorService],
 })

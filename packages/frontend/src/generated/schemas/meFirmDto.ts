@@ -24,7 +24,6 @@ import type { MeFirmDtoSettings } from './meFirmDtoSettings';
 export interface MeFirmDto {
   id: string;
   name: string;
-  slug: string;
   primaryLanguage: MeFirmDtoPrimaryLanguage;
   jurisdiction: string;
   defaultTimezone: string;

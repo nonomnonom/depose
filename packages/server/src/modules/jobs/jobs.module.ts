@@ -6,7 +6,12 @@ import { AccessControlModule } from '../access-control/access-control.module.js'
 import { AuditModule } from '../audit/audit.module.js';
 import { JobsController } from './jobs.controller.js';
 import { JobsService } from './jobs.service.js';
-import { EXTRACTION_QUEUE, INGEST_QUEUE } from './queue.constants.js';
+import {
+  EMBEDDING_QUEUE,
+  EXTRACTION_QUEUE,
+  INGEST_QUEUE,
+  OCR_QUEUE,
+} from './queue.constants.js';
 
 @Module({
   imports: [
@@ -17,7 +22,12 @@ import { EXTRACTION_QUEUE, INGEST_QUEUE } from './queue.constants.js';
         removeOnFail: 500,
       },
     }),
-    BullModule.registerQueue({ name: INGEST_QUEUE }, { name: EXTRACTION_QUEUE }),
+    BullModule.registerQueue(
+      { name: INGEST_QUEUE },
+      { name: EXTRACTION_QUEUE },
+      { name: OCR_QUEUE },
+      { name: EMBEDDING_QUEUE },
+    ),
     DatabaseModule,
     AccessControlModule,
     AuditModule,

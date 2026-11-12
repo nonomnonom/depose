@@ -19,4 +19,17 @@ export class OutputsController {
     const actor = this.context.requireFirmActor();
     return this.service.listOutputs(actor, matterId);
   }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get an output and its current version' })
+  @ApiParam({ name: 'matterId', format: 'uuid' })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ description: 'Output detail' })
+  async get(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const actor = this.context.requireFirmActor();
+    return this.service.getOutput(actor, matterId, id);
+  }
 }

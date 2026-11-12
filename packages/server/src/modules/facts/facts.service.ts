@@ -38,6 +38,11 @@ export class FactsService {
     const conditions = [eq(facts.firmId, actor.firmId), eq(facts.matterId, matterId)];
     if (query.status) conditions.push(eq(facts.status, query.status));
     if (query.q) conditions.push(ilike(facts.text, `%${query.q}%`));
+    if (query.documentId) {
+      conditions.push(
+        sql`exists (select 1 from ${factSources} where ${factSources.factId} = ${facts.id} and ${factSources.documentId} = ${query.documentId})`,
+      );
+    }
     if (query.cursor) conditions.push(lt(facts.createdAt, new Date(query.cursor)));
 
     const rows = await this.db

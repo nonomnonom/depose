@@ -21,5 +21,4 @@ import type { MemberDto } from './memberDto';
 
 export interface AcceptInvitationResponseDto {
   member: MemberDto;
-  firmSlug: string;
 }

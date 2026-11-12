@@ -39,5 +39,6 @@ import { IntelligenceService } from './intelligence.service.js';
   ],
   controllers: [IntelligenceController],
   providers: [IntelligenceService],
+  exports: [IntelligenceService],
 })
 export class IntelligenceModule {}

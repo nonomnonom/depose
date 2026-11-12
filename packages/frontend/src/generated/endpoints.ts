@@ -19,17 +19,17 @@
  */
 import type {
   AcceptInvitationResponseDto,
-  AiControllerCreateBody,
-  AiControllerRemove200,
-  AiControllerSendBody,
-  AiMessageResponseDto,
-  AiProviderListDto,
-  AiProviderResponseDto,
-  AiProviderTestDto,
-  AiThreadDetailDto,
-  AiThreadDto,
-  AiThreadListDto,
   AppControllerHealth200,
+  AppControllerReady200,
+  ChronologyControllerTimelineParams,
+  ChronologyTimelineDto,
+  ConversationControllerCreateBody,
+  ConversationControllerRemove200,
+  ConversationControllerSendBody,
+  ConversationMessageResponseDto,
+  ConversationThreadDetailDto,
+  ConversationThreadDto,
+  ConversationThreadListDto,
   DismissOnboardingResponseDto,
   DocumentListDto,
   DocumentPageDto,
@@ -48,21 +48,24 @@ import type {
   FactsControllerUpdateBody,
   FirmDomainsResponseDto,
   FirmResponseDto,
+  FirmSettingsControllerUpdateBody,
+  FirmSettingsResponseDto,
   FirmSetupResponseDto,
   FirmsControllerSetupBody,
   FirmsControllerUpdateBody,
-  InvitationListDto,
-  InvitationResponseDto,
+  InconsistenciesControllerListParams,
   InvitationsControllerCreateBody,
   InvitationsControllerRevoke200,
   JobsControllerListParams,
   MatterListDto,
   MatterResponseDto,
+  MatterSettingsControllerUpdateBody,
+  MatterSettingsResponseDto,
   MattersControllerCreateBody,
   MattersControllerListParams,
   MattersControllerUpdateBody,
-  McpControllerCreateBody,
-  McpControllerRemove200,
+  McpRegistryControllerCreateBody,
+  McpRegistryControllerRemove200,
   McpServerListDto,
   McpServerResponseDto,
   McpTestResponseDto,
@@ -71,9 +74,6 @@ import type {
   MemberResponseDto,
   MembersControllerRemove200,
   MembersControllerUpdateRoleBody,
-  ModelGatewayControllerCreateBody,
-  ModelGatewayControllerRemove200,
-  ModelGatewayControllerUpdateBody,
   NotificationListDto,
   NotificationsControllerListParams,
   NotificationsControllerMarkAllRead200,
@@ -81,6 +81,8 @@ import type {
   OnboardingStatusDto,
   PermissionsResponseDto,
   PublicInvitationResponseDto,
+  RelevanceControllerGetByLabelsParams,
+  RelevanceControllerListParams,
   SearchControllerSearchMatterParams,
   SubsetFactListDto,
   SubsetListDto,
@@ -91,7 +93,9 @@ import type {
   SubsetsControllerSetDocumentsBody,
   SubsetsControllerUpdateBody,
   TenantResponseDto,
-  UnreadCountDto
+  UnreadCountDto,
+  UserPreferencesControllerUpdateBody,
+  UserPreferencesResponseDto
 } from './schemas';
 
 import { customFetch } from '../lib/api/client';
@@ -119,7 +123,7 @@ export const getAppControllerHealthUrl = () => {
 
 
 
-  return `/api/health`
+  return `/api/api/health`
 }
 
 /**
@@ -129,6 +133,50 @@ export const getAppControllerHealthUrl = () => {
 export const appControllerHealth = async ( options?: Parameters<typeof customFetch>[1]): Promise<appControllerHealthResponse> => {
 
   return customFetch<appControllerHealthResponse>(getAppControllerHealthUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type appControllerReadyResponse200 = {
+  data: AppControllerReady200
+  status: 200
+}
+
+export type appControllerReadyResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type appControllerReadyResponseSuccess = (appControllerReadyResponse200) & {
+  headers: Headers;
+};
+export type appControllerReadyResponseError = (appControllerReadyResponse500) & {
+  headers: Headers;
+};
+
+export type appControllerReadyResponse = (appControllerReadyResponseSuccess | appControllerReadyResponseError)
+
+export const getAppControllerReadyUrl = () => {
+
+
+
+
+  return `/api/api/health/ready`
+}
+
+/**
+ * Checks Postgres and Redis. Returns 503 with per-dependency status while either is unavailable.
+ * @summary Readiness probe
+ */
+export const appControllerReady = async ( options?: Parameters<typeof customFetch>[1]): Promise<appControllerReadyResponse> => {
+
+  return customFetch<appControllerReadyResponse>(getAppControllerReadyUrl(),
   {
     ...options,
     method: 'GET'
@@ -291,852 +339,6 @@ export const meControllerPermissions = async ( options?: Parameters<typeof custo
 
 
 
-export type aiControllerListResponse200 = {
-  data: AiThreadListDto
-  status: 200
-}
-
-export type aiControllerListResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type aiControllerListResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type aiControllerListResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type aiControllerListResponseSuccess = (aiControllerListResponse200) & {
-  headers: Headers;
-};
-export type aiControllerListResponseError = (aiControllerListResponse401 | aiControllerListResponse403 | aiControllerListResponse500) & {
-  headers: Headers;
-};
-
-export type aiControllerListResponse = (aiControllerListResponseSuccess | aiControllerListResponseError)
-
-export const getAiControllerListUrl = (matterId: string,) => {
-
-
-
-
-  return `/api/v1/matters/${matterId}/threads`
-}
-
-/**
- * @summary List your AI threads in a matter
- */
-export const aiControllerList = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<aiControllerListResponse> => {
-
-  return customFetch<aiControllerListResponse>(getAiControllerListUrl(matterId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export type aiControllerCreateResponse201 = {
-  data: AiThreadDto
-  status: 201
-}
-
-export type aiControllerCreateResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type aiControllerCreateResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type aiControllerCreateResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type aiControllerCreateResponseSuccess = (aiControllerCreateResponse201) & {
-  headers: Headers;
-};
-export type aiControllerCreateResponseError = (aiControllerCreateResponse401 | aiControllerCreateResponse403 | aiControllerCreateResponse500) & {
-  headers: Headers;
-};
-
-export type aiControllerCreateResponse = (aiControllerCreateResponseSuccess | aiControllerCreateResponseError)
-
-export const getAiControllerCreateUrl = (matterId: string,) => {
-
-
-
-
-  return `/api/v1/matters/${matterId}/threads`
-}
-
-/**
- * @summary Start an AI conversation
- */
-export const aiControllerCreate = async (matterId: string,
-    aiControllerCreateBody: AiControllerCreateBody, options?: Parameters<typeof customFetch>[1]): Promise<aiControllerCreateResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return customFetch<aiControllerCreateResponse>(getAiControllerCreateUrl(matterId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(aiControllerCreateBody)
-  }
-);}
-
-
-
-export type aiControllerGetResponse200 = {
-  data: AiThreadDetailDto
-  status: 200
-}
-
-export type aiControllerGetResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type aiControllerGetResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type aiControllerGetResponse404 = {
-  data: ErrorEnvelopeDto
-  status: 404
-}
-
-export type aiControllerGetResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type aiControllerGetResponseSuccess = (aiControllerGetResponse200) & {
-  headers: Headers;
-};
-export type aiControllerGetResponseError = (aiControllerGetResponse401 | aiControllerGetResponse403 | aiControllerGetResponse404 | aiControllerGetResponse500) & {
-  headers: Headers;
-};
-
-export type aiControllerGetResponse = (aiControllerGetResponseSuccess | aiControllerGetResponseError)
-
-export const getAiControllerGetUrl = (matterId: string,
-    threadId: string,) => {
-
-
-
-
-  return `/api/v1/matters/${matterId}/threads/${threadId}`
-}
-
-/**
- * @summary Get a thread and its messages
- */
-export const aiControllerGet = async (matterId: string,
-    threadId: string, options?: Parameters<typeof customFetch>[1]): Promise<aiControllerGetResponse> => {
-
-  return customFetch<aiControllerGetResponse>(getAiControllerGetUrl(matterId,threadId),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export type aiControllerRemoveResponse200 = {
-  data: AiControllerRemove200
-  status: 200
-}
-
-export type aiControllerRemoveResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type aiControllerRemoveResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type aiControllerRemoveResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type aiControllerRemoveResponseSuccess = (aiControllerRemoveResponse200) & {
-  headers: Headers;
-};
-export type aiControllerRemoveResponseError = (aiControllerRemoveResponse401 | aiControllerRemoveResponse403 | aiControllerRemoveResponse500) & {
-  headers: Headers;
-};
-
-export type aiControllerRemoveResponse = (aiControllerRemoveResponseSuccess | aiControllerRemoveResponseError)
-
-export const getAiControllerRemoveUrl = (matterId: string,
-    threadId: string,) => {
-
-
-
-
-  return `/api/v1/matters/${matterId}/threads/${threadId}`
-}
-
-/**
- * @summary Delete a thread
- */
-export const aiControllerRemove = async (matterId: string,
-    threadId: string, options?: Parameters<typeof customFetch>[1]): Promise<aiControllerRemoveResponse> => {
-
-  return customFetch<aiControllerRemoveResponse>(getAiControllerRemoveUrl(matterId,threadId),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-export type aiControllerSendResponse201 = {
-  data: AiMessageResponseDto
-  status: 201
-}
-
-export type aiControllerSendResponse400 = {
-  data: ErrorEnvelopeDto
-  status: 400
-}
-
-export type aiControllerSendResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type aiControllerSendResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type aiControllerSendResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type aiControllerSendResponseSuccess = (aiControllerSendResponse201) & {
-  headers: Headers;
-};
-export type aiControllerSendResponseError = (aiControllerSendResponse400 | aiControllerSendResponse401 | aiControllerSendResponse403 | aiControllerSendResponse500) & {
-  headers: Headers;
-};
-
-export type aiControllerSendResponse = (aiControllerSendResponseSuccess | aiControllerSendResponseError)
-
-export const getAiControllerSendUrl = (matterId: string,
-    threadId: string,) => {
-
-
-
-
-  return `/api/v1/matters/${matterId}/threads/${threadId}/messages`
-}
-
-/**
- * Runs the grounded retrieval agent over confirmed facts and returns the answer with citations and tool calls.
- * @summary Ask Dep AI
- */
-export const aiControllerSend = async (matterId: string,
-    threadId: string,
-    aiControllerSendBody: AiControllerSendBody, options?: Parameters<typeof customFetch>[1]): Promise<aiControllerSendResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return customFetch<aiControllerSendResponse>(getAiControllerSendUrl(matterId,threadId),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(aiControllerSendBody)
-  }
-);}
-
-
-
-export type aiControllerCancelResponse200 = {
-  data: void
-  status: 200
-}
-
-export type aiControllerCancelResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type aiControllerCancelResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type aiControllerCancelResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type aiControllerCancelResponseSuccess = (aiControllerCancelResponse200) & {
-  headers: Headers;
-};
-export type aiControllerCancelResponseError = (aiControllerCancelResponse401 | aiControllerCancelResponse403 | aiControllerCancelResponse500) & {
-  headers: Headers;
-};
-
-export type aiControllerCancelResponse = (aiControllerCancelResponseSuccess | aiControllerCancelResponseError)
-
-export const getAiControllerCancelUrl = (matterId: string,
-    threadId: string,) => {
-
-
-
-
-  return `/api/v1/matters/${matterId}/threads/${threadId}/cancel`
-}
-
-/**
- * @summary Stop the active Dep AI run
- */
-export const aiControllerCancel = async (matterId: string,
-    threadId: string, options?: Parameters<typeof customFetch>[1]): Promise<aiControllerCancelResponse> => {
-
-  return customFetch<aiControllerCancelResponse>(getAiControllerCancelUrl(matterId,threadId),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-export type modelGatewayControllerListResponse200 = {
-  data: AiProviderListDto
-  status: 200
-}
-
-export type modelGatewayControllerListResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type modelGatewayControllerListResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type modelGatewayControllerListResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type modelGatewayControllerListResponseSuccess = (modelGatewayControllerListResponse200) & {
-  headers: Headers;
-};
-export type modelGatewayControllerListResponseError = (modelGatewayControllerListResponse401 | modelGatewayControllerListResponse403 | modelGatewayControllerListResponse500) & {
-  headers: Headers;
-};
-
-export type modelGatewayControllerListResponse = (modelGatewayControllerListResponseSuccess | modelGatewayControllerListResponseError)
-
-export const getModelGatewayControllerListUrl = () => {
-
-
-
-
-  return `/api/v1/firm/ai/providers`
-}
-
-/**
- * @summary List the firm AI provider connections (keys masked)
- */
-export const modelGatewayControllerList = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerListResponse> => {
-
-  return customFetch<modelGatewayControllerListResponse>(getModelGatewayControllerListUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export type modelGatewayControllerCreateResponse201 = {
-  data: AiProviderResponseDto
-  status: 201
-}
-
-export type modelGatewayControllerCreateResponse400 = {
-  data: ErrorEnvelopeDto
-  status: 400
-}
-
-export type modelGatewayControllerCreateResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type modelGatewayControllerCreateResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type modelGatewayControllerCreateResponse409 = {
-  data: ErrorEnvelopeDto
-  status: 409
-}
-
-export type modelGatewayControllerCreateResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type modelGatewayControllerCreateResponseSuccess = (modelGatewayControllerCreateResponse201) & {
-  headers: Headers;
-};
-export type modelGatewayControllerCreateResponseError = (modelGatewayControllerCreateResponse400 | modelGatewayControllerCreateResponse401 | modelGatewayControllerCreateResponse403 | modelGatewayControllerCreateResponse409 | modelGatewayControllerCreateResponse500) & {
-  headers: Headers;
-};
-
-export type modelGatewayControllerCreateResponse = (modelGatewayControllerCreateResponseSuccess | modelGatewayControllerCreateResponseError)
-
-export const getModelGatewayControllerCreateUrl = () => {
-
-
-
-
-  return `/api/v1/firm/ai/providers`
-}
-
-/**
- * @summary Add a BYOK completion provider
- */
-export const modelGatewayControllerCreate = async (modelGatewayControllerCreateBody: ModelGatewayControllerCreateBody, options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerCreateResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return customFetch<modelGatewayControllerCreateResponse>(getModelGatewayControllerCreateUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(modelGatewayControllerCreateBody)
-  }
-);}
-
-
-
-export type modelGatewayControllerUpdateResponse200 = {
-  data: AiProviderResponseDto
-  status: 200
-}
-
-export type modelGatewayControllerUpdateResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type modelGatewayControllerUpdateResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type modelGatewayControllerUpdateResponse404 = {
-  data: ErrorEnvelopeDto
-  status: 404
-}
-
-export type modelGatewayControllerUpdateResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type modelGatewayControllerUpdateResponseSuccess = (modelGatewayControllerUpdateResponse200) & {
-  headers: Headers;
-};
-export type modelGatewayControllerUpdateResponseError = (modelGatewayControllerUpdateResponse401 | modelGatewayControllerUpdateResponse403 | modelGatewayControllerUpdateResponse404 | modelGatewayControllerUpdateResponse500) & {
-  headers: Headers;
-};
-
-export type modelGatewayControllerUpdateResponse = (modelGatewayControllerUpdateResponseSuccess | modelGatewayControllerUpdateResponseError)
-
-export const getModelGatewayControllerUpdateUrl = (id: string,) => {
-
-
-
-
-  return `/api/v1/firm/ai/providers/${id}`
-}
-
-/**
- * @summary Update a provider connection
- */
-export const modelGatewayControllerUpdate = async (id: string,
-    modelGatewayControllerUpdateBody: ModelGatewayControllerUpdateBody, options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerUpdateResponse> => {
-
-    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
-    if (!h) return {};
-    if (h instanceof Headers) return Object.fromEntries(h.entries());
-    if (Symbol.iterator in h) {
-      return Object.fromEntries(
-        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
-      );
-    }
-    const headers: Record<string, string | readonly string[]> = {};
-    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
-      if (value !== undefined) headers[name] = value;
-    }
-    return headers;
-  };
-return customFetch<modelGatewayControllerUpdateResponse>(getModelGatewayControllerUpdateUrl(id),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(modelGatewayControllerUpdateBody)
-  }
-);}
-
-
-
-export type modelGatewayControllerRemoveResponse200 = {
-  data: ModelGatewayControllerRemove200
-  status: 200
-}
-
-export type modelGatewayControllerRemoveResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type modelGatewayControllerRemoveResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type modelGatewayControllerRemoveResponse404 = {
-  data: ErrorEnvelopeDto
-  status: 404
-}
-
-export type modelGatewayControllerRemoveResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type modelGatewayControllerRemoveResponseSuccess = (modelGatewayControllerRemoveResponse200) & {
-  headers: Headers;
-};
-export type modelGatewayControllerRemoveResponseError = (modelGatewayControllerRemoveResponse401 | modelGatewayControllerRemoveResponse403 | modelGatewayControllerRemoveResponse404 | modelGatewayControllerRemoveResponse500) & {
-  headers: Headers;
-};
-
-export type modelGatewayControllerRemoveResponse = (modelGatewayControllerRemoveResponseSuccess | modelGatewayControllerRemoveResponseError)
-
-export const getModelGatewayControllerRemoveUrl = (id: string,) => {
-
-
-
-
-  return `/api/v1/firm/ai/providers/${id}`
-}
-
-/**
- * @summary Remove a provider connection
- */
-export const modelGatewayControllerRemove = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerRemoveResponse> => {
-
-  return customFetch<modelGatewayControllerRemoveResponse>(getModelGatewayControllerRemoveUrl(id),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-export type modelGatewayControllerTestResponse200 = {
-  data: AiProviderTestDto
-  status: 200
-}
-
-export type modelGatewayControllerTestResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type modelGatewayControllerTestResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type modelGatewayControllerTestResponse404 = {
-  data: ErrorEnvelopeDto
-  status: 404
-}
-
-export type modelGatewayControllerTestResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type modelGatewayControllerTestResponseSuccess = (modelGatewayControllerTestResponse200) & {
-  headers: Headers;
-};
-export type modelGatewayControllerTestResponseError = (modelGatewayControllerTestResponse401 | modelGatewayControllerTestResponse403 | modelGatewayControllerTestResponse404 | modelGatewayControllerTestResponse500) & {
-  headers: Headers;
-};
-
-export type modelGatewayControllerTestResponse = (modelGatewayControllerTestResponseSuccess | modelGatewayControllerTestResponseError)
-
-export const getModelGatewayControllerTestUrl = (id: string,) => {
-
-
-
-
-  return `/api/v1/firm/ai/providers/${id}/test`
-}
-
-/**
- * @summary Test credentials and refresh the model list
- */
-export const modelGatewayControllerTest = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerTestResponse> => {
-
-  return customFetch<modelGatewayControllerTestResponse>(getModelGatewayControllerTestUrl(id),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-export type modelGatewayControllerRoutesResponse200 = {
-  data: void
-  status: 200
-}
-
-export type modelGatewayControllerRoutesResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type modelGatewayControllerRoutesResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type modelGatewayControllerRoutesResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type modelGatewayControllerRoutesResponseSuccess = (modelGatewayControllerRoutesResponse200) & {
-  headers: Headers;
-};
-export type modelGatewayControllerRoutesResponseError = (modelGatewayControllerRoutesResponse401 | modelGatewayControllerRoutesResponse403 | modelGatewayControllerRoutesResponse500) & {
-  headers: Headers;
-};
-
-export type modelGatewayControllerRoutesResponse = (modelGatewayControllerRoutesResponseSuccess | modelGatewayControllerRoutesResponseError)
-
-export const getModelGatewayControllerRoutesUrl = () => {
-
-
-
-
-  return `/api/v1/firm/ai/providers/routes`
-}
-
-/**
- * Read-only. Pipeline routes are configured by the operator through env and cannot be changed from the firm UI.
- * @summary Operator route status for decision and extraction
- */
-export const modelGatewayControllerRoutes = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerRoutesResponse> => {
-
-  return customFetch<modelGatewayControllerRoutesResponse>(getModelGatewayControllerRoutesUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export type modelGatewayControllerCatalogueResponse200 = {
-  data: void
-  status: 200
-}
-
-export type modelGatewayControllerCatalogueResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type modelGatewayControllerCatalogueResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type modelGatewayControllerCatalogueResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type modelGatewayControllerCatalogueResponseSuccess = (modelGatewayControllerCatalogueResponse200) & {
-  headers: Headers;
-};
-export type modelGatewayControllerCatalogueResponseError = (modelGatewayControllerCatalogueResponse401 | modelGatewayControllerCatalogueResponse403 | modelGatewayControllerCatalogueResponse500) & {
-  headers: Headers;
-};
-
-export type modelGatewayControllerCatalogueResponse = (modelGatewayControllerCatalogueResponseSuccess | modelGatewayControllerCatalogueResponseError)
-
-export const getModelGatewayControllerCatalogueUrl = () => {
-
-
-
-
-  return `/api/v1/firm/ai/providers/catalogue`
-}
-
-/**
- * @summary List completion models the firm may select
- */
-export const modelGatewayControllerCatalogue = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerCatalogueResponse> => {
-
-  return customFetch<modelGatewayControllerCatalogueResponse>(getModelGatewayControllerCatalogueUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-export type modelGatewayControllerHealthResponse200 = {
-  data: void
-  status: 200
-}
-
-export type modelGatewayControllerHealthResponse401 = {
-  data: ErrorEnvelopeDto
-  status: 401
-}
-
-export type modelGatewayControllerHealthResponse403 = {
-  data: ErrorEnvelopeDto
-  status: 403
-}
-
-export type modelGatewayControllerHealthResponse500 = {
-  data: ErrorEnvelopeDto
-  status: 500
-}
-
-export type modelGatewayControllerHealthResponseSuccess = (modelGatewayControllerHealthResponse200) & {
-  headers: Headers;
-};
-export type modelGatewayControllerHealthResponseError = (modelGatewayControllerHealthResponse401 | modelGatewayControllerHealthResponse403 | modelGatewayControllerHealthResponse500) & {
-  headers: Headers;
-};
-
-export type modelGatewayControllerHealthResponse = (modelGatewayControllerHealthResponseSuccess | modelGatewayControllerHealthResponseError)
-
-export const getModelGatewayControllerHealthUrl = () => {
-
-
-
-
-  return `/api/v1/firm/ai/providers/health`
-}
-
-/**
- * @summary Completion route health for the firm
- */
-export const modelGatewayControllerHealth = async ( options?: Parameters<typeof customFetch>[1]): Promise<modelGatewayControllerHealthResponse> => {
-
-  return customFetch<modelGatewayControllerHealthResponse>(getModelGatewayControllerHealthUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
 export type searchControllerSearchMatterResponse200 = {
   data: void
   status: 200
@@ -1193,6 +395,107 @@ export const searchControllerSearchMatter = async (matterId: string,
   {
     ...options,
     method: 'GET'
+
+
+  }
+);}
+
+
+
+export type embeddingControllerStatusResponse200 = {
+  data: void
+  status: 200
+}
+
+export type embeddingControllerStatusResponse403 = {
+  data: void
+  status: 403
+}
+
+export type embeddingControllerStatusResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type embeddingControllerStatusResponseSuccess = (embeddingControllerStatusResponse200) & {
+  headers: Headers;
+};
+export type embeddingControllerStatusResponseError = (embeddingControllerStatusResponse403 | embeddingControllerStatusResponse500) & {
+  headers: Headers;
+};
+
+export type embeddingControllerStatusResponse = (embeddingControllerStatusResponseSuccess | embeddingControllerStatusResponseError)
+
+export const getEmbeddingControllerStatusUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/embedding`
+}
+
+/**
+ * @summary Embedding status for a matter
+ */
+export const embeddingControllerStatus = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<embeddingControllerStatusResponse> => {
+
+  return customFetch<embeddingControllerStatusResponse>(getEmbeddingControllerStatusUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type embeddingControllerReembedResponse200 = {
+  data: void
+  status: 200
+}
+
+export type embeddingControllerReembedResponse400 = {
+  data: void
+  status: 400
+}
+
+export type embeddingControllerReembedResponse403 = {
+  data: void
+  status: 403
+}
+
+export type embeddingControllerReembedResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type embeddingControllerReembedResponseSuccess = (embeddingControllerReembedResponse200) & {
+  headers: Headers;
+};
+export type embeddingControllerReembedResponseError = (embeddingControllerReembedResponse400 | embeddingControllerReembedResponse403 | embeddingControllerReembedResponse500) & {
+  headers: Headers;
+};
+
+export type embeddingControllerReembedResponse = (embeddingControllerReembedResponseSuccess | embeddingControllerReembedResponseError)
+
+export const getEmbeddingControllerReembedUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/embedding/reembed`
+}
+
+/**
+ * @summary Trigger re-embedding for a matter
+ */
+export const embeddingControllerReembed = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<embeddingControllerReembedResponse> => {
+
+  return customFetch<embeddingControllerReembedResponse>(getEmbeddingControllerReembedUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
 
 
   }
@@ -1364,6 +667,426 @@ export const jobsControllerList = async (params?: JobsControllerListParams, opti
   {
     ...options,
     method: 'GET'
+
+
+  }
+);}
+
+
+
+export type systemOneControllerDecideResponse200 = {
+  data: void
+  status: 200
+}
+
+export type systemOneControllerDecideResponse400 = {
+  data: void
+  status: 400
+}
+
+export type systemOneControllerDecideResponse403 = {
+  data: void
+  status: 403
+}
+
+export type systemOneControllerDecideResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type systemOneControllerDecideResponseSuccess = (systemOneControllerDecideResponse200) & {
+  headers: Headers;
+};
+export type systemOneControllerDecideResponseError = (systemOneControllerDecideResponse400 | systemOneControllerDecideResponse403 | systemOneControllerDecideResponse500) & {
+  headers: Headers;
+};
+
+export type systemOneControllerDecideResponse = (systemOneControllerDecideResponseSuccess | systemOneControllerDecideResponseError)
+
+export const getSystemOneControllerDecideUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/system-one/decide`
+}
+
+/**
+ * @summary Run a typed decision query against the matter
+ */
+export const systemOneControllerDecide = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<systemOneControllerDecideResponse> => {
+
+  return customFetch<systemOneControllerDecideResponse>(getSystemOneControllerDecideUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type conversationControllerListResponse200 = {
+  data: ConversationThreadListDto
+  status: 200
+}
+
+export type conversationControllerListResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type conversationControllerListResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type conversationControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type conversationControllerListResponseSuccess = (conversationControllerListResponse200) & {
+  headers: Headers;
+};
+export type conversationControllerListResponseError = (conversationControllerListResponse401 | conversationControllerListResponse403 | conversationControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type conversationControllerListResponse = (conversationControllerListResponseSuccess | conversationControllerListResponseError)
+
+export const getConversationControllerListUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/threads`
+}
+
+/**
+ * @summary List your AI threads in a matter
+ */
+export const conversationControllerList = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<conversationControllerListResponse> => {
+
+  return customFetch<conversationControllerListResponse>(getConversationControllerListUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type conversationControllerCreateResponse201 = {
+  data: ConversationThreadDto
+  status: 201
+}
+
+export type conversationControllerCreateResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type conversationControllerCreateResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type conversationControllerCreateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type conversationControllerCreateResponseSuccess = (conversationControllerCreateResponse201) & {
+  headers: Headers;
+};
+export type conversationControllerCreateResponseError = (conversationControllerCreateResponse401 | conversationControllerCreateResponse403 | conversationControllerCreateResponse500) & {
+  headers: Headers;
+};
+
+export type conversationControllerCreateResponse = (conversationControllerCreateResponseSuccess | conversationControllerCreateResponseError)
+
+export const getConversationControllerCreateUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/threads`
+}
+
+/**
+ * @summary Start an AI conversation
+ */
+export const conversationControllerCreate = async (matterId: string,
+    conversationControllerCreateBody: ConversationControllerCreateBody, options?: Parameters<typeof customFetch>[1]): Promise<conversationControllerCreateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<conversationControllerCreateResponse>(getConversationControllerCreateUrl(matterId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(conversationControllerCreateBody)
+  }
+);}
+
+
+
+export type conversationControllerGetResponse200 = {
+  data: ConversationThreadDetailDto
+  status: 200
+}
+
+export type conversationControllerGetResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type conversationControllerGetResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type conversationControllerGetResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type conversationControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type conversationControllerGetResponseSuccess = (conversationControllerGetResponse200) & {
+  headers: Headers;
+};
+export type conversationControllerGetResponseError = (conversationControllerGetResponse401 | conversationControllerGetResponse403 | conversationControllerGetResponse404 | conversationControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type conversationControllerGetResponse = (conversationControllerGetResponseSuccess | conversationControllerGetResponseError)
+
+export const getConversationControllerGetUrl = (matterId: string,
+    threadId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/threads/${threadId}`
+}
+
+/**
+ * @summary Get a thread and its messages
+ */
+export const conversationControllerGet = async (matterId: string,
+    threadId: string, options?: Parameters<typeof customFetch>[1]): Promise<conversationControllerGetResponse> => {
+
+  return customFetch<conversationControllerGetResponse>(getConversationControllerGetUrl(matterId,threadId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type conversationControllerRemoveResponse200 = {
+  data: ConversationControllerRemove200
+  status: 200
+}
+
+export type conversationControllerRemoveResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type conversationControllerRemoveResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type conversationControllerRemoveResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type conversationControllerRemoveResponseSuccess = (conversationControllerRemoveResponse200) & {
+  headers: Headers;
+};
+export type conversationControllerRemoveResponseError = (conversationControllerRemoveResponse401 | conversationControllerRemoveResponse403 | conversationControllerRemoveResponse500) & {
+  headers: Headers;
+};
+
+export type conversationControllerRemoveResponse = (conversationControllerRemoveResponseSuccess | conversationControllerRemoveResponseError)
+
+export const getConversationControllerRemoveUrl = (matterId: string,
+    threadId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/threads/${threadId}`
+}
+
+/**
+ * @summary Delete a thread
+ */
+export const conversationControllerRemove = async (matterId: string,
+    threadId: string, options?: Parameters<typeof customFetch>[1]): Promise<conversationControllerRemoveResponse> => {
+
+  return customFetch<conversationControllerRemoveResponse>(getConversationControllerRemoveUrl(matterId,threadId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+export type conversationControllerSendResponse201 = {
+  data: ConversationMessageResponseDto
+  status: 201
+}
+
+export type conversationControllerSendResponse400 = {
+  data: ErrorEnvelopeDto
+  status: 400
+}
+
+export type conversationControllerSendResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type conversationControllerSendResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type conversationControllerSendResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type conversationControllerSendResponseSuccess = (conversationControllerSendResponse201) & {
+  headers: Headers;
+};
+export type conversationControllerSendResponseError = (conversationControllerSendResponse400 | conversationControllerSendResponse401 | conversationControllerSendResponse403 | conversationControllerSendResponse500) & {
+  headers: Headers;
+};
+
+export type conversationControllerSendResponse = (conversationControllerSendResponseSuccess | conversationControllerSendResponseError)
+
+export const getConversationControllerSendUrl = (matterId: string,
+    threadId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/threads/${threadId}/messages`
+}
+
+/**
+ * Runs the grounded retrieval agent over confirmed facts and returns the answer with citations and tool calls.
+ * @summary Ask Dep AI
+ */
+export const conversationControllerSend = async (matterId: string,
+    threadId: string,
+    conversationControllerSendBody: ConversationControllerSendBody, options?: Parameters<typeof customFetch>[1]): Promise<conversationControllerSendResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<conversationControllerSendResponse>(getConversationControllerSendUrl(matterId,threadId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(conversationControllerSendBody)
+  }
+);}
+
+
+
+export type conversationControllerCancelResponse200 = {
+  data: void
+  status: 200
+}
+
+export type conversationControllerCancelResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type conversationControllerCancelResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type conversationControllerCancelResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type conversationControllerCancelResponseSuccess = (conversationControllerCancelResponse200) & {
+  headers: Headers;
+};
+export type conversationControllerCancelResponseError = (conversationControllerCancelResponse401 | conversationControllerCancelResponse403 | conversationControllerCancelResponse500) & {
+  headers: Headers;
+};
+
+export type conversationControllerCancelResponse = (conversationControllerCancelResponseSuccess | conversationControllerCancelResponseError)
+
+export const getConversationControllerCancelUrl = (matterId: string,
+    threadId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/threads/${threadId}/cancel`
+}
+
+/**
+ * @summary Stop the active Dep AI run
+ */
+export const conversationControllerCancel = async (matterId: string,
+    threadId: string, options?: Parameters<typeof customFetch>[1]): Promise<conversationControllerCancelResponse> => {
+
+  return customFetch<conversationControllerCancelResponse>(getConversationControllerCancelUrl(matterId,threadId),
+  {
+    ...options,
+    method: 'POST'
 
 
   }
@@ -1811,6 +1534,187 @@ export const documentsControllerReprocess = async (matterId: string,
   {
     ...options,
     method: 'POST'
+
+
+  }
+);}
+
+
+
+export type webhooksControllerListWebhooksResponse200 = {
+  data: void
+  status: 200
+}
+
+export type webhooksControllerListWebhooksResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type webhooksControllerListWebhooksResponseSuccess = (webhooksControllerListWebhooksResponse200) & {
+  headers: Headers;
+};
+export type webhooksControllerListWebhooksResponseError = (webhooksControllerListWebhooksResponse500) & {
+  headers: Headers;
+};
+
+export type webhooksControllerListWebhooksResponse = (webhooksControllerListWebhooksResponseSuccess | webhooksControllerListWebhooksResponseError)
+
+export const getWebhooksControllerListWebhooksUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/webhooks`
+}
+
+/**
+ * @summary List webhooks for the firm
+ */
+export const webhooksControllerListWebhooks = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<webhooksControllerListWebhooksResponse> => {
+
+  return customFetch<webhooksControllerListWebhooksResponse>(getWebhooksControllerListWebhooksUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type webhooksControllerCreateWebhookResponse201 = {
+  data: void
+  status: 201
+}
+
+export type webhooksControllerCreateWebhookResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type webhooksControllerCreateWebhookResponseSuccess = (webhooksControllerCreateWebhookResponse201) & {
+  headers: Headers;
+};
+export type webhooksControllerCreateWebhookResponseError = (webhooksControllerCreateWebhookResponse500) & {
+  headers: Headers;
+};
+
+export type webhooksControllerCreateWebhookResponse = (webhooksControllerCreateWebhookResponseSuccess | webhooksControllerCreateWebhookResponseError)
+
+export const getWebhooksControllerCreateWebhookUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/webhooks`
+}
+
+/**
+ * @summary Create a webhook
+ */
+export const webhooksControllerCreateWebhook = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<webhooksControllerCreateWebhookResponse> => {
+
+  return customFetch<webhooksControllerCreateWebhookResponse>(getWebhooksControllerCreateWebhookUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type webhooksControllerDeleteWebhookResponse200 = {
+  data: void
+  status: 200
+}
+
+export type webhooksControllerDeleteWebhookResponse404 = {
+  data: void
+  status: 404
+}
+
+export type webhooksControllerDeleteWebhookResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type webhooksControllerDeleteWebhookResponseSuccess = (webhooksControllerDeleteWebhookResponse200) & {
+  headers: Headers;
+};
+export type webhooksControllerDeleteWebhookResponseError = (webhooksControllerDeleteWebhookResponse404 | webhooksControllerDeleteWebhookResponse500) & {
+  headers: Headers;
+};
+
+export type webhooksControllerDeleteWebhookResponse = (webhooksControllerDeleteWebhookResponseSuccess | webhooksControllerDeleteWebhookResponseError)
+
+export const getWebhooksControllerDeleteWebhookUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/webhooks/${id}`
+}
+
+/**
+ * @summary Delete a webhook
+ */
+export const webhooksControllerDeleteWebhook = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<webhooksControllerDeleteWebhookResponse> => {
+
+  return customFetch<webhooksControllerDeleteWebhookResponse>(getWebhooksControllerDeleteWebhookUrl(matterId,id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+export type webhooksControllerListDeliveriesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type webhooksControllerListDeliveriesResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type webhooksControllerListDeliveriesResponseSuccess = (webhooksControllerListDeliveriesResponse200) & {
+  headers: Headers;
+};
+export type webhooksControllerListDeliveriesResponseError = (webhooksControllerListDeliveriesResponse500) & {
+  headers: Headers;
+};
+
+export type webhooksControllerListDeliveriesResponse = (webhooksControllerListDeliveriesResponseSuccess | webhooksControllerListDeliveriesResponseError)
+
+export const getWebhooksControllerListDeliveriesUrl = (matterId: string,
+    webhookId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/webhooks/${webhookId}/deliveries`
+}
+
+/**
+ * @summary List delivery attempts for a webhook
+ */
+export const webhooksControllerListDeliveries = async (matterId: string,
+    webhookId: string, options?: Parameters<typeof customFetch>[1]): Promise<webhooksControllerListDeliveriesResponse> => {
+
+  return customFetch<webhooksControllerListDeliveriesResponse>(getWebhooksControllerListDeliveriesUrl(matterId,webhookId),
+  {
+    ...options,
+    method: 'GET'
 
 
   }
@@ -2598,6 +2502,146 @@ export const firmsControllerDomains = async ( options?: Parameters<typeof custom
 
 
 
+export type firmSettingsControllerGetResponse200 = {
+  data: FirmSettingsResponseDto
+  status: 200
+}
+
+export type firmSettingsControllerGetResponse400 = {
+  data: ErrorEnvelopeDto
+  status: 400
+}
+
+export type firmSettingsControllerGetResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type firmSettingsControllerGetResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type firmSettingsControllerGetResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type firmSettingsControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type firmSettingsControllerGetResponseSuccess = (firmSettingsControllerGetResponse200) & {
+  headers: Headers;
+};
+export type firmSettingsControllerGetResponseError = (firmSettingsControllerGetResponse400 | firmSettingsControllerGetResponse401 | firmSettingsControllerGetResponse403 | firmSettingsControllerGetResponse404 | firmSettingsControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type firmSettingsControllerGetResponse = (firmSettingsControllerGetResponseSuccess | firmSettingsControllerGetResponseError)
+
+export const getFirmSettingsControllerGetUrl = () => {
+
+
+
+
+  return `/api/v1/firm/settings`
+}
+
+/**
+ * @summary Get effective firm settings
+ */
+export const firmSettingsControllerGet = async ( options?: Parameters<typeof customFetch>[1]): Promise<firmSettingsControllerGetResponse> => {
+
+  return customFetch<firmSettingsControllerGetResponse>(getFirmSettingsControllerGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type firmSettingsControllerUpdateResponse200 = {
+  data: FirmSettingsResponseDto
+  status: 200
+}
+
+export type firmSettingsControllerUpdateResponse400 = {
+  data: ErrorEnvelopeDto
+  status: 400
+}
+
+export type firmSettingsControllerUpdateResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type firmSettingsControllerUpdateResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type firmSettingsControllerUpdateResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type firmSettingsControllerUpdateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type firmSettingsControllerUpdateResponseSuccess = (firmSettingsControllerUpdateResponse200) & {
+  headers: Headers;
+};
+export type firmSettingsControllerUpdateResponseError = (firmSettingsControllerUpdateResponse400 | firmSettingsControllerUpdateResponse401 | firmSettingsControllerUpdateResponse403 | firmSettingsControllerUpdateResponse404 | firmSettingsControllerUpdateResponse500) & {
+  headers: Headers;
+};
+
+export type firmSettingsControllerUpdateResponse = (firmSettingsControllerUpdateResponseSuccess | firmSettingsControllerUpdateResponseError)
+
+export const getFirmSettingsControllerUpdateUrl = () => {
+
+
+
+
+  return `/api/v1/firm/settings`
+}
+
+/**
+ * @summary Update firm settings
+ */
+export const firmSettingsControllerUpdate = async (firmSettingsControllerUpdateBody: FirmSettingsControllerUpdateBody, options?: Parameters<typeof customFetch>[1]): Promise<firmSettingsControllerUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<firmSettingsControllerUpdateResponse>(getFirmSettingsControllerUpdateUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(firmSettingsControllerUpdateBody)
+  }
+);}
+
+
+
 export type membersControllerListResponse200 = {
   data: MemberListDto
   status: 200
@@ -2798,7 +2842,7 @@ export const membersControllerRemove = async (id: string, options?: Parameters<t
 
 
 export type invitationsControllerListResponse200 = {
-  data: InvitationListDto
+  data: PublicInvitationResponseDto
   status: 200
 }
 
@@ -2851,7 +2895,7 @@ export const invitationsControllerList = async ( options?: Parameters<typeof cus
 
 
 export type invitationsControllerCreateResponse201 = {
-  data: InvitationResponseDto
+  data: PublicInvitationResponseDto
   status: 201
 }
 
@@ -2928,7 +2972,7 @@ return customFetch<invitationsControllerCreateResponse>(getInvitationsController
 
 
 export type invitationsControllerResendResponse200 = {
-  data: InvitationResponseDto
+  data: PublicInvitationResponseDto
   status: 200
 }
 
@@ -3500,49 +3544,54 @@ return customFetch<mattersControllerUpdateResponse>(getMattersControllerUpdateUr
 
 
 
-export type mcpControllerListResponse200 = {
-  data: McpServerListDto
+export type matterSettingsControllerGetResponse200 = {
+  data: MatterSettingsResponseDto
   status: 200
 }
 
-export type mcpControllerListResponse401 = {
+export type matterSettingsControllerGetResponse401 = {
   data: ErrorEnvelopeDto
   status: 401
 }
 
-export type mcpControllerListResponse403 = {
+export type matterSettingsControllerGetResponse403 = {
   data: ErrorEnvelopeDto
   status: 403
 }
 
-export type mcpControllerListResponse500 = {
+export type matterSettingsControllerGetResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type matterSettingsControllerGetResponse500 = {
   data: ErrorEnvelopeDto
   status: 500
 }
 
-export type mcpControllerListResponseSuccess = (mcpControllerListResponse200) & {
+export type matterSettingsControllerGetResponseSuccess = (matterSettingsControllerGetResponse200) & {
   headers: Headers;
 };
-export type mcpControllerListResponseError = (mcpControllerListResponse401 | mcpControllerListResponse403 | mcpControllerListResponse500) & {
+export type matterSettingsControllerGetResponseError = (matterSettingsControllerGetResponse401 | matterSettingsControllerGetResponse403 | matterSettingsControllerGetResponse404 | matterSettingsControllerGetResponse500) & {
   headers: Headers;
 };
 
-export type mcpControllerListResponse = (mcpControllerListResponseSuccess | mcpControllerListResponseError)
+export type matterSettingsControllerGetResponse = (matterSettingsControllerGetResponseSuccess | matterSettingsControllerGetResponseError)
 
-export const getMcpControllerListUrl = () => {
-
-
+export const getMatterSettingsControllerGetUrl = (matterId: string,) => {
 
 
-  return `/api/v1/firm/mcp/servers`
+
+
+  return `/api/v1/matters/${matterId}/settings`
 }
 
 /**
- * @summary List MCP servers
+ * @summary Get effective matter settings
  */
-export const mcpControllerList = async ( options?: Parameters<typeof customFetch>[1]): Promise<mcpControllerListResponse> => {
+export const matterSettingsControllerGet = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<matterSettingsControllerGetResponse> => {
 
-  return customFetch<mcpControllerListResponse>(getMcpControllerListUrl(),
+  return customFetch<matterSettingsControllerGetResponse>(getMatterSettingsControllerGetUrl(matterId),
   {
     ...options,
     method: 'GET'
@@ -3553,57 +3602,58 @@ export const mcpControllerList = async ( options?: Parameters<typeof customFetch
 
 
 
-export type mcpControllerCreateResponse201 = {
-  data: McpServerResponseDto
-  status: 201
+export type matterSettingsControllerUpdateResponse200 = {
+  data: MatterSettingsResponseDto
+  status: 200
 }
 
-export type mcpControllerCreateResponse400 = {
+export type matterSettingsControllerUpdateResponse400 = {
   data: ErrorEnvelopeDto
   status: 400
 }
 
-export type mcpControllerCreateResponse401 = {
+export type matterSettingsControllerUpdateResponse401 = {
   data: ErrorEnvelopeDto
   status: 401
 }
 
-export type mcpControllerCreateResponse403 = {
+export type matterSettingsControllerUpdateResponse403 = {
   data: ErrorEnvelopeDto
   status: 403
 }
 
-export type mcpControllerCreateResponse409 = {
+export type matterSettingsControllerUpdateResponse404 = {
   data: ErrorEnvelopeDto
-  status: 409
+  status: 404
 }
 
-export type mcpControllerCreateResponse500 = {
+export type matterSettingsControllerUpdateResponse500 = {
   data: ErrorEnvelopeDto
   status: 500
 }
 
-export type mcpControllerCreateResponseSuccess = (mcpControllerCreateResponse201) & {
+export type matterSettingsControllerUpdateResponseSuccess = (matterSettingsControllerUpdateResponse200) & {
   headers: Headers;
 };
-export type mcpControllerCreateResponseError = (mcpControllerCreateResponse400 | mcpControllerCreateResponse401 | mcpControllerCreateResponse403 | mcpControllerCreateResponse409 | mcpControllerCreateResponse500) & {
+export type matterSettingsControllerUpdateResponseError = (matterSettingsControllerUpdateResponse400 | matterSettingsControllerUpdateResponse401 | matterSettingsControllerUpdateResponse403 | matterSettingsControllerUpdateResponse404 | matterSettingsControllerUpdateResponse500) & {
   headers: Headers;
 };
 
-export type mcpControllerCreateResponse = (mcpControllerCreateResponseSuccess | mcpControllerCreateResponseError)
+export type matterSettingsControllerUpdateResponse = (matterSettingsControllerUpdateResponseSuccess | matterSettingsControllerUpdateResponseError)
 
-export const getMcpControllerCreateUrl = () => {
-
-
+export const getMatterSettingsControllerUpdateUrl = (matterId: string,) => {
 
 
-  return `/api/v1/firm/mcp/servers`
+
+
+  return `/api/v1/matters/${matterId}/settings`
 }
 
 /**
- * @summary Register an MCP server
+ * @summary Update matter settings
  */
-export const mcpControllerCreate = async (mcpControllerCreateBody: McpControllerCreateBody, options?: Parameters<typeof customFetch>[1]): Promise<mcpControllerCreateResponse> => {
+export const matterSettingsControllerUpdate = async (matterId: string,
+    matterSettingsControllerUpdateBody: MatterSettingsControllerUpdateBody, options?: Parameters<typeof customFetch>[1]): Promise<matterSettingsControllerUpdateResponse> => {
 
     const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
     if (!h) return {};
@@ -3619,52 +3669,182 @@ export const mcpControllerCreate = async (mcpControllerCreateBody: McpController
     }
     return headers;
   };
-return customFetch<mcpControllerCreateResponse>(getMcpControllerCreateUrl(),
+return customFetch<matterSettingsControllerUpdateResponse>(getMatterSettingsControllerUpdateUrl(matterId),
   {
     ...options,
-    method: 'POST',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
-    body: JSON.stringify(mcpControllerCreateBody)
+    body: JSON.stringify(matterSettingsControllerUpdateBody)
   }
 );}
 
 
 
-export type mcpControllerTestResponse200 = {
-  data: McpTestResponseDto
+export type mcpRegistryControllerListResponse200 = {
+  data: McpServerListDto
   status: 200
 }
 
-export type mcpControllerTestResponse401 = {
+export type mcpRegistryControllerListResponse401 = {
   data: ErrorEnvelopeDto
   status: 401
 }
 
-export type mcpControllerTestResponse403 = {
+export type mcpRegistryControllerListResponse403 = {
   data: ErrorEnvelopeDto
   status: 403
 }
 
-export type mcpControllerTestResponse404 = {
-  data: ErrorEnvelopeDto
-  status: 404
-}
-
-export type mcpControllerTestResponse500 = {
+export type mcpRegistryControllerListResponse500 = {
   data: ErrorEnvelopeDto
   status: 500
 }
 
-export type mcpControllerTestResponseSuccess = (mcpControllerTestResponse200) & {
+export type mcpRegistryControllerListResponseSuccess = (mcpRegistryControllerListResponse200) & {
   headers: Headers;
 };
-export type mcpControllerTestResponseError = (mcpControllerTestResponse401 | mcpControllerTestResponse403 | mcpControllerTestResponse404 | mcpControllerTestResponse500) & {
+export type mcpRegistryControllerListResponseError = (mcpRegistryControllerListResponse401 | mcpRegistryControllerListResponse403 | mcpRegistryControllerListResponse500) & {
   headers: Headers;
 };
 
-export type mcpControllerTestResponse = (mcpControllerTestResponseSuccess | mcpControllerTestResponseError)
+export type mcpRegistryControllerListResponse = (mcpRegistryControllerListResponseSuccess | mcpRegistryControllerListResponseError)
 
-export const getMcpControllerTestUrl = (id: string,) => {
+export const getMcpRegistryControllerListUrl = () => {
+
+
+
+
+  return `/api/v1/firm/mcp/servers`
+}
+
+/**
+ * @summary List MCP servers
+ */
+export const mcpRegistryControllerList = async ( options?: Parameters<typeof customFetch>[1]): Promise<mcpRegistryControllerListResponse> => {
+
+  return customFetch<mcpRegistryControllerListResponse>(getMcpRegistryControllerListUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type mcpRegistryControllerCreateResponse201 = {
+  data: McpServerResponseDto
+  status: 201
+}
+
+export type mcpRegistryControllerCreateResponse400 = {
+  data: ErrorEnvelopeDto
+  status: 400
+}
+
+export type mcpRegistryControllerCreateResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type mcpRegistryControllerCreateResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type mcpRegistryControllerCreateResponse409 = {
+  data: ErrorEnvelopeDto
+  status: 409
+}
+
+export type mcpRegistryControllerCreateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type mcpRegistryControllerCreateResponseSuccess = (mcpRegistryControllerCreateResponse201) & {
+  headers: Headers;
+};
+export type mcpRegistryControllerCreateResponseError = (mcpRegistryControllerCreateResponse400 | mcpRegistryControllerCreateResponse401 | mcpRegistryControllerCreateResponse403 | mcpRegistryControllerCreateResponse409 | mcpRegistryControllerCreateResponse500) & {
+  headers: Headers;
+};
+
+export type mcpRegistryControllerCreateResponse = (mcpRegistryControllerCreateResponseSuccess | mcpRegistryControllerCreateResponseError)
+
+export const getMcpRegistryControllerCreateUrl = () => {
+
+
+
+
+  return `/api/v1/firm/mcp/servers`
+}
+
+/**
+ * @summary Register an MCP server
+ */
+export const mcpRegistryControllerCreate = async (mcpRegistryControllerCreateBody: McpRegistryControllerCreateBody, options?: Parameters<typeof customFetch>[1]): Promise<mcpRegistryControllerCreateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<mcpRegistryControllerCreateResponse>(getMcpRegistryControllerCreateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(mcpRegistryControllerCreateBody)
+  }
+);}
+
+
+
+export type mcpRegistryControllerTestResponse200 = {
+  data: McpTestResponseDto
+  status: 200
+}
+
+export type mcpRegistryControllerTestResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type mcpRegistryControllerTestResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type mcpRegistryControllerTestResponse404 = {
+  data: ErrorEnvelopeDto
+  status: 404
+}
+
+export type mcpRegistryControllerTestResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type mcpRegistryControllerTestResponseSuccess = (mcpRegistryControllerTestResponse200) & {
+  headers: Headers;
+};
+export type mcpRegistryControllerTestResponseError = (mcpRegistryControllerTestResponse401 | mcpRegistryControllerTestResponse403 | mcpRegistryControllerTestResponse404 | mcpRegistryControllerTestResponse500) & {
+  headers: Headers;
+};
+
+export type mcpRegistryControllerTestResponse = (mcpRegistryControllerTestResponseSuccess | mcpRegistryControllerTestResponseError)
+
+export const getMcpRegistryControllerTestUrl = (id: string,) => {
 
 
 
@@ -3676,9 +3856,9 @@ export const getMcpControllerTestUrl = (id: string,) => {
  * Performs an MCP initialize and tools/list request against the server URL.
  * @summary Connect and list tools
  */
-export const mcpControllerTest = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<mcpControllerTestResponse> => {
+export const mcpRegistryControllerTest = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<mcpRegistryControllerTestResponse> => {
 
-  return customFetch<mcpControllerTestResponse>(getMcpControllerTestUrl(id),
+  return customFetch<mcpRegistryControllerTestResponse>(getMcpRegistryControllerTestUrl(id),
   {
     ...options,
     method: 'POST'
@@ -3689,41 +3869,41 @@ export const mcpControllerTest = async (id: string, options?: Parameters<typeof 
 
 
 
-export type mcpControllerRemoveResponse200 = {
-  data: McpControllerRemove200
+export type mcpRegistryControllerRemoveResponse200 = {
+  data: McpRegistryControllerRemove200
   status: 200
 }
 
-export type mcpControllerRemoveResponse401 = {
+export type mcpRegistryControllerRemoveResponse401 = {
   data: ErrorEnvelopeDto
   status: 401
 }
 
-export type mcpControllerRemoveResponse403 = {
+export type mcpRegistryControllerRemoveResponse403 = {
   data: ErrorEnvelopeDto
   status: 403
 }
 
-export type mcpControllerRemoveResponse404 = {
+export type mcpRegistryControllerRemoveResponse404 = {
   data: ErrorEnvelopeDto
   status: 404
 }
 
-export type mcpControllerRemoveResponse500 = {
+export type mcpRegistryControllerRemoveResponse500 = {
   data: ErrorEnvelopeDto
   status: 500
 }
 
-export type mcpControllerRemoveResponseSuccess = (mcpControllerRemoveResponse200) & {
+export type mcpRegistryControllerRemoveResponseSuccess = (mcpRegistryControllerRemoveResponse200) & {
   headers: Headers;
 };
-export type mcpControllerRemoveResponseError = (mcpControllerRemoveResponse401 | mcpControllerRemoveResponse403 | mcpControllerRemoveResponse404 | mcpControllerRemoveResponse500) & {
+export type mcpRegistryControllerRemoveResponseError = (mcpRegistryControllerRemoveResponse401 | mcpRegistryControllerRemoveResponse403 | mcpRegistryControllerRemoveResponse404 | mcpRegistryControllerRemoveResponse500) & {
   headers: Headers;
 };
 
-export type mcpControllerRemoveResponse = (mcpControllerRemoveResponseSuccess | mcpControllerRemoveResponseError)
+export type mcpRegistryControllerRemoveResponse = (mcpRegistryControllerRemoveResponseSuccess | mcpRegistryControllerRemoveResponseError)
 
-export const getMcpControllerRemoveUrl = (id: string,) => {
+export const getMcpRegistryControllerRemoveUrl = (id: string,) => {
 
 
 
@@ -3734,9 +3914,9 @@ export const getMcpControllerRemoveUrl = (id: string,) => {
 /**
  * @summary Remove an MCP server
  */
-export const mcpControllerRemove = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<mcpControllerRemoveResponse> => {
+export const mcpRegistryControllerRemove = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<mcpRegistryControllerRemoveResponse> => {
 
-  return customFetch<mcpControllerRemoveResponse>(getMcpControllerRemoveUrl(id),
+  return customFetch<mcpRegistryControllerRemoveResponse>(getMcpRegistryControllerRemoveUrl(id),
   {
     ...options,
     method: 'DELETE'
@@ -4363,6 +4543,49 @@ export const onboardingControllerDismiss = async ( options?: Parameters<typeof c
 
 
 
+export type outputsControllerListResponse200 = {
+  data: void
+  status: 200
+}
+
+export type outputsControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type outputsControllerListResponseSuccess = (outputsControllerListResponse200) & {
+  headers: Headers;
+};
+export type outputsControllerListResponseError = (outputsControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type outputsControllerListResponse = (outputsControllerListResponseSuccess | outputsControllerListResponseError)
+
+export const getOutputsControllerListUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/outputs`
+}
+
+/**
+ * @summary List outputs in a matter
+ */
+export const outputsControllerList = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<outputsControllerListResponse> => {
+
+  return customFetch<outputsControllerListResponse>(getOutputsControllerListUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
 export type subsetsControllerListResponse200 = {
   data: SubsetListDto
   status: 200
@@ -4861,6 +5084,2050 @@ export const subsetsControllerFacts = async (matterId: string,
     params?: SubsetsControllerFactsParams, options?: Parameters<typeof customFetch>[1]): Promise<subsetsControllerFactsResponse> => {
 
   return customFetch<subsetsControllerFactsResponse>(getSubsetsControllerFactsUrl(matterId,subsetId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type userPreferencesControllerGetResponse200 = {
+  data: UserPreferencesResponseDto
+  status: 200
+}
+
+export type userPreferencesControllerGetResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type userPreferencesControllerGetResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type userPreferencesControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type userPreferencesControllerGetResponseSuccess = (userPreferencesControllerGetResponse200) & {
+  headers: Headers;
+};
+export type userPreferencesControllerGetResponseError = (userPreferencesControllerGetResponse401 | userPreferencesControllerGetResponse403 | userPreferencesControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type userPreferencesControllerGetResponse = (userPreferencesControllerGetResponseSuccess | userPreferencesControllerGetResponseError)
+
+export const getUserPreferencesControllerGetUrl = () => {
+
+
+
+
+  return `/api/v1/me/preferences`
+}
+
+/**
+ * @summary Get current user preferences
+ */
+export const userPreferencesControllerGet = async ( options?: Parameters<typeof customFetch>[1]): Promise<userPreferencesControllerGetResponse> => {
+
+  return customFetch<userPreferencesControllerGetResponse>(getUserPreferencesControllerGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type userPreferencesControllerUpdateResponse200 = {
+  data: UserPreferencesResponseDto
+  status: 200
+}
+
+export type userPreferencesControllerUpdateResponse400 = {
+  data: ErrorEnvelopeDto
+  status: 400
+}
+
+export type userPreferencesControllerUpdateResponse401 = {
+  data: ErrorEnvelopeDto
+  status: 401
+}
+
+export type userPreferencesControllerUpdateResponse403 = {
+  data: ErrorEnvelopeDto
+  status: 403
+}
+
+export type userPreferencesControllerUpdateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type userPreferencesControllerUpdateResponseSuccess = (userPreferencesControllerUpdateResponse200) & {
+  headers: Headers;
+};
+export type userPreferencesControllerUpdateResponseError = (userPreferencesControllerUpdateResponse400 | userPreferencesControllerUpdateResponse401 | userPreferencesControllerUpdateResponse403 | userPreferencesControllerUpdateResponse500) & {
+  headers: Headers;
+};
+
+export type userPreferencesControllerUpdateResponse = (userPreferencesControllerUpdateResponseSuccess | userPreferencesControllerUpdateResponseError)
+
+export const getUserPreferencesControllerUpdateUrl = () => {
+
+
+
+
+  return `/api/v1/me/preferences`
+}
+
+/**
+ * @summary Update current user preferences
+ */
+export const userPreferencesControllerUpdate = async (userPreferencesControllerUpdateBody: UserPreferencesControllerUpdateBody, options?: Parameters<typeof customFetch>[1]): Promise<userPreferencesControllerUpdateResponse> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<userPreferencesControllerUpdateResponse>(getUserPreferencesControllerUpdateUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(userPreferencesControllerUpdateBody)
+  }
+);}
+
+
+
+export type intelligenceControllerChronologyResponse200 = {
+  data: void
+  status: 200
+}
+
+export type intelligenceControllerChronologyResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type intelligenceControllerChronologyResponseSuccess = (intelligenceControllerChronologyResponse200) & {
+  headers: Headers;
+};
+export type intelligenceControllerChronologyResponseError = (intelligenceControllerChronologyResponse500) & {
+  headers: Headers;
+};
+
+export type intelligenceControllerChronologyResponse = (intelligenceControllerChronologyResponseSuccess | intelligenceControllerChronologyResponseError)
+
+export const getIntelligenceControllerChronologyUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/intelligence/chronology`
+}
+
+/**
+ * @summary Matter chronology timeline
+ */
+export const intelligenceControllerChronology = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<intelligenceControllerChronologyResponse> => {
+
+  return customFetch<intelligenceControllerChronologyResponse>(getIntelligenceControllerChronologyUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type intelligenceControllerContradictionsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type intelligenceControllerContradictionsResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type intelligenceControllerContradictionsResponseSuccess = (intelligenceControllerContradictionsResponse200) & {
+  headers: Headers;
+};
+export type intelligenceControllerContradictionsResponseError = (intelligenceControllerContradictionsResponse500) & {
+  headers: Headers;
+};
+
+export type intelligenceControllerContradictionsResponse = (intelligenceControllerContradictionsResponseSuccess | intelligenceControllerContradictionsResponseError)
+
+export const getIntelligenceControllerContradictionsUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/intelligence/contradictions`
+}
+
+/**
+ * @summary Detect contradictions among matter facts
+ */
+export const intelligenceControllerContradictions = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<intelligenceControllerContradictionsResponse> => {
+
+  return customFetch<intelligenceControllerContradictionsResponse>(getIntelligenceControllerContradictionsUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type intelligenceControllerAskResponse200 = {
+  data: void
+  status: 200
+}
+
+export type intelligenceControllerAskResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type intelligenceControllerAskResponseSuccess = (intelligenceControllerAskResponse200) & {
+  headers: Headers;
+};
+export type intelligenceControllerAskResponseError = (intelligenceControllerAskResponse500) & {
+  headers: Headers;
+};
+
+export type intelligenceControllerAskResponse = (intelligenceControllerAskResponseSuccess | intelligenceControllerAskResponseError)
+
+export const getIntelligenceControllerAskUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/intelligence/ask`
+}
+
+/**
+ * @summary Ask a question over matter evidence
+ */
+export const intelligenceControllerAsk = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<intelligenceControllerAskResponse> => {
+
+  return customFetch<intelligenceControllerAskResponse>(getIntelligenceControllerAskUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type intelligenceControllerRealtimeCheckResponse200 = {
+  data: void
+  status: 200
+}
+
+export type intelligenceControllerRealtimeCheckResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type intelligenceControllerRealtimeCheckResponseSuccess = (intelligenceControllerRealtimeCheckResponse200) & {
+  headers: Headers;
+};
+export type intelligenceControllerRealtimeCheckResponseError = (intelligenceControllerRealtimeCheckResponse500) & {
+  headers: Headers;
+};
+
+export type intelligenceControllerRealtimeCheckResponse = (intelligenceControllerRealtimeCheckResponseSuccess | intelligenceControllerRealtimeCheckResponseError)
+
+export const getIntelligenceControllerRealtimeCheckUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/intelligence/realtime-check`
+}
+
+/**
+ * @summary Real-time evidence check during hearing
+ */
+export const intelligenceControllerRealtimeCheck = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<intelligenceControllerRealtimeCheckResponse> => {
+
+  return customFetch<intelligenceControllerRealtimeCheckResponse>(getIntelligenceControllerRealtimeCheckUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type inconsistenciesControllerListResponse200 = {
+  data: void
+  status: 200
+}
+
+export type inconsistenciesControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type inconsistenciesControllerListResponseSuccess = (inconsistenciesControllerListResponse200) & {
+  headers: Headers;
+};
+export type inconsistenciesControllerListResponseError = (inconsistenciesControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type inconsistenciesControllerListResponse = (inconsistenciesControllerListResponseSuccess | inconsistenciesControllerListResponseError)
+
+export const getInconsistenciesControllerListUrl = (matterId: string,
+    params: InconsistenciesControllerListParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/matters/${matterId}/inconsistencies?${stringifiedParams}` : `/api/v1/matters/${matterId}/inconsistencies`
+}
+
+/**
+ * @summary List inconsistencies in a matter
+ */
+export const inconsistenciesControllerList = async (matterId: string,
+    params: InconsistenciesControllerListParams, options?: Parameters<typeof customFetch>[1]): Promise<inconsistenciesControllerListResponse> => {
+
+  return customFetch<inconsistenciesControllerListResponse>(getInconsistenciesControllerListUrl(matterId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type inconsistenciesControllerSummaryResponse200 = {
+  data: void
+  status: 200
+}
+
+export type inconsistenciesControllerSummaryResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type inconsistenciesControllerSummaryResponseSuccess = (inconsistenciesControllerSummaryResponse200) & {
+  headers: Headers;
+};
+export type inconsistenciesControllerSummaryResponseError = (inconsistenciesControllerSummaryResponse500) & {
+  headers: Headers;
+};
+
+export type inconsistenciesControllerSummaryResponse = (inconsistenciesControllerSummaryResponseSuccess | inconsistenciesControllerSummaryResponseError)
+
+export const getInconsistenciesControllerSummaryUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/inconsistencies/summary`
+}
+
+/**
+ * @summary Get inconsistency summary for a matter
+ */
+export const inconsistenciesControllerSummary = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<inconsistenciesControllerSummaryResponse> => {
+
+  return customFetch<inconsistenciesControllerSummaryResponse>(getInconsistenciesControllerSummaryUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type inconsistenciesControllerGetResponse200 = {
+  data: void
+  status: 200
+}
+
+export type inconsistenciesControllerGetResponse404 = {
+  data: void
+  status: 404
+}
+
+export type inconsistenciesControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type inconsistenciesControllerGetResponseSuccess = (inconsistenciesControllerGetResponse200) & {
+  headers: Headers;
+};
+export type inconsistenciesControllerGetResponseError = (inconsistenciesControllerGetResponse404 | inconsistenciesControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type inconsistenciesControllerGetResponse = (inconsistenciesControllerGetResponseSuccess | inconsistenciesControllerGetResponseError)
+
+export const getInconsistenciesControllerGetUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/inconsistencies/${id}`
+}
+
+/**
+ * @summary Get an inconsistency
+ */
+export const inconsistenciesControllerGet = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<inconsistenciesControllerGetResponse> => {
+
+  return customFetch<inconsistenciesControllerGetResponse>(getInconsistenciesControllerGetUrl(matterId,id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type inconsistenciesControllerDetectResponse200 = {
+  data: void
+  status: 200
+}
+
+export type inconsistenciesControllerDetectResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type inconsistenciesControllerDetectResponseSuccess = (inconsistenciesControllerDetectResponse200) & {
+  headers: Headers;
+};
+export type inconsistenciesControllerDetectResponseError = (inconsistenciesControllerDetectResponse500) & {
+  headers: Headers;
+};
+
+export type inconsistenciesControllerDetectResponse = (inconsistenciesControllerDetectResponseSuccess | inconsistenciesControllerDetectResponseError)
+
+export const getInconsistenciesControllerDetectUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/inconsistencies/detect`
+}
+
+/**
+ * Compares facts that share an entity or fact type, asks the decision route whether each pair conflicts, and stores confirmed pairs as candidate contradictions.
+ * @summary Detect contradictions across the matter facts
+ */
+export const inconsistenciesControllerDetect = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<inconsistenciesControllerDetectResponse> => {
+
+  return customFetch<inconsistenciesControllerDetectResponse>(getInconsistenciesControllerDetectUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type inconsistenciesControllerReviewResponse200 = {
+  data: void
+  status: 200
+}
+
+export type inconsistenciesControllerReviewResponse404 = {
+  data: void
+  status: 404
+}
+
+export type inconsistenciesControllerReviewResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type inconsistenciesControllerReviewResponseSuccess = (inconsistenciesControllerReviewResponse200) & {
+  headers: Headers;
+};
+export type inconsistenciesControllerReviewResponseError = (inconsistenciesControllerReviewResponse404 | inconsistenciesControllerReviewResponse500) & {
+  headers: Headers;
+};
+
+export type inconsistenciesControllerReviewResponse = (inconsistenciesControllerReviewResponseSuccess | inconsistenciesControllerReviewResponseError)
+
+export const getInconsistenciesControllerReviewUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/inconsistencies/${id}/review`
+}
+
+/**
+ * @summary Review an inconsistency
+ */
+export const inconsistenciesControllerReview = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<inconsistenciesControllerReviewResponse> => {
+
+  return customFetch<inconsistenciesControllerReviewResponse>(getInconsistenciesControllerReviewUrl(matterId,id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type inconsistenciesControllerUpdateSeverityResponse200 = {
+  data: void
+  status: 200
+}
+
+export type inconsistenciesControllerUpdateSeverityResponse404 = {
+  data: void
+  status: 404
+}
+
+export type inconsistenciesControllerUpdateSeverityResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type inconsistenciesControllerUpdateSeverityResponseSuccess = (inconsistenciesControllerUpdateSeverityResponse200) & {
+  headers: Headers;
+};
+export type inconsistenciesControllerUpdateSeverityResponseError = (inconsistenciesControllerUpdateSeverityResponse404 | inconsistenciesControllerUpdateSeverityResponse500) & {
+  headers: Headers;
+};
+
+export type inconsistenciesControllerUpdateSeverityResponse = (inconsistenciesControllerUpdateSeverityResponseSuccess | inconsistenciesControllerUpdateSeverityResponseError)
+
+export const getInconsistenciesControllerUpdateSeverityUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/inconsistencies/${id}/severity`
+}
+
+/**
+ * @summary Update inconsistency severity
+ */
+export const inconsistenciesControllerUpdateSeverity = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<inconsistenciesControllerUpdateSeverityResponse> => {
+
+  return customFetch<inconsistenciesControllerUpdateSeverityResponse>(getInconsistenciesControllerUpdateSeverityUrl(matterId,id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+export type inconsistenciesControllerListByKindResponse200 = {
+  data: void
+  status: 200
+}
+
+export type inconsistenciesControllerListByKindResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type inconsistenciesControllerListByKindResponseSuccess = (inconsistenciesControllerListByKindResponse200) & {
+  headers: Headers;
+};
+export type inconsistenciesControllerListByKindResponseError = (inconsistenciesControllerListByKindResponse500) & {
+  headers: Headers;
+};
+
+export type inconsistenciesControllerListByKindResponse = (inconsistenciesControllerListByKindResponseSuccess | inconsistenciesControllerListByKindResponseError)
+
+export const getInconsistenciesControllerListByKindUrl = (matterId: string,
+    kind: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/inconsistencies/kind/${kind}`
+}
+
+/**
+ * @summary List inconsistencies by kind
+ */
+export const inconsistenciesControllerListByKind = async (matterId: string,
+    kind: string, options?: Parameters<typeof customFetch>[1]): Promise<inconsistenciesControllerListByKindResponse> => {
+
+  return customFetch<inconsistenciesControllerListByKindResponse>(getInconsistenciesControllerListByKindUrl(matterId,kind),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type chronologyControllerTimelineResponse200 = {
+  data: ChronologyTimelineDto
+  status: 200
+}
+
+export type chronologyControllerTimelineResponse401 = {
+  data: void
+  status: 401
+}
+
+export type chronologyControllerTimelineResponse403 = {
+  data: void
+  status: 403
+}
+
+export type chronologyControllerTimelineResponse404 = {
+  data: void
+  status: 404
+}
+
+export type chronologyControllerTimelineResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type chronologyControllerTimelineResponseSuccess = (chronologyControllerTimelineResponse200) & {
+  headers: Headers;
+};
+export type chronologyControllerTimelineResponseError = (chronologyControllerTimelineResponse401 | chronologyControllerTimelineResponse403 | chronologyControllerTimelineResponse404 | chronologyControllerTimelineResponse500) & {
+  headers: Headers;
+};
+
+export type chronologyControllerTimelineResponse = (chronologyControllerTimelineResponseSuccess | chronologyControllerTimelineResponseError)
+
+export const getChronologyControllerTimelineUrl = (matterId: string,
+    params?: ChronologyControllerTimelineParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/matters/${matterId}/chronology?${stringifiedParams}` : `/api/v1/matters/${matterId}/chronology`
+}
+
+/**
+ * Ordered, dated confirmed facts for a matter, with an undated count. A server-side search is optional via q.
+ * @summary Matter chronology timeline
+ */
+export const chronologyControllerTimeline = async (matterId: string,
+    params?: ChronologyControllerTimelineParams, options?: Parameters<typeof customFetch>[1]): Promise<chronologyControllerTimelineResponse> => {
+
+  return customFetch<chronologyControllerTimelineResponse>(getChronologyControllerTimelineUrl(matterId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type apiKeysControllerListResponse200 = {
+  data: void
+  status: 200
+}
+
+export type apiKeysControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type apiKeysControllerListResponseSuccess = (apiKeysControllerListResponse200) & {
+  headers: Headers;
+};
+export type apiKeysControllerListResponseError = (apiKeysControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type apiKeysControllerListResponse = (apiKeysControllerListResponseSuccess | apiKeysControllerListResponseError)
+
+export const getApiKeysControllerListUrl = () => {
+
+
+
+
+  return `/api/v1/api-keys`
+}
+
+/**
+ * @summary List API keys for the firm
+ */
+export const apiKeysControllerList = async ( options?: Parameters<typeof customFetch>[1]): Promise<apiKeysControllerListResponse> => {
+
+  return customFetch<apiKeysControllerListResponse>(getApiKeysControllerListUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type apiKeysControllerCreateResponse201 = {
+  data: void
+  status: 201
+}
+
+export type apiKeysControllerCreateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type apiKeysControllerCreateResponseSuccess = (apiKeysControllerCreateResponse201) & {
+  headers: Headers;
+};
+export type apiKeysControllerCreateResponseError = (apiKeysControllerCreateResponse500) & {
+  headers: Headers;
+};
+
+export type apiKeysControllerCreateResponse = (apiKeysControllerCreateResponseSuccess | apiKeysControllerCreateResponseError)
+
+export const getApiKeysControllerCreateUrl = () => {
+
+
+
+
+  return `/api/v1/api-keys`
+}
+
+/**
+ * @summary Create an API key
+ */
+export const apiKeysControllerCreate = async ( options?: Parameters<typeof customFetch>[1]): Promise<apiKeysControllerCreateResponse> => {
+
+  return customFetch<apiKeysControllerCreateResponse>(getApiKeysControllerCreateUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type apiKeysControllerRevokeResponse200 = {
+  data: void
+  status: 200
+}
+
+export type apiKeysControllerRevokeResponse404 = {
+  data: void
+  status: 404
+}
+
+export type apiKeysControllerRevokeResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type apiKeysControllerRevokeResponseSuccess = (apiKeysControllerRevokeResponse200) & {
+  headers: Headers;
+};
+export type apiKeysControllerRevokeResponseError = (apiKeysControllerRevokeResponse404 | apiKeysControllerRevokeResponse500) & {
+  headers: Headers;
+};
+
+export type apiKeysControllerRevokeResponse = (apiKeysControllerRevokeResponseSuccess | apiKeysControllerRevokeResponseError)
+
+export const getApiKeysControllerRevokeUrl = (id: string,) => {
+
+
+
+
+  return `/api/v1/api-keys/${id}`
+}
+
+/**
+ * @summary Revoke an API key
+ */
+export const apiKeysControllerRevoke = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<apiKeysControllerRevokeResponse> => {
+
+  return customFetch<apiKeysControllerRevokeResponse>(getApiKeysControllerRevokeUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+export type entitiesControllerListResponse200 = {
+  data: void
+  status: 200
+}
+
+export type entitiesControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type entitiesControllerListResponseSuccess = (entitiesControllerListResponse200) & {
+  headers: Headers;
+};
+export type entitiesControllerListResponseError = (entitiesControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type entitiesControllerListResponse = (entitiesControllerListResponseSuccess | entitiesControllerListResponseError)
+
+export const getEntitiesControllerListUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/entities`
+}
+
+/**
+ * @summary List entities in a matter
+ */
+export const entitiesControllerList = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<entitiesControllerListResponse> => {
+
+  return customFetch<entitiesControllerListResponse>(getEntitiesControllerListUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type entitiesControllerCreateResponse201 = {
+  data: void
+  status: 201
+}
+
+export type entitiesControllerCreateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type entitiesControllerCreateResponseSuccess = (entitiesControllerCreateResponse201) & {
+  headers: Headers;
+};
+export type entitiesControllerCreateResponseError = (entitiesControllerCreateResponse500) & {
+  headers: Headers;
+};
+
+export type entitiesControllerCreateResponse = (entitiesControllerCreateResponseSuccess | entitiesControllerCreateResponseError)
+
+export const getEntitiesControllerCreateUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/entities`
+}
+
+/**
+ * @summary Create an entity
+ */
+export const entitiesControllerCreate = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<entitiesControllerCreateResponse> => {
+
+  return customFetch<entitiesControllerCreateResponse>(getEntitiesControllerCreateUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type entitiesControllerGetResponse200 = {
+  data: void
+  status: 200
+}
+
+export type entitiesControllerGetResponse404 = {
+  data: void
+  status: 404
+}
+
+export type entitiesControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type entitiesControllerGetResponseSuccess = (entitiesControllerGetResponse200) & {
+  headers: Headers;
+};
+export type entitiesControllerGetResponseError = (entitiesControllerGetResponse404 | entitiesControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type entitiesControllerGetResponse = (entitiesControllerGetResponseSuccess | entitiesControllerGetResponseError)
+
+export const getEntitiesControllerGetUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/entities/${id}`
+}
+
+/**
+ * @summary Get an entity
+ */
+export const entitiesControllerGet = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<entitiesControllerGetResponse> => {
+
+  return customFetch<entitiesControllerGetResponse>(getEntitiesControllerGetUrl(matterId,id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type entitiesControllerAddAliasResponse201 = {
+  data: void
+  status: 201
+}
+
+export type entitiesControllerAddAliasResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type entitiesControllerAddAliasResponseSuccess = (entitiesControllerAddAliasResponse201) & {
+  headers: Headers;
+};
+export type entitiesControllerAddAliasResponseError = (entitiesControllerAddAliasResponse500) & {
+  headers: Headers;
+};
+
+export type entitiesControllerAddAliasResponse = (entitiesControllerAddAliasResponseSuccess | entitiesControllerAddAliasResponseError)
+
+export const getEntitiesControllerAddAliasUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/entities/${id}/aliases`
+}
+
+/**
+ * @summary Add an alias to an entity
+ */
+export const entitiesControllerAddAlias = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<entitiesControllerAddAliasResponse> => {
+
+  return customFetch<entitiesControllerAddAliasResponse>(getEntitiesControllerAddAliasUrl(matterId,id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type issuesControllerListResponse200 = {
+  data: void
+  status: 200
+}
+
+export type issuesControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type issuesControllerListResponseSuccess = (issuesControllerListResponse200) & {
+  headers: Headers;
+};
+export type issuesControllerListResponseError = (issuesControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type issuesControllerListResponse = (issuesControllerListResponseSuccess | issuesControllerListResponseError)
+
+export const getIssuesControllerListUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/issues`
+}
+
+/**
+ * @summary List issues in a matter
+ */
+export const issuesControllerList = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<issuesControllerListResponse> => {
+
+  return customFetch<issuesControllerListResponse>(getIssuesControllerListUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type issuesControllerCreateResponse200 = {
+  data: void
+  status: 200
+}
+
+export type issuesControllerCreateResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type issuesControllerCreateResponseSuccess = (issuesControllerCreateResponse200) & {
+  headers: Headers;
+};
+export type issuesControllerCreateResponseError = (issuesControllerCreateResponse500) & {
+  headers: Headers;
+};
+
+export type issuesControllerCreateResponse = (issuesControllerCreateResponseSuccess | issuesControllerCreateResponseError)
+
+export const getIssuesControllerCreateUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/issues`
+}
+
+/**
+ * @summary Create an issue
+ */
+export const issuesControllerCreate = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<issuesControllerCreateResponse> => {
+
+  return customFetch<issuesControllerCreateResponse>(getIssuesControllerCreateUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type issuesControllerGetResponse200 = {
+  data: void
+  status: 200
+}
+
+export type issuesControllerGetResponse404 = {
+  data: void
+  status: 404
+}
+
+export type issuesControllerGetResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type issuesControllerGetResponseSuccess = (issuesControllerGetResponse200) & {
+  headers: Headers;
+};
+export type issuesControllerGetResponseError = (issuesControllerGetResponse404 | issuesControllerGetResponse500) & {
+  headers: Headers;
+};
+
+export type issuesControllerGetResponse = (issuesControllerGetResponseSuccess | issuesControllerGetResponseError)
+
+export const getIssuesControllerGetUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/issues/${id}`
+}
+
+/**
+ * @summary Get an issue
+ */
+export const issuesControllerGet = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<issuesControllerGetResponse> => {
+
+  return customFetch<issuesControllerGetResponse>(getIssuesControllerGetUrl(matterId,id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type issuesControllerUpdateStatusResponse200 = {
+  data: void
+  status: 200
+}
+
+export type issuesControllerUpdateStatusResponse404 = {
+  data: void
+  status: 404
+}
+
+export type issuesControllerUpdateStatusResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type issuesControllerUpdateStatusResponseSuccess = (issuesControllerUpdateStatusResponse200) & {
+  headers: Headers;
+};
+export type issuesControllerUpdateStatusResponseError = (issuesControllerUpdateStatusResponse404 | issuesControllerUpdateStatusResponse500) & {
+  headers: Headers;
+};
+
+export type issuesControllerUpdateStatusResponse = (issuesControllerUpdateStatusResponseSuccess | issuesControllerUpdateStatusResponseError)
+
+export const getIssuesControllerUpdateStatusUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/issues/${id}/status`
+}
+
+/**
+ * @summary Update issue status
+ */
+export const issuesControllerUpdateStatus = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<issuesControllerUpdateStatusResponse> => {
+
+  return customFetch<issuesControllerUpdateStatusResponse>(getIssuesControllerUpdateStatusUrl(matterId,id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+export type issuesControllerGetFactsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type issuesControllerGetFactsResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type issuesControllerGetFactsResponseSuccess = (issuesControllerGetFactsResponse200) & {
+  headers: Headers;
+};
+export type issuesControllerGetFactsResponseError = (issuesControllerGetFactsResponse500) & {
+  headers: Headers;
+};
+
+export type issuesControllerGetFactsResponse = (issuesControllerGetFactsResponseSuccess | issuesControllerGetFactsResponseError)
+
+export const getIssuesControllerGetFactsUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/issues/${id}/facts`
+}
+
+/**
+ * @summary List facts linked to an issue
+ */
+export const issuesControllerGetFacts = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<issuesControllerGetFactsResponse> => {
+
+  return customFetch<issuesControllerGetFactsResponse>(getIssuesControllerGetFactsUrl(matterId,id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type issuesControllerAddFactResponse200 = {
+  data: void
+  status: 200
+}
+
+export type issuesControllerAddFactResponse400 = {
+  data: void
+  status: 400
+}
+
+export type issuesControllerAddFactResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type issuesControllerAddFactResponseSuccess = (issuesControllerAddFactResponse200) & {
+  headers: Headers;
+};
+export type issuesControllerAddFactResponseError = (issuesControllerAddFactResponse400 | issuesControllerAddFactResponse500) & {
+  headers: Headers;
+};
+
+export type issuesControllerAddFactResponse = (issuesControllerAddFactResponseSuccess | issuesControllerAddFactResponseError)
+
+export const getIssuesControllerAddFactUrl = (matterId: string,
+    id: string,
+    factId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/issues/${id}/facts/${factId}`
+}
+
+/**
+ * @summary Link a fact to an issue
+ */
+export const issuesControllerAddFact = async (matterId: string,
+    id: string,
+    factId: string, options?: Parameters<typeof customFetch>[1]): Promise<issuesControllerAddFactResponse> => {
+
+  return customFetch<issuesControllerAddFactResponse>(getIssuesControllerAddFactUrl(matterId,id,factId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type issuesControllerRemoveFactResponse200 = {
+  data: void
+  status: 200
+}
+
+export type issuesControllerRemoveFactResponse404 = {
+  data: void
+  status: 404
+}
+
+export type issuesControllerRemoveFactResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type issuesControllerRemoveFactResponseSuccess = (issuesControllerRemoveFactResponse200) & {
+  headers: Headers;
+};
+export type issuesControllerRemoveFactResponseError = (issuesControllerRemoveFactResponse404 | issuesControllerRemoveFactResponse500) & {
+  headers: Headers;
+};
+
+export type issuesControllerRemoveFactResponse = (issuesControllerRemoveFactResponseSuccess | issuesControllerRemoveFactResponseError)
+
+export const getIssuesControllerRemoveFactUrl = (matterId: string,
+    id: string,
+    factId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/issues/${id}/facts/${factId}`
+}
+
+/**
+ * @summary Unlink a fact from an issue
+ */
+export const issuesControllerRemoveFact = async (matterId: string,
+    id: string,
+    factId: string, options?: Parameters<typeof customFetch>[1]): Promise<issuesControllerRemoveFactResponse> => {
+
+  return customFetch<issuesControllerRemoveFactResponse>(getIssuesControllerRemoveFactUrl(matterId,id,factId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+export type realtimeControllerListSessionsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type realtimeControllerListSessionsResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type realtimeControllerListSessionsResponseSuccess = (realtimeControllerListSessionsResponse200) & {
+  headers: Headers;
+};
+export type realtimeControllerListSessionsResponseError = (realtimeControllerListSessionsResponse500) & {
+  headers: Headers;
+};
+
+export type realtimeControllerListSessionsResponse = (realtimeControllerListSessionsResponseSuccess | realtimeControllerListSessionsResponseError)
+
+export const getRealtimeControllerListSessionsUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/realtime/sessions`
+}
+
+/**
+ * @summary List realtime sessions in a matter
+ */
+export const realtimeControllerListSessions = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<realtimeControllerListSessionsResponse> => {
+
+  return customFetch<realtimeControllerListSessionsResponse>(getRealtimeControllerListSessionsUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type realtimeControllerCreateSessionResponse200 = {
+  data: void
+  status: 200
+}
+
+export type realtimeControllerCreateSessionResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type realtimeControllerCreateSessionResponseSuccess = (realtimeControllerCreateSessionResponse200) & {
+  headers: Headers;
+};
+export type realtimeControllerCreateSessionResponseError = (realtimeControllerCreateSessionResponse500) & {
+  headers: Headers;
+};
+
+export type realtimeControllerCreateSessionResponse = (realtimeControllerCreateSessionResponseSuccess | realtimeControllerCreateSessionResponseError)
+
+export const getRealtimeControllerCreateSessionUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/realtime/sessions`
+}
+
+/**
+ * @summary Start a live checking session
+ */
+export const realtimeControllerCreateSession = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<realtimeControllerCreateSessionResponse> => {
+
+  return customFetch<realtimeControllerCreateSessionResponse>(getRealtimeControllerCreateSessionUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type realtimeControllerGetSessionResponse200 = {
+  data: void
+  status: 200
+}
+
+export type realtimeControllerGetSessionResponse404 = {
+  data: void
+  status: 404
+}
+
+export type realtimeControllerGetSessionResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type realtimeControllerGetSessionResponseSuccess = (realtimeControllerGetSessionResponse200) & {
+  headers: Headers;
+};
+export type realtimeControllerGetSessionResponseError = (realtimeControllerGetSessionResponse404 | realtimeControllerGetSessionResponse500) & {
+  headers: Headers;
+};
+
+export type realtimeControllerGetSessionResponse = (realtimeControllerGetSessionResponseSuccess | realtimeControllerGetSessionResponseError)
+
+export const getRealtimeControllerGetSessionUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/realtime/sessions/${id}`
+}
+
+/**
+ * @summary Get a realtime session
+ */
+export const realtimeControllerGetSession = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<realtimeControllerGetSessionResponse> => {
+
+  return customFetch<realtimeControllerGetSessionResponse>(getRealtimeControllerGetSessionUrl(matterId,id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type realtimeControllerEndSessionResponse200 = {
+  data: void
+  status: 200
+}
+
+export type realtimeControllerEndSessionResponse404 = {
+  data: void
+  status: 404
+}
+
+export type realtimeControllerEndSessionResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type realtimeControllerEndSessionResponseSuccess = (realtimeControllerEndSessionResponse200) & {
+  headers: Headers;
+};
+export type realtimeControllerEndSessionResponseError = (realtimeControllerEndSessionResponse404 | realtimeControllerEndSessionResponse500) & {
+  headers: Headers;
+};
+
+export type realtimeControllerEndSessionResponse = (realtimeControllerEndSessionResponseSuccess | realtimeControllerEndSessionResponseError)
+
+export const getRealtimeControllerEndSessionUrl = (matterId: string,
+    id: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/realtime/sessions/${id}/end`
+}
+
+/**
+ * @summary End a realtime session
+ */
+export const realtimeControllerEndSession = async (matterId: string,
+    id: string, options?: Parameters<typeof customFetch>[1]): Promise<realtimeControllerEndSessionResponse> => {
+
+  return customFetch<realtimeControllerEndSessionResponse>(getRealtimeControllerEndSessionUrl(matterId,id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+export type realtimeControllerListLinesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type realtimeControllerListLinesResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type realtimeControllerListLinesResponseSuccess = (realtimeControllerListLinesResponse200) & {
+  headers: Headers;
+};
+export type realtimeControllerListLinesResponseError = (realtimeControllerListLinesResponse500) & {
+  headers: Headers;
+};
+
+export type realtimeControllerListLinesResponse = (realtimeControllerListLinesResponseSuccess | realtimeControllerListLinesResponseError)
+
+export const getRealtimeControllerListLinesUrl = (matterId: string,
+    sessionId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/realtime/sessions/${sessionId}/lines`
+}
+
+/**
+ * @summary List transcript lines for a session
+ */
+export const realtimeControllerListLines = async (matterId: string,
+    sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<realtimeControllerListLinesResponse> => {
+
+  return customFetch<realtimeControllerListLinesResponse>(getRealtimeControllerListLinesUrl(matterId,sessionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type realtimeControllerRecordLineResponse200 = {
+  data: void
+  status: 200
+}
+
+export type realtimeControllerRecordLineResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type realtimeControllerRecordLineResponseSuccess = (realtimeControllerRecordLineResponse200) & {
+  headers: Headers;
+};
+export type realtimeControllerRecordLineResponseError = (realtimeControllerRecordLineResponse500) & {
+  headers: Headers;
+};
+
+export type realtimeControllerRecordLineResponse = (realtimeControllerRecordLineResponseSuccess | realtimeControllerRecordLineResponseError)
+
+export const getRealtimeControllerRecordLineUrl = (matterId: string,
+    sessionId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/realtime/sessions/${sessionId}/lines`
+}
+
+/**
+ * Stores the line before checking. Alerts are created for statements the record contradicts, is silent on, or cannot resolve.
+ * @summary Record a transcript line and check it against the record
+ */
+export const realtimeControllerRecordLine = async (matterId: string,
+    sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<realtimeControllerRecordLineResponse> => {
+
+  return customFetch<realtimeControllerRecordLineResponse>(getRealtimeControllerRecordLineUrl(matterId,sessionId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type realtimeControllerListAlertsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type realtimeControllerListAlertsResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type realtimeControllerListAlertsResponseSuccess = (realtimeControllerListAlertsResponse200) & {
+  headers: Headers;
+};
+export type realtimeControllerListAlertsResponseError = (realtimeControllerListAlertsResponse500) & {
+  headers: Headers;
+};
+
+export type realtimeControllerListAlertsResponse = (realtimeControllerListAlertsResponseSuccess | realtimeControllerListAlertsResponseError)
+
+export const getRealtimeControllerListAlertsUrl = (matterId: string,
+    sessionId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/realtime/sessions/${sessionId}/alerts`
+}
+
+/**
+ * @summary List alerts for a session
+ */
+export const realtimeControllerListAlerts = async (matterId: string,
+    sessionId: string, options?: Parameters<typeof customFetch>[1]): Promise<realtimeControllerListAlertsResponse> => {
+
+  return customFetch<realtimeControllerListAlertsResponse>(getRealtimeControllerListAlertsUrl(matterId,sessionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type realtimeControllerReviewAlertResponse200 = {
+  data: void
+  status: 200
+}
+
+export type realtimeControllerReviewAlertResponse404 = {
+  data: void
+  status: 404
+}
+
+export type realtimeControllerReviewAlertResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type realtimeControllerReviewAlertResponseSuccess = (realtimeControllerReviewAlertResponse200) & {
+  headers: Headers;
+};
+export type realtimeControllerReviewAlertResponseError = (realtimeControllerReviewAlertResponse404 | realtimeControllerReviewAlertResponse500) & {
+  headers: Headers;
+};
+
+export type realtimeControllerReviewAlertResponse = (realtimeControllerReviewAlertResponseSuccess | realtimeControllerReviewAlertResponseError)
+
+export const getRealtimeControllerReviewAlertUrl = (matterId: string,
+    sessionId: string,
+    alertId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/realtime/sessions/${sessionId}/alerts/${alertId}`
+}
+
+/**
+ * @summary Review a live alert
+ */
+export const realtimeControllerReviewAlert = async (matterId: string,
+    sessionId: string,
+    alertId: string, options?: Parameters<typeof customFetch>[1]): Promise<realtimeControllerReviewAlertResponse> => {
+
+  return customFetch<realtimeControllerReviewAlertResponse>(getRealtimeControllerReviewAlertUrl(matterId,sessionId,alertId),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+export type relevanceControllerListResponse200 = {
+  data: void
+  status: 200
+}
+
+export type relevanceControllerListResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type relevanceControllerListResponseSuccess = (relevanceControllerListResponse200) & {
+  headers: Headers;
+};
+export type relevanceControllerListResponseError = (relevanceControllerListResponse500) & {
+  headers: Headers;
+};
+
+export type relevanceControllerListResponse = (relevanceControllerListResponseSuccess | relevanceControllerListResponseError)
+
+export const getRelevanceControllerListUrl = (matterId: string,
+    params: RelevanceControllerListParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/matters/${matterId}/relevance?${stringifiedParams}` : `/api/v1/matters/${matterId}/relevance`
+}
+
+/**
+ * @summary List relevance assignments in a matter
+ */
+export const relevanceControllerList = async (matterId: string,
+    params: RelevanceControllerListParams, options?: Parameters<typeof customFetch>[1]): Promise<relevanceControllerListResponse> => {
+
+  return customFetch<relevanceControllerListResponse>(getRelevanceControllerListUrl(matterId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type relevanceControllerAssignResponse200 = {
+  data: void
+  status: 200
+}
+
+export type relevanceControllerAssignResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type relevanceControllerAssignResponseSuccess = (relevanceControllerAssignResponse200) & {
+  headers: Headers;
+};
+export type relevanceControllerAssignResponseError = (relevanceControllerAssignResponse500) & {
+  headers: Headers;
+};
+
+export type relevanceControllerAssignResponse = (relevanceControllerAssignResponseSuccess | relevanceControllerAssignResponseError)
+
+export const getRelevanceControllerAssignUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/relevance`
+}
+
+/**
+ * @summary Assign relevance to a fact
+ */
+export const relevanceControllerAssign = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<relevanceControllerAssignResponse> => {
+
+  return customFetch<relevanceControllerAssignResponse>(getRelevanceControllerAssignUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type relevanceControllerGetForFactResponse200 = {
+  data: void
+  status: 200
+}
+
+export type relevanceControllerGetForFactResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type relevanceControllerGetForFactResponseSuccess = (relevanceControllerGetForFactResponse200) & {
+  headers: Headers;
+};
+export type relevanceControllerGetForFactResponseError = (relevanceControllerGetForFactResponse500) & {
+  headers: Headers;
+};
+
+export type relevanceControllerGetForFactResponse = (relevanceControllerGetForFactResponseSuccess | relevanceControllerGetForFactResponseError)
+
+export const getRelevanceControllerGetForFactUrl = (matterId: string,
+    factId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/relevance/fact/${factId}`
+}
+
+/**
+ * @summary Get relevance for a fact
+ */
+export const relevanceControllerGetForFact = async (matterId: string,
+    factId: string, options?: Parameters<typeof customFetch>[1]): Promise<relevanceControllerGetForFactResponse> => {
+
+  return customFetch<relevanceControllerGetForFactResponse>(getRelevanceControllerGetForFactUrl(matterId,factId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type relevanceControllerBulkAssignResponse200 = {
+  data: void
+  status: 200
+}
+
+export type relevanceControllerBulkAssignResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type relevanceControllerBulkAssignResponseSuccess = (relevanceControllerBulkAssignResponse200) & {
+  headers: Headers;
+};
+export type relevanceControllerBulkAssignResponseError = (relevanceControllerBulkAssignResponse500) & {
+  headers: Headers;
+};
+
+export type relevanceControllerBulkAssignResponse = (relevanceControllerBulkAssignResponseSuccess | relevanceControllerBulkAssignResponseError)
+
+export const getRelevanceControllerBulkAssignUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/relevance/bulk`
+}
+
+/**
+ * @summary Bulk assign relevance to facts
+ */
+export const relevanceControllerBulkAssign = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<relevanceControllerBulkAssignResponse> => {
+
+  return customFetch<relevanceControllerBulkAssignResponse>(getRelevanceControllerBulkAssignUrl(matterId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+export type relevanceControllerGetByLabelsResponse200 = {
+  data: void
+  status: 200
+}
+
+export type relevanceControllerGetByLabelsResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type relevanceControllerGetByLabelsResponseSuccess = (relevanceControllerGetByLabelsResponse200) & {
+  headers: Headers;
+};
+export type relevanceControllerGetByLabelsResponseError = (relevanceControllerGetByLabelsResponse500) & {
+  headers: Headers;
+};
+
+export type relevanceControllerGetByLabelsResponse = (relevanceControllerGetByLabelsResponseSuccess | relevanceControllerGetByLabelsResponseError)
+
+export const getRelevanceControllerGetByLabelsUrl = (matterId: string,
+    params: RelevanceControllerGetByLabelsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/matters/${matterId}/relevance/by-labels?${stringifiedParams}` : `/api/v1/matters/${matterId}/relevance/by-labels`
+}
+
+/**
+ * @summary Get relevance by labels
+ */
+export const relevanceControllerGetByLabels = async (matterId: string,
+    params: RelevanceControllerGetByLabelsParams, options?: Parameters<typeof customFetch>[1]): Promise<relevanceControllerGetByLabelsResponse> => {
+
+  return customFetch<relevanceControllerGetByLabelsResponse>(getRelevanceControllerGetByLabelsUrl(matterId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type summaryThemeControllerListThemesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type summaryThemeControllerListThemesResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type summaryThemeControllerListThemesResponseSuccess = (summaryThemeControllerListThemesResponse200) & {
+  headers: Headers;
+};
+export type summaryThemeControllerListThemesResponseError = (summaryThemeControllerListThemesResponse500) & {
+  headers: Headers;
+};
+
+export type summaryThemeControllerListThemesResponse = (summaryThemeControllerListThemesResponseSuccess | summaryThemeControllerListThemesResponseError)
+
+export const getSummaryThemeControllerListThemesUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/summary-theme/themes`
+}
+
+/**
+ * @summary List themes in a matter
+ */
+export const summaryThemeControllerListThemes = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<summaryThemeControllerListThemesResponse> => {
+
+  return customFetch<summaryThemeControllerListThemesResponse>(getSummaryThemeControllerListThemesUrl(matterId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+export type summaryThemeControllerListSummariesResponse200 = {
+  data: void
+  status: 200
+}
+
+export type summaryThemeControllerListSummariesResponse500 = {
+  data: ErrorEnvelopeDto
+  status: 500
+}
+
+export type summaryThemeControllerListSummariesResponseSuccess = (summaryThemeControllerListSummariesResponse200) & {
+  headers: Headers;
+};
+export type summaryThemeControllerListSummariesResponseError = (summaryThemeControllerListSummariesResponse500) & {
+  headers: Headers;
+};
+
+export type summaryThemeControllerListSummariesResponse = (summaryThemeControllerListSummariesResponseSuccess | summaryThemeControllerListSummariesResponseError)
+
+export const getSummaryThemeControllerListSummariesUrl = (matterId: string,) => {
+
+
+
+
+  return `/api/v1/matters/${matterId}/summary-theme/summaries`
+}
+
+/**
+ * @summary List summaries in a matter
+ */
+export const summaryThemeControllerListSummaries = async (matterId: string, options?: Parameters<typeof customFetch>[1]): Promise<summaryThemeControllerListSummariesResponse> => {
+
+  return customFetch<summaryThemeControllerListSummariesResponse>(getSummaryThemeControllerListSummariesUrl(matterId),
   {
     ...options,
     method: 'GET'

@@ -39,6 +39,7 @@ export function matterSections(matterId: string): MatterSection[] {
   const base = `/matters/${matterId}`;
   return [
     { label: 'Overview', href: `${base}/overview`, permission: 'matter.read' },
+    { label: 'Summary', href: `${base}/summary`, permission: 'matter.read' },
     {
       label: 'Evidence',
       href: `${base}/documents`,
@@ -51,7 +52,18 @@ export function matterSections(matterId: string): MatterSection[] {
     },
     { label: 'Subsets', href: `${base}/subsets`, permission: 'subset.read' },
     { label: 'Chronology', href: `${base}/chronology`, permission: 'event.read' },
+    {
+      label: 'Analysis',
+      href: `${base}/intelligence`,
+      permission: 'fact.read',
+      children: [
+        { label: 'Contradictions', href: `${base}/intelligence`, permission: 'fact.read' },
+        { label: 'Entities', href: `${base}/entities`, permission: 'fact.read' },
+        { label: 'Outputs', href: `${base}/outputs`, permission: 'output.read' },
+      ],
+    },
     { label: 'Dep AI', href: `${base}/ai`, permission: 'ai.ask' },
+    { label: 'Live', href: `${base}/realtime`, permission: 'matter.read' },
   ];
 }
 
@@ -84,6 +96,7 @@ const MATTER_SECTION_LABELS: Record<string, string> = {
   summary: 'Summary',
   chronology: 'Chronology',
   intelligence: 'Contradictions',
+  analysis: 'Analysis',
   entities: 'Entities',
   outputs: 'Outputs',
   realtime: 'Live',

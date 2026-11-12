@@ -25,7 +25,6 @@ export interface FirmDto {
   /** Better Auth organization id */
   organizationId: string;
   name: string;
-  slug: string;
   primaryLanguage: FirmDtoPrimaryLanguage;
   jurisdiction: string;
   defaultTimezone: string;

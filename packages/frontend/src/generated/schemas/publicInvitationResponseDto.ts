@@ -21,4 +21,5 @@ import type { PublicInvitationDto } from './publicInvitationDto';
 
 export interface PublicInvitationResponseDto {
   invitation: PublicInvitationDto;
+  status: string;
 }
