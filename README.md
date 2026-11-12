@@ -1,6 +1,6 @@
 # Depose
 
-Self-hosted, open-source legal intelligence workspace: a Wexler-style backend for
+Self-hosted, open-source legal intelligence workspace for
 ingesting matters and documents, extracting facts and chronology, finding
 inconsistencies, and answering questions with citations.
 
