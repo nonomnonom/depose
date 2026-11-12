@@ -11,6 +11,9 @@ import type { Database } from '../../../infrastructure/database/database.client.
 import { DATABASE } from '../../../infrastructure/database/database.module.js';
 import {
   documents,
+  entities,
+  entityAliases,
+  entityMentions,
   extractionRuns,
   factSources,
   facts,
@@ -324,6 +327,61 @@ export class ExtractionService {
             verification: item.verification,
             lastSeenAt: new Date(),
           });
+          const entityLabel = item.candidate.entity?.trim();
+          if (entityLabel) {
+            const normalizedEntity = normalize(entityLabel).toLowerCase();
+            let [entity] = await tx
+              .select({ id: entities.id })
+              .from(entities)
+              .where(
+                and(
+                  eq(entities.firmId, document.firmId),
+                  eq(entities.matterId, document.matterId),
+                  eq(entities.normalizedName, normalizedEntity),
+                ),
+              )
+              .limit(1);
+            if (!entity) {
+              const [created] = await tx
+                .insert(entities)
+                .values({
+                  firmId: document.firmId,
+                  matterId: document.matterId,
+                  canonicalName: entityLabel,
+                  normalizedName: normalizedEntity,
+                  type: /\b(inc|llc|ltd|limited|corp|corporation|plc|gmbh|company|bank|group)\b/i.test(entityLabel)
+                    ? 'organization'
+                    : 'person',
+                  status: 'proposed',
+                })
+                .returning({ id: entities.id });
+              entity = created;
+            }
+            if (entity) {
+              if (normalize(entityLabel) !== entityLabel) {
+                await tx
+                  .insert(entityAliases)
+                  .values({
+                    firmId: document.firmId,
+                    matterId: document.matterId,
+                    entityId: entity.id,
+                    alias: entityLabel,
+                    normalizedAlias: normalizedEntity,
+                    source: 'extraction',
+                  })
+                  .onConflictDoNothing();
+              }
+              await tx.insert(entityMentions).values({
+                firmId: document.firmId,
+                matterId: document.matterId,
+                entityId: entity.id,
+                factId: fact.id,
+                documentId: document.id,
+                pageNumber: item.pageNumber,
+                surfaceForm: entityLabel,
+              });
+            }
+          }
           counts.stored += 1;
           insertedIds.push(fact.id);
         }

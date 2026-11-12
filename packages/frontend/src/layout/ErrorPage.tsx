@@ -189,7 +189,7 @@ export class RootErrorBoundary extends React.Component<{ children: React.ReactNo
     return { hasError: true };
   }
   componentDidCatch(error: unknown) {
-    // eslint-disable-next-line no-console
+     
     console.error(error);
   }
   render() {

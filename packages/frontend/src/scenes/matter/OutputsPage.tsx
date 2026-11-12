@@ -44,7 +44,7 @@ export function OutputsPage() {
         title="Outputs"
         description="Work product generated from this matter's facts. Every output keeps the citations it was built from."
         actions={
-          <Button variant="outline" render={<Link to={`/matters/${matterId}/ai`} />}>
+          <Button variant="outline" render={<Link to={`/matters/${matterId}/kim`} />}>
             <Sparkle size={14} />
             Draft with Dep AI
           </Button>
@@ -72,7 +72,7 @@ export function OutputsPage() {
             Drafts, chronologies, and reports created from the fact bank appear here. Ask Dep AI
             for a draft when the record is ready.
           </p>
-          <Button className="mt-4" size="sm" render={<Link to={`/matters/${matterId}/ai`} />}>
+          <Button className="mt-4" size="sm" render={<Link to={`/matters/${matterId}/kim`} />}>
             Open Dep AI
           </Button>
         </div>
@@ -82,7 +82,7 @@ export function OutputsPage() {
             {items.map((output) => (
               <li key={output.id}>
                 <Link
-                  to={`/matters/${matterId}/outputs/${output.id}`}
+                  to={`/matters/${matterId}/data/reports/${output.id}`}
                   className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/40"
                 >
                   <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40">
@@ -107,3 +107,4 @@ export function OutputsPage() {
     </div>
   );
 }
+

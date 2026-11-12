@@ -274,14 +274,14 @@ export function LivePage() {
                       <p className="mt-0.5 line-clamp-2">{source.excerpt}</p>
                       {source.type === 'fact' ? (
                         <Link
-                          to={`/matters/${matterId}/facts?focus=${source.id}`}
+                          to={`/matters/${matterId}/data/facts?focus=${source.id}`}
                           className="mt-1 inline-block font-medium text-primary underline-offset-4 hover:underline"
                         >
                           Verify the fact
                         </Link>
                       ) : (
                         <Link
-                          to={`/matters/${matterId}/search?q=${encodeURIComponent(source.excerpt.slice(0, 80))}`}
+                          to={`/matters/${matterId}/data/search?q=${encodeURIComponent(source.excerpt.slice(0, 80))}`}
                           className="mt-1 inline-block font-medium text-primary underline-offset-4 hover:underline"
                         >
                           Find the passage
@@ -366,7 +366,7 @@ export function LivePage() {
                 title="Sessions unavailable"
                 message={sessions.error instanceof Error ? sessions.error.message : undefined}
                 onRetry={() => void sessions.refetch()}
-                secondaryHref={`/matters/${matterId}/overview`}
+                secondaryHref={`/matters/${matterId}/summary`}
                 secondaryLabel="Back to overview"
               />
             ) : items.length === 0 ? (
@@ -405,3 +405,4 @@ export function LivePage() {
     </div>
   );
 }
+

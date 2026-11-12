@@ -1,13 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { and, eq, desc } from 'drizzle-orm';
+import { and, eq, desc, inArray, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
+  factIssues,
   factRelevance,
   facts,
+  issues,
   subsets,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
@@ -73,6 +75,73 @@ export class RelevanceService {
       )
       .orderBy(desc(factRelevance.updatedAt));
     return { items: rows.map(this.toDto) };
+  }
+
+  async classify(actor: FirmActor, matterId: string) {
+    await this.policy.assertMatter(actor, 'fact.relevance.update', matterId);
+    const issueRows = await this.db
+      .select()
+      .from(issues)
+      .where(and(eq(issues.firmId, actor.firmId), eq(issues.matterId, matterId), eq(issues.status, 'open')));
+    if (issueRows.length === 0) return { classified: 0, issues: 0, reason: 'No open issues' };
+    const factRows = await this.db
+      .select()
+      .from(facts)
+      .where(and(
+        eq(facts.firmId, actor.firmId),
+        eq(facts.matterId, matterId),
+        isNull(facts.archivedAt),
+        isNull(facts.mergedIntoId),
+      ))
+      .limit(5_000);
+    let classified = 0;
+    for (const fact of factRows) {
+      const text = `${fact.text} ${fact.entityLabel ?? ''} ${fact.action ?? ''} ${fact.object ?? ''}`.toLowerCase();
+      const tokens = new Set(text.split(/[^a-z0-9]+/).filter((token) => token.length > 2));
+      let best: { issueId: string; score: number } | undefined;
+      for (const issue of issueRows) {
+        const issueTokens = new Set(`${issue.name} ${issue.description ?? ''}`.toLowerCase().split(/[^a-z0-9]+/).filter((token) => token.length > 2));
+        if (issueTokens.size === 0) continue;
+        let shared = 0;
+        for (const token of issueTokens) if (tokens.has(token)) shared += 1;
+        const score = shared / issueTokens.size;
+        if (!best || score > best.score) best = { issueId: issue.id, score };
+      }
+      if (!best) continue;
+      const label = best.score >= 0.5 ? 'key' : best.score >= 0.2 ? 'relevant' : best.score >= 0.08 ? 'maybe_relevant' : 'not_relevant';
+      await this.db.insert(factRelevance).values({
+        firmId: actor.firmId,
+        matterId,
+        factId: fact.id,
+        scopeType: 'matter',
+        scopeId: matterId,
+        label,
+        reason: `Automatic overlap score ${best.score.toFixed(2)} with issue`,
+        updatedBy: actor.userId,
+      }).onConflictDoUpdate({
+        target: [factRelevance.factId, factRelevance.scopeType, factRelevance.scopeId],
+        set: { label, reason: `Automatic overlap score ${best.score.toFixed(2)} with issue`, updatedBy: actor.userId, updatedAt: new Date() },
+      });
+      if (label === 'key' || label === 'relevant' || label === 'maybe_relevant') {
+        await this.db.insert(factIssues).values({
+          firmId: actor.firmId,
+          matterId,
+          factId: fact.id,
+          issueId: best.issueId,
+          source: 'automatic',
+        }).onConflictDoNothing();
+      }
+      classified += 1;
+    }
+    await this.audit.log({
+      firmId: actor.firmId,
+      action: 'relevance.classified',
+      resourceType: 'matter',
+      resourceId: matterId,
+      actor,
+      metadata: { matterId, classified, issues: issueRows.length },
+    });
+    return { classified, issues: issueRows.length };
   }
 
   async assign(actor: FirmActor, matterId: string, input: z.infer<typeof assignRelevanceSchema>) {

@@ -6,6 +6,9 @@ import {
   type AskQuestionInput,
 } from './intelligence.dto.js';
 import { IntelligenceService } from './intelligence.service.js';
+import { FactsService } from '../facts/facts.service.js';
+import { RelevanceService } from '../relevance/relevance.service.js';
+import { SummaryThemeService } from '../summary-theme/summary-theme.service.js';
 import { RequestContextService } from '../../common/request-context.service.js';
 
 @ApiTags('Intelligence')
@@ -13,6 +16,9 @@ import { RequestContextService } from '../../common/request-context.service.js';
 export class IntelligenceController {
   constructor(
     private readonly intelligenceService: IntelligenceService,
+    private readonly facts: FactsService,
+    private readonly relevance: RelevanceService,
+    private readonly summary: SummaryThemeService,
     private readonly context: RequestContextService,
   ) {}
 
@@ -25,6 +31,21 @@ export class IntelligenceController {
   ) {
     const actor = this.context.requireFirmActor();
     return this.intelligenceService.chronology(actor, matterId);
+  }
+
+  @Post('analysis/run')
+  @ApiOperation({ summary: 'Run clustering, relevance, inconsistencies, and summary generation' })
+  @ApiParam({ name: 'matterId', format: 'uuid' })
+  async analyze(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Body() body: { subsetId?: string },
+  ) {
+    const actor = this.context.requireFirmActor();
+    const clustered = await this.facts.cluster(actor, matterId);
+    const relevance = await this.relevance.classify(actor, matterId);
+    const inconsistencies = await this.intelligenceService.contradictions(actor, matterId);
+    const generated = await this.summary.generate(actor, matterId, body?.subsetId);
+    return { clustered, relevance, inconsistencies, ...generated };
   }
 
   @Post('contradictions')

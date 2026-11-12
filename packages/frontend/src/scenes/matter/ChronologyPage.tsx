@@ -48,7 +48,7 @@ export function ChronologyPage() {
         title="Chronology"
         description="Dated facts in order. The timeline is a reading of confirmed facts, not a separate record."
         actions={
-          <Button variant="outline" render={<Link to={`/matters/${matterId}/ai`} />}>
+          <Button variant="outline" render={<Link to={`/matters/${matterId}/kim`} />}>
             <Sparkle size={14} />
             Ask about timing
           </Button>
@@ -91,7 +91,7 @@ export function ChronologyPage() {
             className="mt-4"
             size="sm"
             variant="outline"
-            render={<Link to={`/matters/${matterId}/facts`} />}
+            render={<Link to={`/matters/${matterId}/data/facts`} />}
           >
             Open fact bank <ArrowRight size={13} />
           </Button>
@@ -116,7 +116,7 @@ export function ChronologyPage() {
                       {fact.dateStart}
                     </p>
                     <Link
-                      to={`/matters/${matterId}/facts?focus=${fact.id}`}
+                      to={`/matters/${matterId}/data/facts?focus=${fact.id}`}
                       className="mt-1 block text-sm text-pretty underline-offset-4 hover:underline"
                     >
                       {fact.text}
@@ -139,3 +139,4 @@ export function ChronologyPage() {
     </div>
   );
 }
+

@@ -10,5 +10,6 @@ import { FactsService } from './facts.service.js';
   imports: [AccessControlModule, ExtractionsModule, SearchModule, VectorModule],
   controllers: [FactsController],
   providers: [FactsService],
+  exports: [FactsService],
 })
 export class FactsModule {}

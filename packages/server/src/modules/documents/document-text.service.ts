@@ -30,6 +30,12 @@ const TEXT_MIME = new Set([
 const DOCX_MIME =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const PDF_MIME = 'application/pdf';
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const XLS_MIME = 'application/vnd.ms-excel';
+const PPTX_MIME = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+const ZIP_MIME = 'application/zip';
+const EML_MIME = 'message/rfc822';
+const MSG_MIME = 'application/vnd.ms-outlook';
 
 const IMAGE_MIME = new Set([
   'image/png',
@@ -197,11 +203,14 @@ export class DocumentTextService {
     return null;
   }
 
-  private async pdfPageImage(_data: Buffer, _pageNumber: number): Promise<{ image: Buffer; mimeType: string } | null> {
-    // unpdf exposes a text layer but not a page rasterizer in this build.
-    // OCR for scanned / image-only PDF pages is deferred until a rasterizer
-    // (for example @napi-rs/canvas or a poppler CLI) is added as a dependency.
-    this.logger.debug(`PDF page image render is not available; OCR deferred for scanned PDF page`);
+  private async pdfPageImage(data: Buffer, pageNumber: number): Promise<{ image: Buffer; mimeType: string } | null> {
+    const { pdf } = await import('pdf-to-img');
+    const pages = await pdf(new Uint8Array(data), { scale: 2 });
+    let index = 1;
+    for await (const image of pages) {
+      if (index === pageNumber) return { image: Buffer.from(image), mimeType: 'image/png' };
+      index += 1;
+    }
     return null;
   }
 
@@ -232,7 +241,109 @@ export class DocumentTextService {
       const result = await mammoth.extractRawText({ buffer: data });
       return { pages: splitPages(result.value) };
     }
+    if (mimeType === XLSX_MIME || mimeType === XLS_MIME) {
+      const XLSX = await import('xlsx');
+      const book = XLSX.read(data, { type: 'buffer', cellDates: true });
+      const text = book.SheetNames.map((name) => {
+        const sheet = book.Sheets[name];
+        return `--- sheet: ${name} ---\n${XLSX.utils.sheet_to_csv(sheet, { blankrows: false })}`;
+      }).join('\n\n');
+      return { pages: splitPages(text).filter((page) => page.trim().length > 0) };
+    }
+    if (mimeType === PPTX_MIME) {
+      const AdmZip = (await import('adm-zip')).default;
+      const archive = new AdmZip(data);
+      const slides = archive.getEntries()
+        .filter((entry) => /^ppt\/slides\/slide\d+\.xml$/.test(entry.entryName))
+        .sort((left, right) => left.entryName.localeCompare(right.entryName, undefined, { numeric: true }));
+      const text = slides.map((entry, index) => {
+        const body = this.xmlText(archive.readAsText(entry));
+        return `--- slide ${index + 1} ---\n${body}`;
+      }).join('\n\n');
+      return { pages: splitPages(text).filter((page) => page.trim().length > 0) };
+    }
+    if (mimeType === ZIP_MIME) {
+      return { pages: splitPages(await this.extractZip(data, 0)) };
+    }
+    if (mimeType === EML_MIME) {
+      const { simpleParser } = await import('mailparser');
+      const parsed = await simpleParser(data);
+      const headers = [
+        `From: ${parsed.from?.text ?? ''}`,
+        `To: ${parsed.to && !Array.isArray(parsed.to) ? parsed.to.text : ''}`,
+        `Subject: ${parsed.subject ?? ''}`,
+        `Date: ${parsed.date?.toISOString() ?? ''}`,
+      ].join('\n');
+      const body = parsed.text || (parsed.html ? this.xmlText(parsed.html) : '');
+      const attachments = (parsed.attachments ?? []).map((attachment) =>
+        `--- attachment: ${attachment.filename ?? 'unnamed'} ---\n${attachment.content.toString('utf8').slice(0, 40_000)}`,
+      );
+      return { pages: splitPages([headers, body, ...attachments].join('\n\n')) };
+    }
+    if (mimeType === MSG_MIME) {
+      const readerModule = await import('@kenjiuno/msgreader');
+      const MsgReader = readerModule.default as unknown as new (input: Buffer) => {
+        getFileData(): {
+          senderName?: string;
+          recipients?: { name?: string }[];
+          subject?: string;
+          messageDeliveryTime?: string;
+          body?: string;
+        };
+      };
+      const parsed = new MsgReader(data).getFileData();
+      const headers = [
+        `From: ${parsed.senderName ?? ''}`,
+        `To: ${parsed.recipients?.map((recipient: { name?: string }) => recipient.name).join(', ') ?? ''}`,
+        `Subject: ${parsed.subject ?? ''}`,
+        `Date: ${parsed.messageDeliveryTime ?? ''}`,
+      ].join('\n');
+      return { pages: splitPages([headers, parsed.body ?? ''].join('\n\n')) };
+    }
     return { pages: [] };
+  }
+
+  private xmlText(xml: string): string {
+    return xml
+      .replace(/<w:p[ >]/g, '\n<w:p ')
+      .replace(/<\/a:p>/g, '\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  private async extractZip(data: Buffer, depth: number): Promise<string> {
+    if (depth > 2) return '[nested archive omitted]';
+    const AdmZip = (await import('adm-zip')).default;
+    const archive = new AdmZip(data);
+    const entries = archive.getEntries().slice(0, 500);
+    const parts: string[] = [];
+    let total = 0;
+    for (const entry of entries) {
+      if (entry.isDirectory || total > 20 * 1024 * 1024) continue;
+      const content = archive.readFile(entry);
+      if (!content) continue;
+      total += content.length;
+      const name = entry.entryName.toLowerCase();
+      if (name.endsWith('.zip')) {
+        parts.push(`--- archive: ${entry.entryName} ---\n${await this.extractZip(content, depth + 1)}`);
+      } else if (name.endsWith('.pdf')) {
+        const { extractText, getDocumentProxy } = await import('unpdf');
+        const parsed = await getDocumentProxy(new Uint8Array(content));
+        const result = await extractText(parsed, { mergePages: false });
+        const pages = Array.isArray(result.text) ? result.text : [result.text];
+        parts.push(`--- file: ${entry.entryName} ---\n${pages.join('\n')}`);
+      } else if (/\.(txt|md|csv|json|xml|html?)$/i.test(name)) {
+        parts.push(`--- file: ${entry.entryName} ---\n${content.toString('utf8').slice(0, 40_000)}`);
+      }
+    }
+    return parts.join('\n\n');
   }
 
   private async finish(

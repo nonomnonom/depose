@@ -40,6 +40,13 @@ export class RelevanceController {
     return this.service.getForFact(actor, matterId, factId);
   }
 
+  @Post('classify')
+  @ApiOperation({ summary: 'Classify facts against open matter issues' })
+  @ApiParam({ name: 'matterId', format: 'uuid' })
+  async classify(@Param('matterId', ParseUUIDPipe) matterId: string) {
+    return this.service.classify(this.context.requireFirmActor(), matterId);
+  }
+
   @Post()
   @ApiOperation({ summary: 'Assign relevance to a fact' })
   @ApiParam({ name: 'matterId', format: 'uuid' })

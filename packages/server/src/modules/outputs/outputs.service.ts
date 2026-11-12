@@ -1,10 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
 import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
+  contradictions,
+  facts,
   outputSources,
   outputVersions,
   outputs,
@@ -88,6 +90,150 @@ export class OutputsService {
         factId: source.factId,
         citation: source.citationSnapshot,
       })),
+    };
+  }
+
+  async create(
+    actor: FirmActor,
+    matterId: string,
+    input: { kind: string; title: string; subsetId?: string },
+  ) {
+    await this.policy.assertMatter(actor, 'output.create', matterId);
+    const [output] = await this.db.insert(outputs).values({
+      firmId: actor.firmId,
+      matterId,
+      subsetId: input.subsetId ?? null,
+      kind: input.kind,
+      title: input.title,
+      status: 'draft',
+      createdBy: actor.userId,
+    }).returning();
+    await this.db.insert(outputVersions).values({
+      firmId: actor.firmId,
+      matterId,
+      outputId: output.id,
+      version: 1,
+      content: { markdown: '' },
+      contentMarkdown: '',
+      createdBy: actor.userId,
+    });
+    await this.audit.log({
+      firmId: actor.firmId,
+      action: 'output.created',
+      resourceType: 'output',
+      resourceId: output.id,
+      actor,
+      metadata: { matterId, kind: input.kind },
+    });
+    return { output: this.outputDto(output) };
+  }
+
+  async generate(actor: FirmActor, matterId: string, outputId: string) {
+    await this.policy.assertMatter(actor, 'output.create', matterId);
+    const [output] = await this.db
+      .select()
+      .from(outputs)
+      .where(and(eq(outputs.id, outputId), eq(outputs.firmId, actor.firmId), eq(outputs.matterId, matterId)))
+      .limit(1);
+    if (!output) throw DomainError.notFound('Output not found');
+    const rows = await this.db
+      .select({ fact: facts })
+      .from(facts)
+      .where(and(
+        eq(facts.firmId, actor.firmId),
+        eq(facts.matterId, matterId),
+        eq(facts.status, 'confirmed'),
+        isNull(facts.archivedAt),
+        isNull(facts.mergedIntoId),
+      ))
+      .orderBy(facts.dateStart, desc(facts.confidence))
+      .limit(500);
+    const contradictionRows = output.kind.includes('inconsisten')
+      ? await this.db
+          .select()
+          .from(contradictions)
+          .where(and(eq(contradictions.firmId, actor.firmId), eq(contradictions.matterId, matterId)))
+          .orderBy(desc(contradictions.severity))
+          .limit(100)
+      : [];
+    const lines: string[] = [`# ${output.title}`, ''];
+    if (output.kind.includes('chronolog')) {
+      lines.push('## Chronology', '');
+      rows.filter((row) => row.fact.dateStart).sort((left, right) =>
+        (left.fact.dateStart ?? '').localeCompare(right.fact.dateStart ?? ''),
+      ).forEach((row, index) => {
+        lines.push(`${index + 1}. **${row.fact.dateStart}** — ${row.fact.text}`);
+      });
+    } else if (output.kind.includes('inconsisten')) {
+      lines.push('## Inconsistencies', '');
+      contradictionRows.forEach((row) => {
+        lines.push(`### ${row.kind} · ${row.severity}`, '', row.summary, '');
+      });
+    } else {
+      lines.push('## Confirmed facts', '');
+      rows.forEach((row, index) => {
+        lines.push(`${index + 1}. ${row.fact.dateStart ? `**${row.fact.dateStart}** — ` : ''}${row.fact.text}`);
+      });
+    }
+    const markdown = lines.join('\n');
+    const nextVersion = output.currentVersion + 1;
+    const [version] = await this.db.transaction(async (tx) => {
+      const [created] = await tx.insert(outputVersions).values({
+        firmId: actor.firmId,
+        matterId,
+        outputId: output.id,
+        version: nextVersion,
+        content: { markdown, factCount: rows.length, contradictions: contradictionRows.length },
+        contentMarkdown: markdown,
+        createdBy: actor.userId,
+      }).returning();
+      await tx.update(outputs).set({ currentVersion: nextVersion, status: 'draft', updatedAt: new Date() })
+        .where(eq(outputs.id, output.id));
+      if (rows.length > 0) {
+        await tx.insert(outputSources).values(rows.map((row) => ({
+          firmId: actor.firmId,
+          matterId,
+          outputVersionId: created.id,
+          factId: row.fact.id,
+          citationSnapshot: {
+            text: row.fact.text,
+            dateStart: row.fact.dateStart,
+            status: row.fact.status,
+          },
+        }))).onConflictDoNothing();
+      }
+      return [created];
+    });
+    await this.audit.log({
+      firmId: actor.firmId,
+      action: 'output.generated',
+      resourceType: 'output',
+      resourceId: output.id,
+      actor,
+      metadata: { matterId, version: nextVersion, facts: rows.length },
+    });
+    return { output: this.outputDto({ ...output, currentVersion: nextVersion, updatedAt: new Date() }), version };
+  }
+
+  async finalize(actor: FirmActor, matterId: string, outputId: string) {
+    await this.policy.assertMatter(actor, 'output.finalize', matterId);
+    const detail = await this.getOutput(actor, matterId, outputId);
+    if (!detail.version) throw DomainError.notFound('Output version not found');
+    await this.db.transaction(async (tx) => {
+      await tx.update(outputVersions).set({ finalizedBy: actor.userId, finalizedAt: new Date() })
+        .where(eq(outputVersions.id, detail.version!.id));
+      await tx.update(outputs).set({ status: 'final', updatedAt: new Date() }).where(eq(outputs.id, outputId));
+    });
+    return this.getOutput(actor, matterId, outputId);
+  }
+
+  async exportOutput(actor: FirmActor, matterId: string, outputId: string) {
+    const detail = await this.getOutput(actor, matterId, outputId);
+    const markdown = detail.version?.contentMarkdown ?? '';
+    return {
+      fileName: `${detail.output.title.replace(/[^a-z0-9._-]+/gi, '-').toLowerCase()}.md`,
+      mimeType: 'text/markdown; charset=utf-8',
+      content: markdown,
     };
   }
 

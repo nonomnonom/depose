@@ -14,7 +14,7 @@ import { Moon, Sun } from '@coolicons/react';
 import { useClientConfig } from '~/lib/config/client-config';
 import { useSession, useSignOut } from '~/lib/auth/session';
 import { useTheme } from '~/layout/ThemeProvider';
-import { firmNavGroups, matterSections } from '~/layout/app-shell/navigation';
+import { globalNavGroups, matterWorkspaceNav, type NavEntry } from '~/app/navigation';
 
 interface CommandPaletteValue {
   open: boolean;
@@ -37,11 +37,7 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  return (
-    <CommandPaletteContext.Provider value={{ open, setOpen }}>
-      {children}
-    </CommandPaletteContext.Provider>
-  );
+  return <CommandPaletteContext.Provider value={{ open, setOpen }}>{children}</CommandPaletteContext.Provider>;
 }
 
 export function useCommandPalette(): CommandPaletteValue {
@@ -50,42 +46,42 @@ export function useCommandPalette(): CommandPaletteValue {
   return value;
 }
 
+interface CommandGroup {
+  label: string;
+  items: NavEntry[];
+}
+
 export function CommandPalette() {
   const { open, setOpen } = useCommandPalette();
   const navigate = useNavigate();
   const config = useClientConfig();
-  const { can, me } = useSession();
+  const { can } = useSession();
   const { setTheme, resolvedTheme } = useTheme();
   const signOut = useSignOut();
   const matterMatch = useMatch('/matters/:matterId/*');
   const matterId = matterMatch?.params.matterId;
 
-  const groups = useMemo(() => {
-    const firmGroups = firmNavGroups
+  const groups = useMemo<CommandGroup[]>(() => {
+    const firmGroups: CommandGroup[] = globalNavGroups
       .map((group) => ({
         label: group.label,
-        items: group.items
-          .filter((item) => {
-            if (item.permission && !can(item.permission)) return false;
-            if (item.firmOnly && !me?.firm) return false;
-            return true;
-          })
-          .map((item) => ({ href: item.href, label: item.label, icon: item.icon })),
+        items: group.entries.filter((entry) => !entry.permission || can(entry.permission)),
       }))
       .filter((group) => group.items.length > 0);
 
     if (!matterId) return firmGroups;
 
-    const sections = matterSections(matterId)
-      .filter((section) => !section.permission || can(section.permission))
-      .map((section) => ({
-        href: section.children?.[0]?.href ?? section.href,
-        label: section.label,
-        icon: null,
-      }));
+    const workspace = matterWorkspaceNav(matterId, can);
+    const matterItems: NavEntry[] = [...workspace.tabs];
+    for (const section of workspace.dataSections) {
+      matterItems.push(section);
+      for (const child of section.children ?? []) {
+        matterItems.push(child);
+      }
+    }
 
-    return [{ label: 'This matter', items: sections }, ...firmGroups];
-  }, [can, me?.firm, matterId]);
+    return [{ label: 'This matter', items: matterItems }, ...firmGroups];
+  }, [can, matterId]);
 
   const run = (action: () => void) => {
     setOpen(false);
@@ -121,25 +117,17 @@ export function CommandPalette() {
           <CommandGroup heading="Instance">
             <CommandItem value="hostname" disabled>
               <span className="truncate text-xs text-muted-foreground">
-                {config.firmName} · {config.hostname}
+                {config.firmName} {config.hostname}
               </span>
             </CommandItem>
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Appearance">
-            <CommandItem
-              value="light theme"
-              onSelect={() => run(() => setTheme('light'))}
-              data-checked={resolvedTheme === 'light'}
-            >
+            <CommandItem value="light theme" onSelect={() => run(() => setTheme('light'))} data-checked={resolvedTheme === 'light'}>
               <Sun className="size-4" />
               <span>Light theme</span>
             </CommandItem>
-            <CommandItem
-              value="dark theme"
-              onSelect={() => run(() => setTheme('dark'))}
-              data-checked={resolvedTheme === 'dark'}
-            >
+            <CommandItem value="dark theme" onSelect={() => run(() => setTheme('dark'))} data-checked={resolvedTheme === 'dark'}>
               <Moon className="size-4" />
               <span>Dark theme</span>
             </CommandItem>
@@ -155,3 +143,7 @@ export function CommandPalette() {
     </CommandDialog>
   );
 }
+
+
+
+

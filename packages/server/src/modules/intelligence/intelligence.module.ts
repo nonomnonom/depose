@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { AccessControlModule } from '../access-control/access-control.module.js';
 import { AuditModule } from '../audit/audit.module.js';
 import { InconsistenciesModule } from '../inconsistencies/inconsistencies.module.js';
+import { FactsModule } from '../facts/facts.module.js';
+import { RelevanceModule } from '../relevance/relevance.module.js';
+import { SummaryThemeModule } from '../summary-theme/summary-theme.module.js';
 import { VectorModule } from '../vector/vector.module.js';
 import { AiRuntimeModule } from '../ai/runtime/ai-runtime.module.js';
 import { IntelligenceController } from './intelligence.controller.js';
@@ -35,6 +38,9 @@ import { IntelligenceService } from './intelligence.service.js';
     AuditModule,
     VectorModule,
     InconsistenciesModule,
+    FactsModule,
+    RelevanceModule,
+    SummaryThemeModule,
     AiRuntimeModule,
   ],
   controllers: [IntelligenceController],

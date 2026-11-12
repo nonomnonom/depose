@@ -100,7 +100,7 @@ function SubsetRow({ matterId, subset }: { matterId: string; subset: SubsetDto }
   return (
     <li>
       <Link
-        to={`/matters/${matterId}/subsets/${subset.id}`}
+        to={`/matters/${matterId}/data/subsets/${subset.id}`}
         className="grid grid-cols-[1fr_auto] items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/30 sm:grid-cols-[1fr_6rem_6rem_7rem]"
       >
         <div className="min-w-0">
@@ -173,7 +173,7 @@ function CreateSubsetDialog({
           setName('');
           setDescription('');
           setSelected([]);
-          navigate(`/matters/${matterId}/subsets/${data.subset.id}`);
+          navigate(`/matters/${matterId}/data/subsets/${data.subset.id}`);
         },
         onError: (err) =>
           setError(err instanceof Error ? err.message : 'Could not create the subset.'),
@@ -307,3 +307,4 @@ function CreateSubsetDialog({
     </Dialog>
   );
 }
+

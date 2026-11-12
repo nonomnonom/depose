@@ -108,6 +108,7 @@ const envSchema = z
     EXTRACTION_FALLBACK_ENABLED: booleanFlag('false'),
     EXTRACTION_PIPELINE_VERSION: z.string().default('fact-extraction-1'),
     EXTRACTION_NULL_THRESHOLD: z.coerce.number().min(0).max(1).default(0.6),
+    EXTRACTION_AUTO_RUN: booleanFlag('true'),
 
     /* Retrieval, embeddings, Qdrant (spec 22) */
     VECTOR_SEARCH_ENABLED: booleanFlag('true'),
@@ -289,6 +290,7 @@ export interface AppConfig {
     fallbackEnabled: boolean;
     pipelineVersion: string;
     nullThreshold: number;
+    autoRun: boolean;
   };
   ocr: {
     provider: 'azure-read' | 'google-document-ai' | 'openrouter-clairic' | 'offline';
@@ -434,6 +436,7 @@ export function loadAppConfig(source: NodeJS.ProcessEnv = process.env): AppConfi
       fallbackEnabled: env.EXTRACTION_FALLBACK_ENABLED,
       pipelineVersion: env.EXTRACTION_PIPELINE_VERSION,
       nullThreshold: env.EXTRACTION_NULL_THRESHOLD,
+      autoRun: env.EXTRACTION_AUTO_RUN,
     },
     worker: {
       concurrency: env.WORKER_CONCURRENCY,

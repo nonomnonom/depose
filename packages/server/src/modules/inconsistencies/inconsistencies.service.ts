@@ -353,6 +353,7 @@ export class InconsistenciesService {
           eq(facts.firmId, actor.firmId),
           eq(facts.matterId, matterId),
           isNull(facts.mergedIntoId),
+          isNull(facts.archivedAt),
           inArray(facts.status, ['proposed', 'confirmed']),
         ),
       )

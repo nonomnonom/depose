@@ -7,7 +7,8 @@ import { ApiError } from '~/lib/api/errors';
 import { unwrapData } from '~/lib/api/client';
 import { mattersControllerGet } from '~/generated/endpoints';
 import { queryKeys } from '~/lib/query/keys';
-import { matterSections } from '~/layout/app-shell/navigation';
+import { matterWorkspaceNav } from '~/app/navigation';
+import { urls } from '~/app/urls';
 import { useSession } from '~/lib/auth/session';
 import { PageSkeleton } from '~/lib/components/PageSkeleton';
 import { ForbiddenPage, NotFoundPage } from '~/layout/ErrorPage';
@@ -52,22 +53,11 @@ export function MatterLayout() {
   }
 
   const matter = matterQuery.data.matter;
-  const sections = matterSections(matterId)
-    .filter((section) => !section.permission || can(section.permission))
-    .map((section) => ({
-      ...section,
-      children: section.children?.filter((child) => !child.permission || can(child.permission)),
-    }));
-  const activeTop = sections.find(
-    (section) =>
-      location.pathname === section.href ||
-      location.pathname.startsWith(`${section.href}/`) ||
-      section.children?.some(
-        (child) =>
-          location.pathname === child.href || location.pathname.startsWith(`${child.href}/`),
-      ),
+  const nav = matterWorkspaceNav(matterId, can);
+  const activeTab = nav.tabs.find(
+    (tab) => location.pathname === tab.href || location.pathname.startsWith(`${tab.href}/`),
   );
-  const children = activeTop?.children ?? [];
+  const isDataTab = Boolean(activeTab) && activeTab?.href === urls.matterData(matterId);
   const readOnly = matter.status === 'closed' || matter.status === 'archived';
 
   return (
@@ -84,11 +74,11 @@ export function MatterLayout() {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              {matter.matterNumber ? `${matter.matterNumber} Â· ` : ''}
+              {matter.matterNumber ? `${matter.matterNumber} · ` : ''}
               {matter.type}
             </p>
           </div>
-          <Button variant="outline" size="sm" render={<Link to={`/matters/${matterId}/settings`} />}>
+          <Button variant="outline" size="sm" render={<Link to={nav.settingsHref} />}>
             <FileSettingsCorner size={15} />
             Matter settings
           </Button>
@@ -106,54 +96,75 @@ export function MatterLayout() {
         </div>
       ) : null}
 
-      <nav aria-label="Matter sections" className="flex flex-col border-b border-border">
-        <div className="flex items-center gap-1 overflow-x-auto">
-          {sections.map((section) => {
-            const active = activeTop?.label === section.label;
-            return (
-              <Link
-                key={section.label}
-                to={section.children?.[0]?.href ?? section.href}
-                aria-current={active ? 'page' : undefined}
-                className={`shrink-0 rounded-t-md border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
-                  active
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {section.label}
-              </Link>
-            );
-          })}
-        </div>
-        {children.length > 0 ? (
-          <div className="flex items-center gap-1 bg-muted/40 px-1 py-1.5">
-            {children.map((child) => {
-              const active =
-                location.pathname === child.href ||
-                location.pathname.startsWith(`${child.href}/`);
-              return (
-                <Link
-                  key={child.href}
-                  to={child.href}
-                  aria-current={active ? 'page' : undefined}
-                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                    active
-                      ? 'bg-background text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {child.label}
-                </Link>
-              );
-            })}
-          </div>
-        ) : null}
+      <nav aria-label="Matter workspace" className="flex items-center gap-1 border-b border-border">
+        {nav.tabs.map((tab) => {
+          const active = location.pathname === tab.href || location.pathname.startsWith(`${tab.href}/`);
+          return (
+            <Link
+              key={tab.scene}
+              to={tab.href}
+              aria-current={active ? 'page' : undefined}
+              className={`shrink-0 rounded-t-md border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+                active
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="flex flex-1 flex-col py-6">
-        <Outlet context={{ matter }} />
+        {isDataTab ? (
+          <div className="flex flex-1 gap-6">
+            {nav.dataSections.length > 0 ? (
+              <aside className="flex w-60 shrink-0 flex-col gap-1" aria-label="Matter data sections">
+                {nav.dataSections.map((section) => (
+                  <div key={section.href} className="flex flex-col gap-1">
+                    <Link
+                      to={section.href}
+                      className={`rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors ${
+                        location.pathname === section.href || location.pathname.startsWith(`${section.href}/`)
+                          ? 'bg-accent text-accent-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      }`}
+                    >
+                      {section.label}
+                    </Link>
+                    {(section.children ?? []).length > 0 ? (
+                      <div className="ml-6 flex flex-col gap-1">
+                        {(section.children ?? []).map((child) => (
+                          <Link
+                            key={child.href}
+                            to={child.href}
+                            className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                              location.pathname === child.href || location.pathname.startsWith(`${child.href}/`)
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </aside>
+            ) : null}
+            <div className="min-w-0 flex-1">
+              <Outlet context={{ matter }} />
+            </div>
+          </div>
+        ) : (
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Outlet context={{ matter }} />
+          </div>
+        )}
       </div>
     </div>
   );
 }
+

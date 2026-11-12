@@ -10,6 +10,7 @@ import {
   facts,
   issues,
   subsetDocuments,
+  subsetIssues,
   subsets,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
@@ -62,9 +63,14 @@ export class SubsetsService {
       .from(subsetDocuments)
       .where(eq(subsetDocuments.subsetId, subsetId));
     const counts = await this.counts(actor, matterId, subsetId);
+    const issueRows = await this.db
+      .select({ issueId: subsetIssues.issueId })
+      .from(subsetIssues)
+      .where(eq(subsetIssues.subsetId, subsetId));
     return {
       subset: this.toDto(row, counts.documentCount, counts.factCount),
       documentIds: docs.map((doc) => doc.documentId),
+      issueIds: issueRows.map((issue) => issue.issueId),
     };
   }
 
@@ -95,6 +101,16 @@ export class SubsetsService {
           documentId,
         })),
       );
+      if (input.issueIds && input.issueIds.length > 0) {
+        await tx.insert(subsetIssues).values(
+          input.issueIds.map((issueId) => ({
+            firmId: actor.firmId,
+            matterId,
+            subsetId: subset.id,
+            issueId,
+          })),
+        );
+      }
       return subset;
     });
 
@@ -110,6 +126,7 @@ export class SubsetsService {
     return {
       subset: this.toDto(created, documentIds.length, 0),
       documentIds,
+      issueIds: input.issueIds ?? [],
     };
   }
 
@@ -121,21 +138,45 @@ export class SubsetsService {
   ) {
     await this.policy.assertMatter(actor, 'subset.update', matterId);
     await this.requireSubset(actor, matterId, subsetId);
-    const [updated] = await this.db
-      .update(subsets)
-      .set({
-        ...(input.name !== undefined ? { name: input.name } : {}),
-        ...(input.description !== undefined ? { description: input.description } : {}),
-        ...(input.applyMatterIssues !== undefined
-          ? { applyMatterIssues: input.applyMatterIssues }
-          : {}),
-        updatedAt: new Date(),
-      })
-      .where(eq(subsets.id, subsetId))
-      .returning();
+    if (input.issueIds) await this.assertIssues(actor, matterId, input.issueIds);
+    const updated = await this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(subsets)
+        .set({
+          ...(input.name !== undefined ? { name: input.name } : {}),
+          ...(input.description !== undefined ? { description: input.description } : {}),
+          ...(input.applyMatterIssues !== undefined
+            ? { applyMatterIssues: input.applyMatterIssues }
+            : {}),
+          updatedAt: new Date(),
+        })
+        .where(eq(subsets.id, subsetId))
+        .returning();
+      if (input.issueIds) {
+        await tx.delete(subsetIssues).where(eq(subsetIssues.subsetId, subsetId));
+        if (input.issueIds.length > 0) {
+          await tx.insert(subsetIssues).values(
+            input.issueIds.map((issueId) => ({
+              firmId: actor.firmId,
+              matterId,
+              subsetId,
+              issueId,
+            })),
+          );
+        }
+      }
+      return row;
+    });
 
     const counts = await this.counts(actor, matterId, subsetId);
-    return this.toDto(updated, counts.documentCount, counts.factCount);
+    const issueRows = await this.db
+      .select({ issueId: subsetIssues.issueId })
+      .from(subsetIssues)
+      .where(eq(subsetIssues.subsetId, subsetId));
+    return {
+      subset: this.toDto(updated, counts.documentCount, counts.factCount),
+      issueIds: issueRows.map((issue) => issue.issueId),
+    };
   }
 
   async setDocuments(
@@ -226,6 +267,7 @@ export class SubsetsService {
     const conditions = [
       eq(facts.firmId, actor.firmId),
       eq(facts.matterId, matterId),
+      isNull(facts.archivedAt),
       query.includeManual ? sql`(${inSubset} or ${noSources})` : inSubset,
     ];
     if (query.cursor) conditions.push(lt(facts.createdAt, new Date(query.cursor)));

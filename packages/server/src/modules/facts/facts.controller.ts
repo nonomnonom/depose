@@ -29,9 +29,11 @@ import { RequestContextService } from '../../common/request-context.service.js';
 import { parseOrThrow, ZodBodyPipe } from '../../common/zod.pipe.js';
 import { ExtractionService } from '../ai/extractions/extraction.service.js';
 import {
+  bulkFactIdsSchema,
   createFactSchema,
   factStatusValues,
   listFactsQuerySchema,
+  mergeFactSchema,
   updateFactSchema,
   type CreateFactInput,
   type ListFactsQuery,
@@ -72,6 +74,49 @@ export class FactsController {
     const actor = this.context.requireFirmActor();
     const parsed: ListFactsQuery = parseOrThrow(listFactsQuerySchema, query);
     return this.facts.list(actor, matterId, parsed);
+  }
+
+  @Post('cluster')
+  @ApiOperation({ summary: 'Merge near-duplicate facts in this matter' })
+  async cluster(@Param('matterId', ParseUUIDPipe) matterId: string) {
+    return this.facts.cluster(this.context.requireFirmActor(), matterId);
+  }
+
+  @Post('bulk/archive')
+  @ApiOperation({ summary: 'Archive several facts at once' })
+  async bulkArchive(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Body(new ZodBodyPipe(bulkFactIdsSchema)) body: { ids: string[] },
+  ) {
+    return this.facts.bulkArchive(this.context.requireFirmActor(), matterId, body.ids);
+  }
+
+  @Post(':id/merge')
+  @ApiOperation({ summary: 'Merge a fact into another fact' })
+  async merge(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodBodyPipe(mergeFactSchema)) body: { targetId: string },
+  ) {
+    return this.facts.merge(this.context.requireFirmActor(), matterId, id, body.targetId);
+  }
+
+  @Post(':id/archive')
+  @ApiOperation({ summary: 'Archive a fact without deleting it' })
+  async archive(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return { fact: await this.facts.archive(this.context.requireFirmActor(), matterId, id) };
+  }
+
+  @Post(':id/unarchive')
+  @ApiOperation({ summary: 'Restore an archived fact' })
+  async unarchive(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return { fact: await this.facts.unarchive(this.context.requireFirmActor(), matterId, id) };
   }
 
   @Post('extract')

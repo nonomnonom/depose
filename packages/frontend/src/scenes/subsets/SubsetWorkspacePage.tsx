@@ -57,7 +57,7 @@ export function SubsetWorkspacePage() {
     <div className="flex flex-col gap-5">
       <div>
         <Link
-          to={`/matters/${matterId}/subsets`}
+          to={`/matters/${matterId}/data/subsets`}
           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={13} />
@@ -77,7 +77,7 @@ export function SubsetWorkspacePage() {
           <div className="flex gap-2">
             <Button
               size="sm"
-              render={<Link to={`/matters/${matterId}/ai?subsetId=${subsetId}`} />}
+              render={<Link to={`/matters/${matterId}/kim?subsetId=${subsetId}`} />}
             >
               <Sparkle size={14} />
               Ask inside subset
@@ -170,7 +170,7 @@ export function SubsetWorkspacePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    render={<Link to={`/matters/${matterId}/facts?focus=${fact.id}`} />}
+                    render={<Link to={`/matters/${matterId}/data/facts?focus=${fact.id}`} />}
                   >
                     Open <ArrowRight size={13} />
                   </Button>
@@ -216,7 +216,7 @@ export function SubsetWorkspacePage() {
               disabled={remove.isPending}
               onClick={() =>
                 remove.mutate(subsetId, {
-                  onSuccess: () => navigate(`/matters/${matterId}/subsets`),
+                  onSuccess: () => navigate(`/matters/${matterId}/data/subsets`),
                 })
               }
             >
@@ -245,3 +245,4 @@ function EmptyScope({ text }: { text: string }) {
     </div>
   );
 }
+

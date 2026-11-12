@@ -393,7 +393,7 @@ function EvidenceColumn({
                 {fact.factType ? <span>· {fact.factType}</span> : null}
               </div>
               <Link
-                to={`/matters/${matterId}/facts?focus=${fact.id}`}
+                to={`/matters/${matterId}/data/facts?focus=${fact.id}`}
                 className="mt-1 block text-sm text-pretty underline-offset-4 hover:underline"
               >
                 {fact.text}
@@ -419,3 +419,4 @@ function EvidenceColumn({
     </section>
   );
 }
+

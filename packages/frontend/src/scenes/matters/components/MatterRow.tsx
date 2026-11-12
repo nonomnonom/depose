@@ -27,7 +27,7 @@ export function MatterStatusBadge({ status }: { status: MatterDtoStatus }) {
 export function MatterRow({ matter }: { matter: MatterDto }) {
   return (
     <Link
-      to={`/matters/${matter.id}/overview`}
+      to={`/matters/${matter.id}/summary`}
       className="flex flex-col gap-1.5 border-b border-border px-3 py-3 transition-colors last:border-b-0 hover:bg-accent/40"
     >
       <div className="flex items-start justify-between gap-3">
@@ -44,3 +44,4 @@ export function MatterRow({ matter }: { matter: MatterDto }) {
     </Link>
   );
 }
+

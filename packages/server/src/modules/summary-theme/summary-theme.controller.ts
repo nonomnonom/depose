@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseUUIDPipe } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiOkResponse } from '@nestjs/swagger';
 import { SummaryThemeService } from './summary-theme.service.js';
 import { RequestContextService } from '../../common/request-context.service.js';
@@ -10,6 +10,16 @@ export class SummaryThemeController {
     private readonly service: SummaryThemeService,
     private readonly context: RequestContextService,
   ) {}
+
+  @Post('generate')
+  @ApiOperation({ summary: 'Generate themes and a summary from confirmed facts' })
+  @ApiParam({ name: 'matterId', format: 'uuid' })
+  async generate(
+    @Param('matterId', ParseUUIDPipe) matterId: string,
+    @Body() body: { subsetId?: string },
+  ) {
+    return this.service.generate(this.context.requireFirmActor(), matterId, body?.subsetId);
+  }
 
   @Get('themes')
   @ApiOperation({ summary: 'List themes in a matter' })

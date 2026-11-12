@@ -109,14 +109,12 @@ export class SubsetsController {
     @Param('subsetId', ParseUUIDPipe) subsetId: string,
     @Body(new ZodBodyPipe(updateSubsetSchema)) body: UpdateSubsetInput,
   ) {
-    return {
-      subset: await this.subsets.update(
-        this.context.requireFirmActor(),
-        matterId,
-        subsetId,
-        body,
-      ),
-    };
+    return this.subsets.update(
+      this.context.requireFirmActor(),
+      matterId,
+      subsetId,
+      body,
+    );
   }
 
   @Put(':subsetId/documents')

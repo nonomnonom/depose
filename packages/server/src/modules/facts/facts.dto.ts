@@ -49,6 +49,7 @@ export type UpdateFactInput = z.infer<typeof updateFactSchema>;
 
 export const listFactsQuerySchema = z.object({
   status: z.enum(factStatusValues).optional(),
+  includeArchived: z.enum(['true', 'false']).optional().transform((value) => value === 'true'),
   q: z.string().trim().max(200).optional(),
   documentId: z.uuid().optional(),
   cursor: z.iso.datetime({ offset: true }).optional(),
@@ -56,3 +57,6 @@ export const listFactsQuerySchema = z.object({
 });
 
 export type ListFactsQuery = z.infer<typeof listFactsQuerySchema>;
+
+export const mergeFactSchema = z.object({ targetId: z.uuid() }).strict();
+export const bulkFactIdsSchema = z.object({ ids: z.array(z.uuid()).min(1).max(200) }).strict();

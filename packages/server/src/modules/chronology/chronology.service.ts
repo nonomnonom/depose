@@ -32,6 +32,7 @@ export class ChronologyService {
       eq(facts.matterId, matterId),
       eq(facts.status, 'confirmed'),
       isNull(facts.mergedIntoId),
+      isNull(facts.archivedAt),
     ];
 
     if (query.q) {
@@ -86,6 +87,7 @@ export class ChronologyService {
           eq(facts.matterId, matterId),
           eq(facts.status, 'confirmed'),
           isNull(facts.dateStart),
+          isNull(facts.archivedAt),
         ),
       )
       .limit(1);

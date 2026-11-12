@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
@@ -59,7 +59,7 @@ export function FactsPage() {
 
   const filters: FactFilters = { q: search || undefined, status };
   const facts = useFacts(matterId, filters);
-  const items = facts.data?.pages.flatMap((page) => page.items) ?? [];
+  const items = useMemo(() => facts.data?.pages.flatMap((page) => page.items) ?? [], [facts.data]);
   const extract = useRunExtraction(matterId);
   const job = useJob(jobId);
 
@@ -540,3 +540,4 @@ function AddFactDialog({
     </Dialog>
   );
 }
+

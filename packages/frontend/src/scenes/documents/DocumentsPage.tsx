@@ -215,7 +215,7 @@ export function DocumentsPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                render={<Link to={`/matters/${matterId}/facts`} />}
+                render={<Link to={`/matters/${matterId}/data/facts`} />}
               >
                 Review proposed facts
               </Button>
@@ -361,3 +361,4 @@ function DocumentRow({
     </li>
   );
 }
+

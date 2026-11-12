@@ -47,7 +47,7 @@ export function useDocuments(matterId: string, filters: DocumentFilters) {
   });
 }
 
-export function useUploadDocument(matterId: string, filters: DocumentFilters) {
+export function useUploadDocument(matterId: string, _filters: DocumentFilters) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (file: File) =>
@@ -84,3 +84,4 @@ export function useReprocessDocument(matterId: string) {
     },
   });
 }
+

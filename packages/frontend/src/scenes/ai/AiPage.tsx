@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Badge } from '@depose/ui/components/badge';
 import { Button } from '@depose/ui/components/button';
 import { ScrollArea } from '@depose/ui/components/scroll-area';
@@ -48,7 +48,7 @@ export function AiPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showThreads, setShowThreads] = useState(false);
 
-  const items = threads.data ?? [];
+  const items = useMemo(() => threads.data ?? [], [threads.data]);
   const active = items.find((thread) => thread.id === activeId) ?? null;
 
   useEffect(() => {
@@ -667,3 +667,5 @@ function renderCitations(
     );
   });
 }
+
+

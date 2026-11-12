@@ -154,7 +154,7 @@ export function SearchPage() {
                       </p>
                     ) : null}
                     <Link
-                      to={`/matters/${matterId}/facts?focus=${fact.id}`}
+                      to={`/matters/${matterId}/data/facts?focus=${fact.id}`}
                       className="mt-1.5 inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
                     >
                       Open in fact bank
@@ -183,7 +183,7 @@ export function SearchPage() {
                       {chunk.text}
                     </p>
                     <Link
-                      to={`/matters/${matterId}/documents`}
+                      to={`/matters/${matterId}/data/documents`}
                       className="mt-1.5 inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
                     >
                       Open evidence
@@ -198,3 +198,4 @@ export function SearchPage() {
     </div>
   );
 }
+

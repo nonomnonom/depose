@@ -19,6 +19,7 @@ export const updateSubsetSchema = z
     name: z.string().trim().min(1).max(120).optional(),
     description: z.string().trim().max(2_000).nullable().optional(),
     applyMatterIssues: z.boolean().optional(),
+    issueIds: uuidList.optional(),
   })
   .strict();
 

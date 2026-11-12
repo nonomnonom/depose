@@ -50,7 +50,7 @@ export function OutputDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            render={<Link to={`/matters/${matterId}/outputs`} />}
+            render={<Link to={`/matters/${matterId}/data/reports`} />}
           >
             <ArrowLeft size={14} /> All outputs
           </Button>
@@ -64,7 +64,7 @@ export function OutputDetailPage() {
           title="Output could not be loaded"
           message={detail.error instanceof Error ? detail.error.message : undefined}
           onRetry={() => void detail.refetch()}
-          secondaryHref={`/matters/${matterId}/outputs`}
+          secondaryHref={`/matters/${matterId}/data/reports`}
           secondaryLabel="Back to outputs"
         />
       ) : (
@@ -124,7 +124,7 @@ export function OutputDetailPage() {
                         </p>
                       ) : null}
                       <Link
-                        to={`/matters/${matterId}/facts?focus=${source.factId}`}
+                        to={`/matters/${matterId}/data/facts?focus=${source.factId}`}
                         className="mt-1 inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
                       >
                         Open fact
@@ -140,3 +140,4 @@ export function OutputDetailPage() {
     </div>
   );
 }
+

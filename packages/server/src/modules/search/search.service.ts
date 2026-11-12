@@ -176,6 +176,7 @@ export class SearchService {
             and(
               eq(facts.firmId, actor.firmId),
               eq(facts.matterId, matterId),
+              isNull(facts.archivedAt),
               inArray(facts.id, factIds),
               input.includeUnsupported || parsed.status === 'unsupported'
                 ? undefined
@@ -315,6 +316,7 @@ export class SearchService {
     const conditions = [
       eq(facts.firmId, actor.firmId),
       eq(facts.matterId, matterId),
+      isNull(facts.archivedAt),
       parsed.status
         ? eq(facts.status, parsed.status as 'proposed' | 'confirmed' | 'rejected' | 'unsupported')
         : eq(facts.status, 'confirmed'),

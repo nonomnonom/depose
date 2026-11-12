@@ -8,7 +8,8 @@ import { JobsService } from '../jobs/jobs.service.js';
 import { OcrService } from '../ai/ocr/ocr.service.js';
 import { VectorService } from '../vector/vector.service.js';
 import { WebhooksService } from '../webhooks/webhooks.service.js';
-import { INGEST_QUEUE } from '../jobs/queue.constants.js';
+import { EXTRACTION_QUEUE, INGEST_QUEUE } from '../jobs/queue.constants.js';
+import { appConfig } from '../../config/app.config.js';
 
 abstract class TrackedProcessor extends WorkerHost {
   protected abstract readonly logger: Logger;
@@ -115,6 +116,20 @@ export class IngestProcessor extends TrackedProcessor {
       if (result.status === 'done') {
         await this.jobs.progress(jobId, 60, 'chunking');
         chunkCount = await this.chunks.rebuild(documentId);
+        if (appConfig.extraction.autoRun) {
+          await this.jobs.enqueue({
+            firmId: result.firmId,
+            matterId: result.matterId,
+            type: EXTRACTION_QUEUE,
+            idempotencyKey: `autoextract:${documentId}:${appConfig.extraction.pipelineVersion}`,
+            payload: {
+              documentId,
+              pipelineVersion: appConfig.extraction.pipelineVersion,
+            },
+            maxAttempts: 2,
+            createdBy: 'system',
+          }).catch(() => undefined);
+        }
         await this.jobs.progress(jobId, 80, 'enqueueing-embedding');
         await this.jobs.enqueueEmbeddingJob(result.matterId, result.firmId);
         embeddingEnqueued = true;

@@ -59,6 +59,8 @@ export const facts = pgTable(
       onDelete: 'set null',
     }),
     createdBy: text('created_by'),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+    archivedBy: text('archived_by'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -124,6 +126,30 @@ export const factIssues = pgTable(
     uniqueIndex('fact_issues_fact_issue_unique').on(table.factId, table.issueId),
     index('fact_issues_fact_idx').on(table.factId),
     index('fact_issues_issue_idx').on(table.issueId),
+  ],
+);
+
+export const subsetIssues = pgTable(
+  'subset_issues',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    firmId: uuid('firm_id')
+      .notNull()
+      .references(() => firms.id, { onDelete: 'cascade' }),
+    matterId: uuid('matter_id')
+      .notNull()
+      .references(() => matters.id, { onDelete: 'cascade' }),
+    subsetId: uuid('subset_id')
+      .notNull()
+      .references(() => subsets.id, { onDelete: 'cascade' }),
+    issueId: uuid('issue_id')
+      .notNull()
+      .references(() => issues.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('subset_issues_subset_issue_unique').on(table.subsetId, table.issueId),
+    index('subset_issues_subset_idx').on(table.subsetId),
   ],
 );
 

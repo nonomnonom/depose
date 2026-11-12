@@ -75,7 +75,7 @@ export function DocumentViewerPage() {
             <Button
               variant="outline"
               size="sm"
-              render={<Link to={`/matters/${matterId}/documents`} />}
+              render={<Link to={`/matters/${matterId}/data/documents`} />}
             >
               All documents
             </Button>
@@ -103,7 +103,7 @@ export function DocumentViewerPage() {
           title="Document could not be loaded"
           message={document.error instanceof Error ? document.error.message : undefined}
           onRetry={() => void document.refetch()}
-          secondaryHref={`/matters/${matterId}/documents`}
+          secondaryHref={`/matters/${matterId}/data/documents`}
           secondaryLabel="Back to documents"
         />
       ) : (
@@ -196,7 +196,7 @@ export function DocumentViewerPage() {
                       </div>
                       <p className="mt-1 line-clamp-4 text-sm text-pretty">{fact.text}</p>
                       <Link
-                        to={`/matters/${matterId}/facts?focus=${fact.id}`}
+                        to={`/matters/${matterId}/data/facts?focus=${fact.id}`}
                         className="mt-1 inline-block text-xs font-medium text-primary underline-offset-4 hover:underline"
                       >
                         Open in fact bank
@@ -212,3 +212,4 @@ export function DocumentViewerPage() {
     </div>
   );
 }
+

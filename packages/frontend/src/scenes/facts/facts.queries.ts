@@ -7,7 +7,6 @@ import {
 import {
   factsControllerConfirm,
   factsControllerCreate,
-  factsControllerExtract,
   factsControllerGet,
   factsControllerList,
   factsControllerReject,
@@ -129,3 +128,4 @@ export function useRejectFact(matterId: string) {
     onSuccess: invalidate,
   });
 }
+

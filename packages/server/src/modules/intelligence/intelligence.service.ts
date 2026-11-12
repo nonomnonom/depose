@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { AiService } from '@nestjs/ai';
-import { and, desc, eq, ilike, inArray, or } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, isNull, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
@@ -82,7 +82,7 @@ export class IntelligenceService {
     const rows = await this.db
       .select()
       .from(facts)
-      .where(and(eq(facts.firmId, actor.firmId), eq(facts.matterId, matterId)))
+      .where(and(eq(facts.firmId, actor.firmId), eq(facts.matterId, matterId), isNull(facts.archivedAt)))
       .orderBy(desc(facts.createdAt))
       .limit(200);
     return {
@@ -223,7 +223,7 @@ export class IntelligenceService {
       const matterFacts = await this.db
         .select()
         .from(facts)
-        .where(and(eq(facts.firmId, firmId), eq(facts.matterId, matterId)))
+        .where(and(eq(facts.firmId, firmId), eq(facts.matterId, matterId), isNull(facts.archivedAt)))
         .limit(20);
       for (const f of matterFacts) {
         sources.push({

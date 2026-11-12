@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { and, desc, eq, ilike, isNull, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, isNull, lt, sql } from 'drizzle-orm';
 import { DomainError } from '../../common/domain-error.js';
 import type { FirmActor } from '../../common/request-context.service.js';
 import type { Database } from '../../infrastructure/database/database.client.js';
@@ -8,6 +8,7 @@ import { DATABASE } from '../../infrastructure/database/database.module.js';
 import {
   documents,
   factSources,
+  factVersions,
   facts,
 } from '../../infrastructure/database/schema/index.js';
 import { PolicyService } from '../access-control/policy.service.js';
@@ -36,6 +37,7 @@ export class FactsService {
     await this.policy.assertMatter(actor, 'fact.read', matterId);
     const limit = query.limit ?? 30;
     const conditions = [eq(facts.firmId, actor.firmId), eq(facts.matterId, matterId)];
+    if (!query.includeArchived) conditions.push(isNull(facts.archivedAt));
     if (query.status) conditions.push(eq(facts.status, query.status));
     if (query.q) conditions.push(ilike(facts.text, `%${query.q}%`));
     if (query.documentId) {
@@ -152,6 +154,7 @@ export class FactsService {
   async update(actor: FirmActor, matterId: string, factId: string, input: UpdateFactInput) {
     await this.policy.assertMatter(actor, 'fact.update', matterId);
     const fact = await this.requireFact(actor, matterId, factId);
+    await this.snapshot(actor, matterId, fact, 'edited');
     if (fact.status === 'confirmed' && input.text && normalize(input.text) !== fact.normalizedText) {
       throw DomainError.conflict('CONFLICT', 'Confirmed facts are immutable');
     }
@@ -190,6 +193,147 @@ export class FactsService {
   async reject(actor: FirmActor, matterId: string, factId: string) {
     await this.policy.assertMatter(actor, 'fact.reject', matterId);
     return this.changeStatus(actor, matterId, factId, 'rejected', ['proposed', 'confirmed']);
+  }
+
+  async archive(actor: FirmActor, matterId: string, factId: string) {
+    await this.policy.assertMatter(actor, 'fact.update', matterId);
+    const fact = await this.requireFact(actor, matterId, factId);
+    const [updated] = await this.db
+      .update(facts)
+      .set({ archivedAt: new Date(), archivedBy: actor.userId, updatedAt: new Date() })
+      .where(eq(facts.id, fact.id))
+      .returning();
+    await this.vector.removeFact(fact.id);
+    await this.audit.log({
+      firmId: actor.firmId,
+      action: 'fact.archived',
+      resourceType: 'fact',
+      resourceId: fact.id,
+      actor,
+      metadata: { matterId },
+    });
+    return this.toDto(updated, await this.sourceCount(fact.id));
+  }
+
+  async unarchive(actor: FirmActor, matterId: string, factId: string) {
+    await this.policy.assertMatter(actor, 'fact.update', matterId);
+    const fact = await this.requireFact(actor, matterId, factId);
+    const [updated] = await this.db
+      .update(facts)
+      .set({ archivedAt: null, archivedBy: null, updatedAt: new Date() })
+      .where(eq(facts.id, fact.id))
+      .returning();
+    await this.vector.indexFacts([fact.id]);
+    return this.toDto(updated, await this.sourceCount(fact.id));
+  }
+
+  async bulkArchive(actor: FirmActor, matterId: string, ids: string[]) {
+    await this.policy.assertMatter(actor, 'fact.update', matterId);
+    const rows = await this.db
+      .update(facts)
+      .set({ archivedAt: new Date(), archivedBy: actor.userId, updatedAt: new Date() })
+      .where(and(eq(facts.firmId, actor.firmId), eq(facts.matterId, matterId), inArray(facts.id, ids)))
+      .returning({ id: facts.id });
+    await Promise.all(rows.map((row) => this.vector.removeFact(row.id)));
+    await this.audit.log({
+      firmId: actor.firmId,
+      action: 'facts.bulk_archived',
+      resourceType: 'fact',
+      resourceId: matterId,
+      actor,
+      metadata: { matterId, count: rows.length },
+    });
+    return { archived: rows.length, ids: rows.map((row) => row.id) };
+  }
+
+  async merge(actor: FirmActor, matterId: string, sourceId: string, targetId: string) {
+    await this.policy.assertMatter(actor, 'fact.merge', matterId);
+    if (sourceId === targetId) throw DomainError.validation('Choose two different facts');
+    const source = await this.requireFact(actor, matterId, sourceId);
+    const target = await this.requireFact(actor, matterId, targetId);
+    if (source.status === 'merged' || target.status === 'merged') {
+      throw DomainError.conflict('CONFLICT', 'A merged fact cannot be merged again');
+    }
+    await this.snapshot(actor, matterId, source, 'merged into another fact');
+    await this.db.transaction(async (tx) => {
+      await tx.update(factSources).set({ factId: target.id }).where(eq(factSources.factId, source.id));
+      await tx.update(facts).set({
+        status: 'merged',
+        mergedIntoId: target.id,
+        updatedAt: new Date(),
+      }).where(eq(facts.id, source.id));
+    });
+    await this.vector.removeFact(source.id);
+    await this.audit.log({
+      firmId: actor.firmId,
+      action: 'fact.merged',
+      resourceType: 'fact',
+      resourceId: source.id,
+      actor,
+      metadata: { matterId, targetId: target.id },
+    });
+    return { merged: true, sourceId: source.id, targetId: target.id };
+  }
+
+  async cluster(actor: FirmActor, matterId: string) {
+    await this.policy.assertMatter(actor, 'fact.merge', matterId);
+    const rows = await this.db
+      .select()
+      .from(facts)
+      .where(and(
+        eq(facts.firmId, actor.firmId),
+        eq(facts.matterId, matterId),
+        isNull(facts.archivedAt),
+        isNull(facts.mergedIntoId),
+      ))
+      .limit(2_000);
+    const groups: (typeof rows)[] = [];
+    for (const fact of rows) {
+      const tokens = new Set(fact.normalizedText.split(/[^a-z0-9]+/).filter((token) => token.length > 2));
+      let group = groups.find((candidate) => {
+        const anchor = candidate[0];
+        if (!anchor) return false;
+        if (anchor.dateStart !== fact.dateStart) return false;
+        if ((anchor.factType ?? '') !== (fact.factType ?? '')) return false;
+        if (normalize(anchor.entityLabel ?? '') !== normalize(fact.entityLabel ?? '')) return false;
+        const other = new Set(anchor.normalizedText.split(/[^a-z0-9]+/).filter((token) => token.length > 2));
+        let shared = 0;
+        for (const token of tokens) if (other.has(token)) shared += 1;
+        return shared / Math.max(tokens.size, other.size, 1) >= 0.82;
+      });
+      if (!group) {
+        group = [];
+        groups.push(group);
+      }
+      group.push(fact);
+    }
+    let merged = 0;
+    for (const group of groups) {
+      if (group.length < 2) continue;
+      const target = group.find((fact) => fact.status === 'confirmed') ?? group[0]!;
+      for (const source of group) {
+        if (source.id === target.id) continue;
+        await this.merge(actor, matterId, source.id, target.id);
+        merged += 1;
+      }
+    }
+    return { merged, groups: groups.filter((group) => group.length > 1).length };
+  }
+
+  private async snapshot(actor: FirmActor, matterId: string, fact: typeof facts.$inferSelect, reason: string) {
+    const [latest] = await this.db
+      .select({ version: sql<number>`coalesce(max(${factVersions.version}), 0)::int` })
+      .from(factVersions)
+      .where(eq(factVersions.factId, fact.id));
+    await this.db.insert(factVersions).values({
+      firmId: actor.firmId,
+      matterId,
+      factId: fact.id,
+      version: (latest?.version ?? 0) + 1,
+      snapshot: fact as unknown as Record<string, unknown>,
+      changedBy: actor.userId,
+      changeReason: reason,
+    });
   }
 
   async remove(actor: FirmActor, matterId: string, factId: string) {

@@ -313,7 +313,7 @@ function EntityDetail({
             {data.facts.map((fact) => (
               <li key={fact.id}>
                 <Link
-                  to={`/matters/${matterId}/facts?focus=${fact.id}`}
+                  to={`/matters/${matterId}/data/facts?focus=${fact.id}`}
                   className="block rounded-md border border-border px-2.5 py-2 text-xs underline-offset-4 hover:bg-muted/40 hover:underline"
                 >
                   <span className="block font-medium tabular-nums text-muted-foreground">
@@ -425,3 +425,4 @@ function AddEntityDialog({
     </Dialog>
   );
 }
+
